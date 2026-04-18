@@ -1,0 +1,37 @@
+# Core Django
+Django==4.2.16
+djangorestframework==3.15.2
+djangorestframework-simplejwt==5.3.1
+django-cors-headers==4.6.0
+
+# Database
+psycopg2-binary>=2.9
+
+# Environment
+python-dotenv>=1.0
+
+# Production server
+gunicorn>=21.2
+
+# Async tasks
+celery[redis]>=5.3
+redis>=5.0
+
+# ML / NLP
+spacy>=3.7
+openai>=1.0
+openai-whisper>=20231117
+vosk>=0.3.45
+
+# PDF processing
+PyPDF2>=3.0
+
+# Image / video processing
+Pillow>=10.1
+opencv-python-headless>=4.9
+
+# HTTP
+requests>=2.31
+
+# Utilities
+numpy>=1.26
