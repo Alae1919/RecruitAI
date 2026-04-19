@@ -1,198 +1,254 @@
-// src/components/JobSeekerEntretien.jsx
-import React, { useState, useEffect } from "react";
-import JobSeekerInterviewProcess from "./JobSeekerInterviewProcess";
-import { fetchJobSeekerInterviews } from "../../services/api";
-import JobSeekerInterviewAnswers from "./JobSeekerInterviewAnswers";
+import React, { useState } from 'react';
+import { fetchJobSeekerInterviews } from '../../services/api';
+import { useApi } from '../../hooks/useApi';
+import Button from '../ui/Button';
+import JobSeekerInterviewProcess from './JobSeekerInterviewProcess';
+import JobSeekerInterviewAnswers from './JobSeekerInterviewAnswers';
 
+/* ── Icons ─────────────────────────────────────────────────────────── */
+function BellIcon({ size = 15 }) {
+  return <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>;
+}
+function MicIcon({ size = 22 }) {
+  return <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" y1="19" x2="12" y2="23"/><line x1="8" y1="23" x2="16" y2="23"/></svg>;
+}
+function PlayIcon({ size = 12 }) {
+  return <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="currentColor" stroke="none"><polygon points="5 3 19 12 5 21 5 3"/></svg>;
+}
+function EyeIcon({ size = 12 }) {
+  return <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>;
+}
 
-const JobSeekerEntretien = () => {
-  const [interviews, setInterviews] = useState([]);
-  const [currentInterview, setCurrentInterview] = useState(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
+/* ── Status badge ───────────────────────────────────────────────────── */
+function StatusBadge({ status }) {
+  const map = {
+    available:  { bg: 'rgba(59,130,246,0.1)',  color: '#93C5FD', border: 'rgba(59,130,246,0.25)',  dot: '#60A5FA', label: 'Available' },
+    completed:  { bg: 'rgba(16,185,129,0.1)',  color: '#6EE7B7', border: 'rgba(16,185,129,0.25)', dot: '#34D399', label: 'Completed' },
+    evaluated:  { bg: 'rgba(16,185,129,0.1)',  color: '#6EE7B7', border: 'rgba(16,185,129,0.25)', dot: '#34D399', label: 'Evaluated' },
+    processing: { bg: 'rgba(245,158,11,0.1)',  color: '#FCD34D', border: 'rgba(245,158,11,0.25)', dot: '#F59E0B', label: 'Processing' },
+  };
+  const s = map[status] || { bg: 'rgba(35,42,62,0.6)', color: '#9BA6C4', border: 'rgba(35,42,62,0.8)', dot: '#59628A', label: status };
+  return (
+    <span className="inline-flex items-center gap-1 text-[11px] px-2 py-0.5 rounded-full font-medium"
+      style={{ background: s.bg, color: s.color, border: `1px solid ${s.border}` }}>
+      <span className="w-1.5 h-1.5 rounded-full" style={{ background: s.dot }} />
+      {s.label}
+    </span>
+  );
+}
+
+/* ── Score ring ─────────────────────────────────────────────────────── */
+function Score({ value }) {
+  if (value == null) return <span className="text-brand-text-disabled font-mono text-sm">—</span>;
+  return <span className="font-mono text-sm font-bold" style={{ color: '#F59E0B' }}>{value}<span className="text-brand-text-disabled text-xs">/10</span></span>;
+}
+
+/* ── Skeleton row ───────────────────────────────────────────────────── */
+function SkeletonRow() {
+  return (
+    <tr style={{ borderTop: '1px solid rgba(35,42,62,0.5)' }}>
+      {[50, 20, 15, 15, 15].map((w, i) => (
+        <td key={i} className="px-6 py-4">
+          <div className="h-4 rounded animate-pulse" style={{ width: `${w}%`, background: 'rgba(35,42,62,0.8)' }} />
+        </td>
+      ))}
+    </tr>
+  );
+}
+
+export default function JobSeekerEntretien() {
+  const { data, loading, error, refetch } = useApi(fetchJobSeekerInterviews, []);
+  const [currentInterview, setCurrentInterview]   = useState(null);
   const [selectedInterview, setSelectedInterview] = useState(null);
 
-const handleViewInterview = (interviewId) => {
-  setSelectedInterview(interviewId);
-};
+  const interviews = Array.isArray(data)
+    ? data.map(i => ({
+        id: i.id,
+        candidateName: i.candidate_name,
+        offerName: i.offer_name,
+        status: i.status,
+        score: i.result?.score ?? null,
+        video: i.interview_link ?? null,
+      }))
+    : [];
 
-  // Charger les interviews depuis l'API
-  useEffect(() => {
-    const loadInterviews = async () => {
-      try {
-        const data = await fetchJobSeekerInterviews();
-        console.log(data);
-        const formattedInterviews = data.map((item) => ({
-          id: item.id,
-          candidateName: item.candidate_name,
-          offerName: item.offer_name,
-          status: item.status,
-          score: item.result ? item.result.score : null,
-          video: item.interview_link ? item.interview_link : null,
-        }));
-        setInterviews(formattedInterviews);
-        setLoading(false);
-      } catch (err) {
-        console.error("Erreur lors du chargement des interviews :", err);
-        setError("Failed to load interviews. Please try again later.");
-        setLoading(false);
-      }
-    };
+  if (currentInterview) {
+    return <JobSeekerInterviewProcess interview={currentInterview} onClose={() => { setCurrentInterview(null); refetch(); }} />;
+  }
+  if (selectedInterview) {
+    return <JobSeekerInterviewAnswers interviewId={selectedInterview} onBack={() => setSelectedInterview(null)} />;
+  }
 
-    loadInterviews();
-  }, []);
-
-  if (loading) return <p>Loading interviews...</p>;
-  if (error) return <p>{error}</p>;
+  const kpis = [
+    { label: 'Total',      value: interviews.length },
+    { label: 'Available',  value: interviews.filter(i => i.status === 'available').length,  color: '#3B82F6' },
+    { label: 'Completed',  value: interviews.filter(i => ['completed','evaluated'].includes(i.status)).length, color: '#10B981' },
+    { label: 'Avg Score',  value: (() => {
+        const scored = interviews.filter(i => i.score != null);
+        return scored.length ? (scored.reduce((a, i) => a + i.score, 0) / scored.length).toFixed(1) : '—';
+      })(), suffix: interviews.filter(i => i.score != null).length ? '/10' : '' },
+  ];
 
   return (
-    <div className="p-6 bg-white shadow-md rounded-lg">
-      {currentInterview ? (
-        <JobSeekerInterviewProcess
-          interview={currentInterview}
-          onClose={() => setCurrentInterview(null)}
-        />
-      ) : (selectedInterview ? (
-        <JobSeekerInterviewAnswers
-          interviewId={selectedInterview}
-          onBack={() => setSelectedInterview(null)}
-        />
-      ) :(
-        <>
-          <h1 className="text-2xl font-bold mb-6 text-gray-800">My Interviews</h1>
-          <div className="overflow-x-auto">
-            <table className="min-w-full border-collapse border border-gray-300 hidden md:table">
-              <thead className="bg-gray-200">
-                <tr>
-                  <th className="border px-4 py-2 text-left">Offer Name</th>
-                  <th className="border px-4 py-2 text-left">Status</th>
-                  <th className="border px-4 py-2 text-left">Score</th>
-                  <th className="border px-4 py-2 text-left">Passer l'entretien</th>
-                  <th className="border px-4 py-2 text-left">View Interview</th>
-                </tr>
-              </thead>
-              <tbody>
-                {interviews.map((interview) => (
-                  <tr key={interview.id} className="border">
-                    <td className="border px-4 py-2">{interview.offerName}</td>
-                    <td className="border px-4 py-2">
-                      <span
-                        className={`px-2 py-1 rounded text-white ${
-                          interview.status === "completed"
-                            ? "bg-green-500"
-                            : interview.status === "processing"
-                            ? "bg-yellow-500"
-                            : "bg-gray-500"
-                        }`}
-                      >
-                        {interview.status}
-                      </span>
-                    </td>
-                    <td className="border px-4 py-2">
-                      {interview.score !== null
-                        ? `${interview.score}/10`
-                        : "N/A"}
-                    </td>
-                    <td className="border px-4 py-2">
-                      <button
-                        onClick={() =>
-                          interview.status !== "available"
-                            ? setCurrentInterview(interview)
-                            : null
-                        }
-                        disabled={interview.status === "available"}
-                        className={`px-4 py-2 rounded hover:bg-blue-600 ${
-                          interview.status !== "available"
-                            ? "bg-gray-300 text-gray-600 cursor-not-allowed"
-                            : "bg-blue-500 text-white cursor-pointer"
-                        }`}
-                      >
-                        Passer l'entretien
-                      </button>
-                      
-                    </td>
-                    <td className="border px-4 py-2">
-                    <button
-                      onClick={() => handleViewInterview(interview.id)}
-                      disabled={interview.status === "available"}
-                      className="px-4 py-2 bg-green-500 text-white rounded hover:bg-green-600"
-                    >
-                      View Interview
-                    </button>
-                    
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+    <div className="flex-1 animate-fadeIn">
+      {/* Topbar */}
+      <div className="h-14 px-6 flex items-center gap-3 sticky top-0 z-20"
+        style={{ borderBottom: '1px solid rgba(35,42,62,0.7)', background: 'rgba(9,12,20,0.85)', backdropFilter: 'blur(12px)' }}>
+        <div className="flex-1">
+          <h1 className="text-[15px] font-semibold text-brand-text-primary">My Interviews</h1>
+        </div>
+        <button className="w-9 h-9 rounded-lg text-brand-text-muted grid place-items-center transition-colors"
+          onMouseEnter={e => e.currentTarget.style.background = 'rgba(35,42,62,0.6)'}
+          onMouseLeave={e => e.currentTarget.style.background = 'transparent'}>
+          <BellIcon />
+        </button>
+      </div>
 
-          {/* Mode carte pour mobile */}
-          <div className="md:hidden">
-            {interviews.map((interview) => (
-              <div
-                key={interview.id}
-                className="border rounded-lg mb-4 p-4 shadow-sm"
-              >
-                <h2 className="font-bold text-lg">{interview.offerName}</h2>
-                <p>
-                  <span className="font-semibold">Status: </span>
-                  <span
-                    className={`px-2 py-1 rounded text-white ${
-                      interview.status === "completed"
-                        ? "bg-green-500"
-                        : interview.status === "processing"
-                        ? "bg-yellow-500"
-                        : "bg-gray-500"
-                    }`}
-                  >
-                    {interview.status}
-                  </span>
-                </p>
-                <p>
-                  <span className="font-semibold">Score: </span>
-                  {interview.score !== null
-                    ? `${interview.score}/10`
-                    : "N/A"}
-                </p>
-                <div className="mt-2 flex space-x-2">
-                  <button
-                    onClick={() =>
-                      interview.status === "available"
-                        ? setCurrentInterview(interview)
-                        : null
-                    }
-                    disabled={interview.status !== "available"}
-                    className={`px-4 py-2 rounded w-full hover:bg-blue-600 ${
-                      interview.status !== "available"
-                        ? "bg-gray-300 text-gray-600 cursor-not-allowed"
-                        : "bg-blue-500 text-white cursor-pointer"
-                    }`}
-                  >
-                    Passer l'entretien
-                  </button>
-                  
-                  <button
-                    onClick={() =>
-                      handleViewInterview(interview.id)}
-                    
-                    disabled={interview.status === "available"}
-                    className={`px-4 py-2 rounded w-full hover:bg-green-600 ${
-                      interview.status !== "available"
-                        ? "bg-green-500 text-white cursor-pointer"
-                        : "bg-gray-300 text-gray-600 cursor-not-allowed"
-                    }`}
-                  >
-                    View Interview
-                  </button>
+      <div className="px-8 py-6 max-w-[1200px] mx-auto">
+
+        {/* KPI cards */}
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+          {kpis.map((k, i) => (
+            <div key={k.label} className="rounded-xl p-5 relative overflow-hidden"
+              style={{ background: '#101420', border: '1px solid rgba(35,42,62,0.8)', boxShadow: '0 4px 20px rgba(0,0,0,0.3)' }}>
+              <div className="absolute top-0 left-0 right-0 h-[2px] rounded-t-xl"
+                style={{ background: `linear-gradient(90deg, ${k.color || '#F59E0B'}60, ${k.color || '#F59E0B'}15)` }} />
+              <div className="text-[10px] font-mono uppercase tracking-widest text-brand-text-disabled">{k.label}</div>
+              <div className="mt-2 flex items-baseline gap-1">
+                <div className="text-3xl font-bold font-mono tracking-tight text-brand-text-primary">
+                  {loading ? <span className="inline-block w-10 h-7 rounded animate-pulse" style={{ background: 'rgba(35,42,62,0.8)' }} /> : k.value}
                 </div>
+                {k.suffix && <span className="text-brand-text-disabled text-sm">{k.suffix}</span>}
               </div>
-            ))}
+            </div>
+          ))}
+        </div>
+
+        {/* Error */}
+        {error && (
+          <div className="mb-5 px-4 py-3 rounded-xl text-sm text-red-300 flex items-center justify-between"
+            style={{ background: 'rgba(239,68,68,0.08)', border: '1px solid rgba(239,68,68,0.2)' }}>
+            Failed to load interviews.
+            <button onClick={refetch} className="text-xs underline hover:text-red-200">Retry</button>
           </div>
-        </>
-      ))}
+        )}
+
+        {/* Table card */}
+        <div className="rounded-xl overflow-hidden"
+          style={{ background: '#101420', border: '1px solid rgba(35,42,62,0.8)', boxShadow: '0 4px 24px rgba(0,0,0,0.3)' }}>
+
+          {interviews.length === 0 && !loading ? (
+            <div className="flex flex-col items-center py-20 gap-4">
+              <div className="w-14 h-14 rounded-2xl grid place-items-center text-brand-text-disabled"
+                style={{ background: 'rgba(35,42,62,0.5)', border: '1px solid rgba(35,42,62,0.8)' }}>
+                <MicIcon />
+              </div>
+              <div className="text-center">
+                <div className="text-sm font-semibold text-brand-text-primary">No interviews yet</div>
+                <div className="text-xs text-brand-text-muted mt-1">Interviews appear here after your application is accepted.</div>
+              </div>
+            </div>
+          ) : (
+            <>
+              {/* Desktop table */}
+              <div className="hidden md:block overflow-x-auto">
+                <table className="w-full text-sm">
+                  <thead>
+                    <tr>
+                      {['Position', 'Status', 'Score', 'Take Interview', 'View Answers'].map((h, i) => (
+                        <th key={h} className="text-left px-6 py-3 text-[10px] font-mono uppercase tracking-widest font-medium text-brand-text-disabled"
+                          style={{ borderBottom: '1px solid rgba(35,42,62,0.6)' }}>
+                          {h}
+                        </th>
+                      ))}
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {loading ? (
+                      [1, 2, 3].map(i => <SkeletonRow key={i} />)
+                    ) : (
+                      interviews.map(i => (
+                        <tr key={i.id}
+                          className="transition-colors"
+                          style={{ borderTop: '1px solid rgba(35,42,62,0.5)' }}
+                          onMouseEnter={e => e.currentTarget.style.background = 'rgba(24,30,46,0.6)'}
+                          onMouseLeave={e => e.currentTarget.style.background = 'transparent'}>
+                          <td className="px-6 py-4 font-semibold text-brand-text-primary">{i.offerName}</td>
+                          <td className="px-6 py-4"><StatusBadge status={i.status} /></td>
+                          <td className="px-6 py-4"><Score value={i.score} /></td>
+                          <td className="px-6 py-4">
+                            <button
+                              disabled={i.status !== 'available'}
+                              onClick={() => i.status === 'available' && setCurrentInterview(i)}
+                              className="h-7 px-3 text-xs rounded-lg font-semibold inline-flex items-center gap-1.5 transition-all disabled:opacity-40 disabled:cursor-not-allowed"
+                              style={i.status === 'available'
+                                ? { background: 'linear-gradient(135deg, #F59E0B 0%, #FCD34D 100%)', color: '#111827', boxShadow: '0 0 12px rgba(245,158,11,0.25)' }
+                                : { background: 'rgba(35,42,62,0.5)', border: '1px solid rgba(35,42,62,0.7)', color: '#59628A' }}>
+                              <PlayIcon /> Start
+                            </button>
+                          </td>
+                          <td className="px-6 py-4">
+                            <button
+                              disabled={i.status === 'available'}
+                              onClick={() => i.status !== 'available' && setSelectedInterview(i.id)}
+                              className="h-7 px-3 text-xs rounded-lg inline-flex items-center gap-1.5 transition-all disabled:opacity-40 disabled:cursor-not-allowed text-brand-text-muted"
+                              style={{ border: '1px solid rgba(35,42,62,0.7)', background: 'rgba(35,42,62,0.4)' }}
+                              onMouseEnter={e => !e.currentTarget.disabled && (e.currentTarget.style.borderColor = 'rgba(245,158,11,0.3)', e.currentTarget.style.color = '#F59E0B')}
+                              onMouseLeave={e => (e.currentTarget.style.borderColor = 'rgba(35,42,62,0.7)', e.currentTarget.style.color = '')}>
+                              <EyeIcon /> Answers
+                            </button>
+                          </td>
+                        </tr>
+                      ))
+                    )}
+                  </tbody>
+                </table>
+              </div>
+
+              {/* Mobile cards */}
+              <div className="md:hidden divide-y" style={{ borderColor: 'rgba(35,42,62,0.5)' }}>
+                {loading ? (
+                  <div className="p-6 space-y-3">
+                    {[1, 2, 3].map(i => <div key={i} className="h-20 rounded-xl animate-pulse" style={{ background: 'rgba(35,42,62,0.5)' }} />)}
+                  </div>
+                ) : (
+                  interviews.map(i => (
+                    <div key={i.id} className="p-5" style={{ borderColor: 'rgba(35,42,62,0.5)' }}>
+                      <div className="flex items-start justify-between gap-3 mb-4">
+                        <div>
+                          <div className="font-semibold text-sm text-brand-text-primary">{i.offerName}</div>
+                          {i.score != null && (
+                            <div className="mt-1"><Score value={i.score} /></div>
+                          )}
+                        </div>
+                        <StatusBadge status={i.status} />
+                      </div>
+                      <div className="flex gap-2">
+                        <button
+                          disabled={i.status !== 'available'}
+                          onClick={() => i.status === 'available' && setCurrentInterview(i)}
+                          className="flex-1 h-8 text-xs rounded-lg font-semibold inline-flex items-center justify-center gap-1.5 transition-all disabled:opacity-40"
+                          style={i.status === 'available'
+                            ? { background: 'linear-gradient(135deg, #F59E0B 0%, #FCD34D 100%)', color: '#111827' }
+                            : { background: 'rgba(35,42,62,0.5)', border: '1px solid rgba(35,42,62,0.7)', color: '#59628A' }}>
+                          <PlayIcon /> Start
+                        </button>
+                        <button
+                          disabled={i.status === 'available'}
+                          onClick={() => i.status !== 'available' && setSelectedInterview(i.id)}
+                          className="flex-1 h-8 text-xs rounded-lg inline-flex items-center justify-center gap-1.5 transition-all disabled:opacity-40 text-brand-text-muted"
+                          style={{ border: '1px solid rgba(35,42,62,0.7)', background: 'rgba(35,42,62,0.4)' }}>
+                          <EyeIcon /> Answers
+                        </button>
+                      </div>
+                    </div>
+                  ))
+                )}
+              </div>
+            </>
+          )}
+        </div>
+      </div>
     </div>
   );
-};
-
-export default JobSeekerEntretien;
+}

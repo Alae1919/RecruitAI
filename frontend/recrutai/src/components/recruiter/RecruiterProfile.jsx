@@ -1,326 +1,276 @@
+import React, { useState } from 'react';
+import { getRecruiterProfile, updateRecruiterProfile } from '../../services/api';
+import { useApi } from '../../hooks/useApi';
+import { useToast } from '../../hooks/useToast';
+import Input from '../ui/Input';
+import Button from '../ui/Button';
 
-import React, { useState, useEffect } from "react";
-import { getRecruiterProfile, updateRecruiterProfile } from "../../services/api"; // Importer les fonctions API
+/* ── Icons ─────────────────────────────────────────────────────────── */
+function BellIcon({ size = 15 }) {
+  return <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>;
+}
+function EditIcon({ size = 14 }) {
+  return <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>;
+}
+function BuildingIcon({ size = 15 }) {
+  return <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/></svg>;
+}
 
-const RecruiterProfile = () => {
-  const [profile, setProfile] = useState(null); // État pour stocker les données du profil
-  const [isEditing, setIsEditing] = useState(false); // État pour activer/désactiver le mode édition
-  const [loading, setLoading] = useState(true); // État pour gérer le chargement
-  const [error, setError] = useState(null); // État pour gérer les erreurs
+/* ── Avatar ─────────────────────────────────────────────────────────── */
+function Avatar({ name, size = 72 }) {
+  const initials = (name || '?').split(' ').map(s => s[0]).slice(0, 2).join('').toUpperCase();
+  let h = 0;
+  for (let i = 0; i < (name || '').length; i++) h = (h * 31 + name.charCodeAt(i)) % 360;
+  return (
+    <div className="rounded-2xl grid place-items-center font-bold text-white shrink-0"
+      style={{
+        width: size, height: size,
+        background: `oklch(0.52 0.12 ${h})`,
+        boxShadow: `0 0 24px oklch(0.52 0.12 ${h} / 0.45)`,
+        fontSize: size > 48 ? 22 : 13,
+      }}>
+      {initials}
+    </div>
+  );
+}
 
-  // Charger les données du profil au montage du composant
-  useEffect(() => {
-    const fetchProfile = async () => {
-      try {
-        const data = await getRecruiterProfile();
-        setProfile(data); // Mettre à jour le profil avec les données récupérées
-        setLoading(false);
-      } catch (err) {
-        setError(err);
-        setLoading(false);
-      }
-    };
+/* ── Section label ──────────────────────────────────────────────────── */
+function SectionLabel({ icon: Icon, children }) {
+  return (
+    <div className="flex items-center gap-3 pt-1 pb-0.5">
+      {Icon && <Icon size={13} />}
+      <div className="text-[10px] font-mono tracking-[0.18em] uppercase"
+        style={{ color: '#F59E0B', textShadow: '0 0 12px rgba(245,158,11,0.35)' }}>
+        {children}
+      </div>
+      <div className="flex-1 h-px" style={{ background: 'rgba(245,158,11,0.12)' }} />
+    </div>
+  );
+}
 
-    fetchProfile();
-  }, []);
+/* ── Skeleton ───────────────────────────────────────────────────────── */
+function SkeletonField() {
+  return (
+    <div className="space-y-1.5">
+      <div className="h-3 w-20 rounded" style={{ background: 'rgba(35,42,62,0.8)' }} />
+      <div className="h-10 w-full rounded-xl animate-pulse" style={{ background: 'rgba(16,20,32,0.8)', border: '1px solid rgba(35,42,62,0.8)' }} />
+    </div>
+  );
+}
 
-  const handleChange = (e) => {
-    const { name, value } = e.target;
-    setProfile((prev) => ({ ...prev, [name]: value }));
-  };
+const PERSONAL_FIELDS = [
+  { name: 'full_name', label: 'Full Name', type: 'text' },
+  { name: 'phone',     label: 'Personal Phone', type: 'text' },
+  { name: 'adress',   label: 'Address', type: 'text', span: true },
+];
 
-  const handleEditClick = () => {
-    setIsEditing(true);
-  };
+const COMPANY_FIELDS = [
+  { name: 'company_name',    label: 'Company Name',    type: 'text' },
+  { name: 'position',        label: 'Your Position',   type: 'text' },
+  { name: 'company_phone',   label: 'Company Phone',   type: 'text' },
+  { name: 'industry',        label: 'Industry',        type: 'text' },
+  { name: 'company_website', label: 'Company Website', type: 'url', span: true },
+];
 
-  const handleCancelClick = () => {
-    setIsEditing(false);
-  };
+export default function RecruiterProfile() {
+  const { data: profile, loading, error, refetch } = useApi(getRecruiterProfile, []);
+  const { toast } = useToast();
+  const [isEditing, setIsEditing] = useState(false);
+  const [draft, setDraft]         = useState(null);
+  const [saving, setSaving]       = useState(false);
 
-  const handleSaveClick = async () => {
+  const handleEdit = () => { setDraft({ ...profile }); setIsEditing(true); };
+  const handleCancel = () => { setDraft(null); setIsEditing(false); };
+  const handleChange = (e) => setDraft(p => ({ ...p, [e.target.name]: e.target.value }));
+
+  const handleSave = async () => {
+    setSaving(true);
     try {
-      const updatedProfile = await updateRecruiterProfile(profile); // Appel API pour sauvegarder les données
-      //setProfile(updatedProfile); // Mettre à jour l'état avec les données sauvegardées
-      setIsEditing(false); // Désactiver le mode édition
-    } catch (err) {
-      console.error("Failed to update profile:", err);
-      setError(err);
+      await updateRecruiterProfile(draft);
+      refetch();
+      toast.success('Profile saved successfully.');
+      setIsEditing(false);
+      setDraft(null);
+    } catch {
+      toast.error('Failed to save profile. Please try again.');
+    } finally {
+      setSaving(false);
     }
   };
 
-  if (loading) return <p>Loading...</p>;
-  if (error) return <p>Error loading profile: {error}</p>;
-
-  const EDITABLE_FIELDS = [
-    { name: "full_name",        label: "Full Name",       type: "text" },
-    { name: "phone",            label: "Personal Phone",  type: "text" },
-    { name: "adress",           label: "Address",         type: "text" },
-    { name: "company_phone",    label: "Company Phone",   type: "text" },
-    { name: "company_name",     label: "Company Name",    type: "text" },
-    { name: "position",         label: "Position",        type: "text" },
-    { name: "company_website",  label: "Company Website", type: "url"  },
-    { name: "industry",         label: "Industry",        type: "text" },
-  ];
+  const data = isEditing ? draft : profile;
+  const displayName = profile?.full_name || profile?.email || 'Recruiter';
 
   return (
-    <div className="p-6 bg-white shadow-md rounded-lg">
-      <h1 className="text-2xl font-bold mb-6">My Profile</h1>
+    <div className="flex-1 animate-fadeIn">
+      {/* Topbar */}
+      <div className="h-14 px-6 flex items-center gap-3 sticky top-0 z-20"
+        style={{ borderBottom: '1px solid rgba(35,42,62,0.7)', background: 'rgba(9,12,20,0.85)', backdropFilter: 'blur(12px)' }}>
+        <div className="flex-1 min-w-0">
+          <div className="text-[11px] font-mono text-brand-text-disabled mb-0.5">Account</div>
+          <h1 className="text-[15px] font-semibold text-brand-text-primary">My Profile</h1>
+        </div>
+        <div className="flex items-center gap-2">
+          <button className="w-9 h-9 rounded-lg text-brand-text-muted grid place-items-center transition-colors"
+            style={{ background: 'transparent' }}
+            onMouseEnter={e => e.currentTarget.style.background = 'rgba(35,42,62,0.6)'}
+            onMouseLeave={e => e.currentTarget.style.background = 'transparent'}>
+            <BellIcon />
+          </button>
+          {!isEditing && (
+            <button onClick={handleEdit}
+              className="h-8 px-3 text-xs rounded-lg font-medium inline-flex items-center gap-1.5 transition-all"
+              style={{ background: 'rgba(245,158,11,0.12)', border: '1px solid rgba(245,158,11,0.25)', color: '#F59E0B' }}
+              onMouseEnter={e => e.currentTarget.style.background = 'rgba(245,158,11,0.2)'}
+              onMouseLeave={e => e.currentTarget.style.background = 'rgba(245,158,11,0.12)'}>
+              <EditIcon /> Edit Profile
+            </button>
+          )}
+        </div>
+      </div>
 
-      <form className="space-y-4">
-        {profile && (
-          <>
-            <div>
-              <label className="block text-sm font-medium">Email</label>
-              <input
-                type="email"
-                name="email"
-                value={profile.email ?? ""}
-                disabled
-                className="w-full px-4 py-2 border rounded-lg bg-gray-100"
-              />
+      <div className="px-8 py-8 max-w-[860px] mx-auto">
+
+        {/* Profile card header */}
+        <div className="rounded-2xl p-6 mb-8 relative overflow-hidden"
+          style={{
+            background: 'linear-gradient(135deg, rgba(24,30,46,0.9) 0%, rgba(16,20,32,0.9) 100%)',
+            border: '1px solid rgba(35,42,62,0.8)',
+            boxShadow: '0 8px 40px rgba(0,0,0,0.4)',
+          }}>
+          {/* Ambient amber glow */}
+          <div className="absolute top-0 right-0 w-48 h-48 pointer-events-none"
+            style={{ background: 'radial-gradient(ellipse at 100% 0%, rgba(245,158,11,0.06) 0%, transparent 70%)' }} />
+
+          <div className="flex items-center gap-5">
+            {loading ? (
+              <div className="rounded-2xl animate-pulse" style={{ width: 72, height: 72, background: 'rgba(35,42,62,0.8)' }} />
+            ) : (
+              <Avatar name={displayName} size={72} />
+            )}
+            <div className="flex-1 min-w-0">
+              {loading ? (
+                <>
+                  <div className="h-5 w-40 rounded animate-pulse mb-2" style={{ background: 'rgba(35,42,62,0.8)' }} />
+                  <div className="h-3.5 w-56 rounded animate-pulse" style={{ background: 'rgba(35,42,62,0.6)' }} />
+                </>
+              ) : (
+                <>
+                  <h2 className="text-xl font-bold text-brand-text-primary truncate">{displayName}</h2>
+                  <div className="flex items-center gap-3 mt-1">
+                    {profile?.position && (
+                      <span className="text-sm text-brand-text-muted">{profile.position}</span>
+                    )}
+                    {profile?.company_name && (
+                      <>
+                        {profile?.position && <span className="text-brand-text-disabled">·</span>}
+                        <span className="inline-flex items-center gap-1.5 text-sm text-brand-text-muted">
+                          <BuildingIcon size={13} /> {profile.company_name}
+                        </span>
+                      </>
+                    )}
+                  </div>
+                  <div className="text-xs text-brand-text-disabled mt-1 font-mono">{profile?.email}</div>
+                </>
+              )}
             </div>
-            {EDITABLE_FIELDS.map(({ name, label, type }) => (
-              <div key={name}>
-                <label className="block text-sm font-medium">{label}</label>
-                <input
-                  type={type}
-                  name={name}
-                  value={profile[name] ?? ""}
-                  onChange={handleChange}
-                  disabled={!isEditing}
-                  className={`w-full px-4 py-2 border rounded-lg ${
-                    isEditing ? "focus:outline-blue-600 bg-white" : "bg-gray-100"
-                  }`}
-                />
-              </div>
-            ))}
-          </>
+            {isEditing && (
+              <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-medium"
+                style={{ background: 'rgba(245,158,11,0.12)', border: '1px solid rgba(245,158,11,0.25)', color: '#F59E0B' }}>
+                <svg width="8" height="8" viewBox="0 0 8 8"><circle cx="4" cy="4" r="3" fill="#F59E0B"/></svg>
+                Editing
+              </span>
+            )}
+          </div>
+        </div>
+
+        {error && (
+          <div className="mb-6 px-4 py-3 rounded-xl text-sm text-red-300"
+            style={{ background: 'rgba(239,68,68,0.08)', border: '1px solid rgba(239,68,68,0.2)' }}>
+            Failed to load profile. <button onClick={refetch} className="underline hover:text-red-200">Retry</button>
+          </div>
         )}
 
-        <div className="flex justify-between">
-          {!isEditing ? (
-            <button
-              type="button"
-              onClick={handleEditClick}
-              className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700"
-            >
-              Edit Profile
-            </button>
-          ) : (
-            <>
-              <button
-                type="button"
-                onClick={handleSaveClick}
-                className="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700"
-              >
+        {/* Form */}
+        <div className="space-y-6">
+          {/* Personal info */}
+          <div className="rounded-2xl overflow-hidden" style={{ background: '#101420', border: '1px solid rgba(35,42,62,0.8)' }}>
+            <div className="px-6 py-4" style={{ borderBottom: '1px solid rgba(35,42,62,0.6)' }}>
+              <SectionLabel>Personal Info</SectionLabel>
+            </div>
+            <div className="p-6 space-y-4">
+              {/* Email always read-only */}
+              <Input label="Email" name="email" type="email" value={profile?.email ?? ''} disabled />
+
+              {loading ? (
+                <>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <SkeletonField /><SkeletonField />
+                  </div>
+                  <SkeletonField />
+                </>
+              ) : (
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  {PERSONAL_FIELDS.map(({ name, label, type, span }) => (
+                    <Input
+                      key={name}
+                      label={label}
+                      name={name}
+                      type={type}
+                      value={data?.[name] ?? ''}
+                      onChange={handleChange}
+                      disabled={!isEditing}
+                      containerClassName={span ? 'sm:col-span-2' : ''}
+                    />
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* Company details */}
+          <div className="rounded-2xl overflow-hidden" style={{ background: '#101420', border: '1px solid rgba(35,42,62,0.8)' }}>
+            <div className="px-6 py-4" style={{ borderBottom: '1px solid rgba(35,42,62,0.6)' }}>
+              <SectionLabel>Company Details</SectionLabel>
+            </div>
+            <div className="p-6">
+              {loading ? (
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  {[1,2,3,4].map(i => <SkeletonField key={i} />)}
+                  <div className="sm:col-span-2"><SkeletonField /></div>
+                </div>
+              ) : (
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  {COMPANY_FIELDS.map(({ name, label, type, span }) => (
+                    <Input
+                      key={name}
+                      label={label}
+                      name={name}
+                      type={type}
+                      value={data?.[name] ?? ''}
+                      onChange={handleChange}
+                      disabled={!isEditing}
+                      containerClassName={span ? 'sm:col-span-2' : ''}
+                    />
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* Save/Cancel */}
+          {isEditing && (
+            <div className="flex items-center gap-3 pt-2">
+              <Button loading={saving} onClick={handleSave} size="lg">
                 Save Changes
-              </button>
-              <button
-                type="button"
-                onClick={handleCancelClick}
-                className="bg-gray-600 text-white px-4 py-2 rounded-lg hover:bg-gray-700"
-              >
+              </Button>
+              <Button variant="secondary" onClick={handleCancel} disabled={saving}>
                 Cancel
-              </button>
-            </>
+              </Button>
+            </div>
           )}
         </div>
-      </form>
+      </div>
     </div>
   );
-};
-
-export default RecruiterProfile;
-/*
-
-import React, { useState } from "react";
-
-const RecruiterProfile = () => {
-  const [profile, setProfile] = useState({
-    full_name: "John Doe",
-    email: "recruiter@example.com",
-    phone: "123456789",
-    adress: "123 Main Street",
-    company_phone: "987654321",
-    company_name: "Tech Company",
-    company_website: "https://www.techcompany.com",
-    industry: "Technology",
-    position: "HR Manager",
-  });
-
-  const [isEditing, setIsEditing] = useState(false); // État pour activer/désactiver le mode édition
-
-  const handleChange = (e) => {
-    const { name, value } = e.target;
-    setProfile((prev) => ({ ...prev, [name]: value }));
-  };
-
-  const handleEditClick = () => {
-    setIsEditing(true); // Active le mode édition
-  };
-
-  const handleCancelClick = () => {
-    setIsEditing(false); // Désactive le mode édition
-  };
-
-  const handleSaveClick = () => {
-    console.log("Profile updated:", profile); // Simule une mise à jour
-    setIsEditing(false); // Désactive le mode édition après la sauvegarde
-  };
-
-  return (
-    <div className="p-6 bg-white shadow-md rounded-lg">
-      <h1 className="text-2xl font-bold mb-6">My Profile</h1>
-
-      <form className="space-y-4">
-        <div>
-          <label className="block text-sm font-medium">Full Name</label>
-          <input
-            type="text"
-            name="full_name"
-            value={profile.full_name}
-            onChange={handleChange}
-            disabled={!isEditing} // Désactive le champ si non en mode édition
-            className={`w-full px-4 py-2 border rounded-lg ${
-              isEditing ? "focus:outline-blue-600 bg-white" : "bg-gray-100"
-            }`}
-          />
-        </div>
-        <div>
-          <label className="block text-sm font-medium">Email</label>
-          <input
-            type="email"
-            name="email"
-            value={profile.email}
-            disabled // Toujours désactivé
-            className="w-full px-4 py-2 border rounded-lg bg-gray-100"
-          />
-        </div>
-        <div>
-          <label className="block text-sm font-medium">Personal Phone</label>
-          <input
-            type="text"
-            name="phone"
-            value={profile.phone}
-            onChange={handleChange}
-            disabled={!isEditing}
-            className={`w-full px-4 py-2 border rounded-lg ${
-              isEditing ? "focus:outline-blue-600 bg-white" : "bg-gray-100"
-            }`}
-          />
-        </div>
-        <div>
-          <label className="block text-sm font-medium">Address</label>
-          <input
-            type="text"
-            name="adress"
-            value={profile.adress}
-            onChange={handleChange}
-            disabled={!isEditing}
-            className={`w-full px-4 py-2 border rounded-lg ${
-              isEditing ? "focus:outline-blue-600 bg-white" : "bg-gray-100"
-            }`}
-          />
-        </div>
-        <div>
-          <label className="block text-sm font-medium">Company Phone</label>
-          <input
-            type="text"
-            name="company_phone"
-            value={profile.company_phone}
-            onChange={handleChange}
-            disabled={!isEditing}
-            className={`w-full px-4 py-2 border rounded-lg ${
-              isEditing ? "focus:outline-blue-600 bg-white" : "bg-gray-100"
-            }`}
-          />
-        </div>
-        <div>
-          <label className="block text-sm font-medium">Company Name</label>
-          <input
-            type="text"
-            name="company_name"
-            value={profile.company_name}
-            onChange={handleChange}
-            disabled={!isEditing}
-            className={`w-full px-4 py-2 border rounded-lg ${
-              isEditing ? "focus:outline-blue-600 bg-white" : "bg-gray-100"
-            }`}
-          />
-        </div>
-        <div>
-          <label className="block text-sm font-medium">Position</label>
-          <input
-            type="text"
-            name="position"
-            value={profile.position}
-            onChange={handleChange}
-            disabled={!isEditing}
-            className={`w-full px-4 py-2 border rounded-lg ${
-              isEditing ? "focus:outline-blue-600 bg-white" : "bg-gray-100"
-            }`}
-          />
-        </div>
-        <div>
-          <label className="block text-sm font-medium">Company Website</label>
-          <input
-            type="url"
-            name="company_website"
-            value={profile.company_website}
-            onChange={handleChange}
-            disabled={!isEditing}
-            className={`w-full px-4 py-2 border rounded-lg ${
-              isEditing ? "focus:outline-blue-600 bg-white" : "bg-gray-100"
-            }`}
-          />
-        </div>
-        <div>
-          <label className="block text-sm font-medium">Industry</label>
-          <input
-            type="text"
-            name="industry"
-            value={profile.industry}
-            onChange={handleChange}
-            disabled={!isEditing}
-            className={`w-full px-4 py-2 border rounded-lg ${
-              isEditing ? "focus:outline-blue-600 bg-white" : "bg-gray-100"
-            }`}
-          />
-        </div>
-
-        {/* Boutons d'action *//*}
-        <div className="flex justify-between">
-          {!isEditing ? (
-            <button
-              type="button"
-              onClick={handleEditClick}
-              className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700"
-            >
-              Edit Profile
-            </button>
-          ) : (
-            <>
-              <button
-                type="button"
-                onClick={handleSaveClick}
-                className="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700"
-              >
-                Save Changes
-              </button>
-              <button
-                type="button"
-                onClick={handleCancelClick}
-                className="bg-gray-600 text-white px-4 py-2 rounded-lg hover:bg-gray-700"
-              >
-                Cancel
-              </button>
-            </>
-          )}
-        </div>
-      </form>
-    </div>
-  );
-};
-
-export default RecruiterProfile;
-*/
+}

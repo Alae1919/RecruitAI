@@ -1,15 +1,11 @@
-import React from "react";
-import Header from "../common/header";
+import React from 'react';
+import PublicHeader from '../navigation/PublicHeader';
 
-
-const PublicLayout = ({ children }) => {
+export default function PublicLayout({ children }) {
   return (
-    <>
-      <Header isPrivate={false} />
-      <main className="container mx-auto  ">{children}</main>
-      
-    </>
+    <div className="min-h-screen bg-surface-light dark:bg-brand-base transition-theme">
+      <PublicHeader />
+      <main className="pt-14">{children}</main>
+    </div>
   );
-};
-
-export default PublicLayout;
+}
