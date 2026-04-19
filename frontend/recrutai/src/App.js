@@ -6,6 +6,7 @@ import { ThemeProvider } from './context/ThemeContext';
 import { ToastProvider } from './context/ToastContext';
 import ErrorBoundary from './components/layout/ErrorBoundary';
 import ToastContainer from './components/feedback/ToastContainer';
+import FluidCursorEffect from './components/ui/smokey-cursor-effect';
 
 function App() {
   return (
@@ -13,6 +14,7 @@ function App() {
       <ThemeProvider>
         <ToastProvider>
           <AuthProvider>
+            <FluidCursorEffect />
             <AppRoutes />
             <ToastContainer />
           </AuthProvider>

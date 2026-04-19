@@ -1,5 +1,6 @@
 import React from 'react';
 import Spinner from './Spinner';
+import { BorderRotate } from './animated-gradient-border';
 
 const variants = {
   primary:   null, // handled via inline style
@@ -38,21 +39,21 @@ export default function Button({
   const isSecondary = variant === 'secondary';
 
   const inlineStyle = isPrimary
-    ? { background: 'linear-gradient(135deg, #F59E0B 0%, #FCD34D 100%)', boxShadow: '0 0 24px rgba(245,158,11,0.3)', ...extraStyle }
+    ? { background: 'linear-gradient(135deg, rgba(245,158,11,0.85) 0%, rgba(252,211,77,0.85) 100%)', ...extraStyle }
     : isSecondary
       ? { ...secondaryStyle, ...extraStyle }
       : extraStyle;
 
-  return (
+  const baseButton = (
     <button
       type={type}
       disabled={isDisabled}
       className={`
         inline-flex items-center justify-center font-semibold transition-all duration-150
         focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-accent focus-visible:ring-offset-2
-        disabled:opacity-50 disabled:cursor-not-allowed disabled:active:scale-100
+        disabled:opacity-50 disabled:cursor-not-allowed disabled:active:scale-100 w-full h-full
         ${isPrimary ? 'text-gray-900' : (variants[variant] || '')}
-        ${sizes[size]} ${className}
+        ${className}
       `}
       style={inlineStyle}
       {...props}
@@ -61,4 +62,29 @@ export default function Button({
       {children}
     </button>
   );
+
+  // If the button is primary, wrap it in the glowing animated border!
+  if (isPrimary && !disabled) {
+    return (
+      <BorderRotate 
+        animationSpeed={3}
+        borderWidth={2}
+        borderRadius={size === 'sm' ? 8 : 12}
+        gradientColors={{
+          primary: '#F59E0B',
+          secondary: '#7C3AED',
+          accent: '#FCD34D'
+        }}
+        backgroundColor="#101420"
+        className={`p-0 ${sizes[size]} shadow-glow`}
+      >
+        {baseButton}
+      </BorderRotate>
+    );
+  }
+
+  // Otherwise return standard button structure
+  return React.cloneElement(baseButton, {
+    className: `${baseButton.props.className} ${sizes[size]}`
+  });
 }

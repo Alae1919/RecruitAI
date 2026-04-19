@@ -5,6 +5,7 @@ import { fetchJobOffers, fetchCandidatesForJobOffer, acceptCandidate, rejectCand
 import { useToast } from '../../hooks/useToast';
 import { Modal } from '../ui/index';
 import pdfjsWorker from 'pdfjs-dist/build/pdf.worker.min.js';
+import SearchComponent from '../ui/animated-glowing-search-bar';
 
 /* ── Icons ─────────────────────────────────────────────────────────── */
 function SearchIcon({ size = 14 }) {
@@ -453,19 +454,12 @@ export default function JobOffersWithCandidates() {
           {/* Candidate list panel */}
           <div className="flex flex-col" style={{ borderRight: '1px solid rgba(35,42,62,0.7)' }}>
             {/* Search */}
-            <div className="p-3" style={{ borderBottom: '1px solid rgba(35,42,62,0.6)' }}>
-              <div className="relative">
-                <div className="absolute left-3 top-1/2 -translate-y-1/2 text-brand-text-disabled pointer-events-none"><SearchIcon /></div>
-                <input
-                  value={q}
-                  onChange={e => setQ(e.target.value)}
-                  placeholder="Search candidates…"
-                  className="w-full h-9 pl-9 pr-3 text-sm text-brand-text-primary placeholder:text-brand-text-disabled outline-none rounded-lg transition-all"
-                  style={{ background: 'rgba(16,20,32,0.8)', border: '1px solid rgba(35,42,62,0.7)' }}
-                  onFocus={e => e.currentTarget.style.borderColor = 'rgba(245,158,11,0.4)'}
-                  onBlur={e => e.currentTarget.style.borderColor = 'rgba(35,42,62,0.7)'}
-                />
-              </div>
+            <div className="p-3 flex justify-center" style={{ borderBottom: '1px solid rgba(35,42,62,0.6)' }}>
+              <SearchComponent 
+                value={q} 
+                onChange={e => setQ(e.target.value)} 
+                placeholder="Search candidates…" 
+              />
             </div>
 
             {/* Candidate list */}

@@ -4,6 +4,7 @@ import { useApi } from '../../hooks/useApi';
 import { useToast } from '../../hooks/useToast';
 import { Button, Input, Modal, ConfirmModal } from '../ui/index';
 import { useNavigate } from 'react-router-dom';
+import SearchComponent from '../ui/animated-glowing-search-bar';
 
 /* ── Icons ─────────────────────────────────────────────────────────── */
 function SearchIcon({ size = 14 }) {
@@ -78,16 +79,11 @@ function KpiCard({ label, value, sub, loading, accentColor = '#F59E0B' }) {
 /* ── Inline search input ────────────────────────────────────────────── */
 function SearchInput({ value, onChange, placeholder }) {
   return (
-    <div className="relative flex-1 min-w-[240px]">
-      <div className="absolute left-3 top-1/2 -translate-y-1/2 text-brand-text-disabled pointer-events-none"><SearchIcon /></div>
-      <input
-        value={value}
-        onChange={onChange}
-        placeholder={placeholder}
-        className="w-full h-9 pl-9 pr-3 text-sm text-brand-text-primary placeholder:text-brand-text-disabled outline-none rounded-lg transition-all"
-        style={{ background: '#101420', border: '1px solid rgba(35,42,62,0.8)' }}
-        onFocus={e => e.currentTarget.style.borderColor = 'rgba(245,158,11,0.45)'}
-        onBlur={e => e.currentTarget.style.borderColor = 'rgba(35,42,62,0.8)'}
+    <div className="flex-1 flex justify-start">
+      <SearchComponent 
+        value={value} 
+        onChange={onChange} 
+        placeholder={placeholder} 
       />
     </div>
   );

@@ -25,6 +25,9 @@ module.exports = {
         sans: ['Inter', 'system-ui', 'sans-serif'],
         mono: ['JetBrains Mono', 'Fira Code', 'Courier New', 'monospace'],
       },
+      animation: {
+        'spin-slow': 'spin 3s linear infinite',
+      },
       boxShadow: {
         'card':        '0 1px 3px 0 rgba(0,0,0,0.5), 0 1px 2px -1px rgba(0,0,0,0.5)',
         'elevated':    '0 10px 30px -10px rgba(0,0,0,0.7)',

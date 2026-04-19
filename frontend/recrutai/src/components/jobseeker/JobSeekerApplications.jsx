@@ -3,6 +3,7 @@ import { getJobOffers, applyForJob } from '../../services/api';
 import { useApi } from '../../hooks/useApi';
 import { useToast } from '../../hooks/useToast';
 import Button from '../ui/Button';
+import SearchComponent from '../ui/animated-glowing-search-bar';
 
 /* ── Icons ─────────────────────────────────────────────────────────── */
 function SearchIcon({ size = 15 }) {
@@ -102,17 +103,11 @@ export default function JobSeekerApplications() {
       <div className="px-8 py-6 max-w-[960px] mx-auto">
 
         {/* Search bar */}
-        <div className="relative mb-6">
-          <div className="absolute left-4 top-1/2 -translate-y-1/2 text-brand-text-disabled pointer-events-none"><SearchIcon /></div>
-          <input
-            type="search"
-            value={search}
-            onChange={e => setSearch(e.target.value)}
-            placeholder="Search by title, location, description…"
-            className="w-full h-11 pl-11 pr-4 text-sm text-brand-text-primary placeholder:text-brand-text-disabled outline-none rounded-xl transition-all"
-            style={{ background: '#101420', border: '1px solid rgba(35,42,62,0.8)' }}
-            onFocus={e => e.currentTarget.style.borderColor = 'rgba(245,158,11,0.45)'}
-            onBlur={e => e.currentTarget.style.borderColor = 'rgba(35,42,62,0.8)'}
+        <div className="flex justify-center mb-10">
+          <SearchComponent 
+            value={search} 
+            onChange={e => setSearch(e.target.value)} 
+            placeholder="Search by title, location, description…" 
           />
         </div>
 
