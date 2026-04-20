@@ -3,9 +3,9 @@ import { sendVideo } from '../api/interviews';
 import { useVideoRecorder } from './useVideoRecorder';
 
 // Discriminated state — impossible states are unrepresentable.
-const INITIAL = { status: 'IDLE', qIdx: -1, error: null };
+export const INITIAL_STATE = { status: 'IDLE', qIdx: -1, error: null };
 
-function reducer(state, event) {
+export function reducer(state, event) {
   switch (event.type) {
     case 'START':
       return { ...state, status: 'RECORDING', qIdx: 0, error: null };
@@ -23,7 +23,7 @@ function reducer(state, event) {
 }
 
 export function useInterviewMachine(interviewId, questions, videoRef) {
-  const [state, dispatch] = useReducer(reducer, INITIAL);
+  const [state, dispatch] = useReducer(reducer, INITIAL_STATE);
   const recorder = useVideoRecorder(videoRef);
   const stateRef = useRef(state);
   stateRef.current = state;
