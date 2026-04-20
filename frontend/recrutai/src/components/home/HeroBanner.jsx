@@ -1,5 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
+import { ArrowRight } from 'lucide-react';
 
 const slides = [
   {
@@ -85,9 +86,7 @@ export default function HeroBanner() {
               className="inline-flex items-center gap-2 px-6 py-3 bg-brand-accent hover:bg-brand-accent-hover text-gray-900 font-semibold rounded-xl text-sm transition-all shadow-glow hover:shadow-lg active:scale-95"
             >
               Get started free
-              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                <line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/>
-              </svg>
+              <ArrowRight size={16} strokeWidth={2.5} />
             </Link>
             <Link
               to="/login"

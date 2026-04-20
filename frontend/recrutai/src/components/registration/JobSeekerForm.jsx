@@ -4,6 +4,7 @@ import { registerJobSeeker } from '../../services/api';
 import { useToast } from '../../hooks/useToast';
 import Input from '../ui/Input';
 import Button from '../ui/Button';
+import { Check } from 'lucide-react';
 
 const EMPTY = {
   full_name: '', email: '', password: '', phone: '',
@@ -27,9 +28,7 @@ function SuccessState() {
     <div className="text-center py-10 space-y-4 animate-fadeIn">
       <div className="w-16 h-16 rounded-full mx-auto grid place-items-center"
         style={{ background: 'linear-gradient(135deg, rgba(245,158,11,0.2) 0%, rgba(245,158,11,0.05) 100%)', border: '1px solid rgba(245,158,11,0.3)', boxShadow: '0 0 30px rgba(245,158,11,0.15)' }}>
-        <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#F59E0B" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-          <polyline points="20 6 9 17 4 12"/>
-        </svg>
+        <Check size={28} strokeWidth={2.5} stroke="#F59E0B" />
       </div>
       <h3 className="text-lg font-bold text-brand-text-primary">You're in!</h3>
       <p className="text-sm text-brand-text-muted">Your job seeker account is ready. Sign in to explore matched roles.</p>

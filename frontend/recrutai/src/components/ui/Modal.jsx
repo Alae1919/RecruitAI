@@ -1,6 +1,7 @@
 import React, { useEffect } from 'react';
 import ReactDOM from 'react-dom';
 import Button from './Button';
+import { X } from 'lucide-react';
 
 const modalSurface = {
   background: 'linear-gradient(160deg, #131826 0%, #101420 100%)',
@@ -48,7 +49,7 @@ export default function Modal({ isOpen, onClose, title, children, footer, size =
             onMouseEnter={e => e.currentTarget.style.background = 'rgba(35,42,62,0.8)'}
             onMouseLeave={e => e.currentTarget.style.background = 'rgba(35,42,62,0.4)'}
           >
-            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+            <X size={12} strokeWidth={2.5} />
           </button>
         </div>
         <div className="px-6 py-5">{children}</div>

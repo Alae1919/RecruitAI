@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { NavLink, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../hooks/useAuth';
 import ThemeToggle from './ThemeToggle';
+import { LogOut, Menu, X } from 'lucide-react';
 
 export default function DashboardHeader({ navItems = [], brandLabel = 'RecrutAI' }) {
   const { user, logout } = useAuth();
@@ -59,9 +60,7 @@ export default function DashboardHeader({ navItems = [], brandLabel = 'RecrutAI'
             onClick={handleLogout}
             className="hidden md:inline-flex items-center gap-1.5 px-3 py-1.5 text-sm text-gray-600 dark:text-brand-text-muted hover:text-gray-900 dark:hover:text-brand-text-primary hover:bg-gray-100 dark:hover:bg-brand-elevated rounded-lg transition-all duration-150"
           >
-            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/>
-            </svg>
+            <LogOut size={14} />
             Logout
           </button>
 
@@ -71,12 +70,7 @@ export default function DashboardHeader({ navItems = [], brandLabel = 'RecrutAI'
             onClick={() => setMenuOpen(o => !o)}
             aria-label="Toggle menu"
           >
-            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              {menuOpen
-                ? <><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></>
-                : <><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="18" x2="21" y2="18"/></>
-              }
-            </svg>
+            {menuOpen ? <X size={18} /> : <Menu size={18} />}
           </button>
         </div>
       </div>

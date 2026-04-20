@@ -4,20 +4,12 @@ import { useApi } from '../../hooks/useApi';
 import Button from '../ui/Button';
 import JobSeekerInterviewProcess from './JobSeekerInterviewProcess';
 import JobSeekerInterviewAnswers from './JobSeekerInterviewAnswers';
+import { Bell, Mic, Play, Eye } from 'lucide-react';
 
-/* ── Icons ─────────────────────────────────────────────────────────── */
-function BellIcon({ size = 15 }) {
-  return <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>;
-}
-function MicIcon({ size = 22 }) {
-  return <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" y1="19" x2="12" y2="23"/><line x1="8" y1="23" x2="16" y2="23"/></svg>;
-}
-function PlayIcon({ size = 12 }) {
-  return <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="currentColor" stroke="none"><polygon points="5 3 19 12 5 21 5 3"/></svg>;
-}
-function EyeIcon({ size = 12 }) {
-  return <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>;
-}
+const BellIcon = ({ size = 15 }) => <Bell size={size} />;
+const MicIcon  = ({ size = 22 }) => <Mic size={size} strokeWidth={1.5} />;
+const PlayIcon = ({ size = 12 }) => <Play size={size} fill="currentColor" stroke="none" />;
+const EyeIcon  = ({ size = 12 }) => <Eye size={size} />;
 
 /* ── Status badge ───────────────────────────────────────────────────── */
 function StatusBadge({ status }) {

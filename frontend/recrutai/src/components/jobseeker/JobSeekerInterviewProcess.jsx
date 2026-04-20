@@ -1,35 +1,14 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { fetchQuestions, sendVideo } from '../../services/api';
+import { Clipboard, Mic, ArrowRight, ArrowLeft, Check, X, Loader2 } from 'lucide-react';
 
-/* ── Icons ─────────────────────────────────────────────────────────── */
-function ClipboardIcon({ size = 22 }) {
-  return <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><rect x="8" y="2" width="8" height="4" rx="1" ry="1"/></svg>;
-}
-function MicIcon({ size = 22 }) {
-  return <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" y1="19" x2="12" y2="23"/><line x1="8" y1="23" x2="16" y2="23"/></svg>;
-}
-function ArrowRightIcon({ size = 14 }) {
-  return <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>;
-}
-function ArrowLeftIcon({ size = 14 }) {
-  return <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="15 18 9 12 15 6"/></svg>;
-}
-function CheckIcon({ size = 14 }) {
-  return <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg>;
-}
-function XIcon({ size = 16 }) {
-  return <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>;
-}
-
-/* ── Spinner ────────────────────────────────────────────────────────── */
-function Spinner() {
-  return (
-    <svg className="animate-spin" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-      <path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83" strokeOpacity="0.4"/>
-      <path d="M12 2v4" strokeOpacity="1"/>
-    </svg>
-  );
-}
+const ClipboardIcon  = ({ size = 22 }) => <Clipboard size={size} strokeWidth={1.5} />;
+const MicIcon        = ({ size = 22 }) => <Mic size={size} strokeWidth={1.5} />;
+const ArrowRightIcon = ({ size = 14 }) => <ArrowRight size={size} strokeWidth={2.5} />;
+const ArrowLeftIcon  = ({ size = 14 }) => <ArrowLeft size={size} strokeWidth={2.5} />;
+const CheckIcon      = ({ size = 14 }) => <Check size={size} strokeWidth={2.5} />;
+const XIcon          = ({ size = 16 }) => <X size={size} />;
+const Spinner        = () => <Loader2 size={16} className="animate-spin" />;
 
 /* ── Step indicator ─────────────────────────────────────────────────── */
 function StepIndicator({ current, total }) {

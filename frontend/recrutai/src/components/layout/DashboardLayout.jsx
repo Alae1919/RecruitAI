@@ -2,26 +2,7 @@ import React, { useEffect, useRef } from 'react';
 import { NavLink, Outlet, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../hooks/useAuth';
 import { Logo } from '../navigation/PublicHeader';
-
-/* ── Icons ─────────────────────────────────────────────────────────── */
-function BriefcaseIcon({ size = 15 }) {
-  return <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/></svg>;
-}
-function UsersIcon({ size = 15 }) {
-  return <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>;
-}
-function PlusIcon({ size = 15 }) {
-  return <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>;
-}
-function LogoutIcon({ size = 14 }) {
-  return <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>;
-}
-function UserIcon({ size = 15 }) {
-  return <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>;
-}
-function CalendarIcon({ size = 15 }) {
-  return <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>;
-}
+import { Briefcase, Users, Plus, LogOut, User, Calendar } from 'lucide-react';
 
 /* ── Avatar ────────────────────────────────────────────────────────── */
 function Avatar({ name, size = 30 }) {
@@ -42,7 +23,7 @@ function Sidebar({ navItems, user, onLogout }) {
     ? `${user.first_name} ${user.last_name || ''}`.trim()
     : user?.email || 'User';
 
-  const defaultIcons = [BriefcaseIcon, UsersIcon, PlusIcon, UserIcon, CalendarIcon];
+  const defaultIcons = [Briefcase, Users, Plus, User, Calendar];
 
   return (
     <aside className="w-[232px] shrink-0 h-screen sticky top-0 flex flex-col overflow-hidden"
@@ -100,7 +81,7 @@ function Sidebar({ navItems, user, onLogout }) {
                   {action && (
                     <span className="ml-auto relative w-4 h-4 rounded-full text-brand-accent flex items-center justify-center"
                       style={{ background: 'rgba(245,158,11,0.2)' }}>
-                      <svg width="8" height="8" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3"><path d="M12 5v14M5 12h14"/></svg>
+                      <Plus size={8} strokeWidth={3} />
                     </span>
                   )}
                 </>
@@ -124,7 +105,7 @@ function Sidebar({ navItems, user, onLogout }) {
           <button onClick={onLogout}
             className="w-7 h-7 rounded-lg grid place-items-center text-brand-text-disabled hover:text-red-400 hover:bg-red-400/10 transition-all shrink-0"
             title="Logout">
-            <LogoutIcon />
+            <LogOut size={14} />
           </button>
         </div>
       </div>
