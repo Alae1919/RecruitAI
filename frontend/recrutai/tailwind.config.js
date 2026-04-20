@@ -19,7 +19,17 @@ module.exports = {
           'text-disabled': '#59628A',
           violet:          '#7C3AED',
           'violet-muted':  '#3D1F7A',
+          // Semantic status colors used in badges
+          success:  '#10B981',
+          warning:  '#F59E0B',
+          error:    '#EF4444',
         },
+        // Light-mode surface variants
+        'surface-light':  '#F8FAFC',
+        'surface-border': '#E2E8F0',
+      },
+      backdropBlur: {
+        glass: '12px',
       },
       fontFamily: {
         sans: ['Inter', 'system-ui', 'sans-serif'],

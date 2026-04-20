@@ -2,6 +2,41 @@
 @tailwind components;
 @tailwind utilities;
 
+/* ── Design token aliases ────────────────────────────────────────────
+   Use these @layer classes instead of inline style={{ }} objects.
+   Rule: no inline style={{ }} in new code unless the value is computed
+   from JS (e.g. dynamic widths, oklch color from a hash). ─────────── */
+@layer components {
+  /* Sticky topbar found in every dashboard screen */
+  .topbar {
+    @apply h-14 px-6 flex items-center gap-3 sticky top-0 z-20;
+    background: rgba(9, 12, 20, 0.85);
+    backdrop-filter: blur(12px);
+    border-bottom: 1px solid rgba(35, 42, 62, 0.7);
+  }
+
+  /* Standard dark card surface */
+  .card-dark {
+    background: #101420;
+    border: 1px solid rgba(35, 42, 62, 0.8);
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+  }
+
+  /* Sidebar background gradient */
+  .sidebar-bg {
+    background: linear-gradient(180deg, #0D1018 0%, #090C14 100%);
+    border-right: 1px solid rgba(35, 42, 62, 0.7);
+  }
+
+  /* Subtle border used in dividers */
+  .border-subtle {
+    border-color: rgba(35, 42, 62, 0.7);
+  }
+  .border-base {
+    border-color: rgba(35, 42, 62, 0.8);
+  }
+}
+
 /* ── CSS custom properties ──────────────────────────────────────────── */
 :root {
   --accent: #F59E0B;
