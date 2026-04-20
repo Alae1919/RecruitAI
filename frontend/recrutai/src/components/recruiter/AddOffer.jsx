@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { createJobOffer } from '../../services/api';
 import { useToast } from '../../hooks/useToast';
+import { draftOffer } from '../../shared/api/aiDraft';
 import { ArrowRight, ArrowLeft, Check, Sparkles, X, MapPin, DollarSign, Brain, Bell } from 'lucide-react';
 
 const BackIcon     = ({ size = 14 }) => <ArrowLeft size={size} />;
@@ -199,22 +200,16 @@ export default function AddOffer() {
   const { toast } = useToast();
   const navigate = useNavigate();
 
-  const generate = () => {
+  const generate = async () => {
     if (!prompt.trim()) return;
     setGenerating(true);
-    setTimeout(() => {
-      const words = prompt.split(' ');
-      setData(d => ({
-        ...d,
-        title: words.slice(0, 4).join(' '),
-        location: 'Remote',
-        description: `We're looking for a ${words.slice(0, 4).join(' ')} to join our growing team.\n\nYou'll work closely with Product, Design, and Engineering. You'll ship fast, mentor peers, and help us build something people actually want to use.`,
-        mustSkills: ['Communication', 'Problem solving', 'Collaboration'],
-        niceSkills: ['Startup experience'],
-      }));
-      setGenerating(false);
+    try {
+      const draft = await draftOffer(prompt);
+      setData(d => ({ ...d, ...draft }));
       setStep(1);
-    }, 1400);
+    } finally {
+      setGenerating(false);
+    }
   };
 
   const handlePublish = async () => {
