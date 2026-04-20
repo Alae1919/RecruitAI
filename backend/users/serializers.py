@@ -55,8 +55,6 @@ class UniqueEmailForRoleValidator:
 
 class JobSeekerSignupSerializer(serializers.ModelSerializer):
 
-    logger.info("Début serializer")
-    
     # Champs supplémentaires pour l'utilisateur
     full_name = serializers.CharField(write_only=True, required=True)
     phone = serializers.CharField(write_only=True, required=True)
@@ -79,9 +77,7 @@ class JobSeekerSignupSerializer(serializers.ModelSerializer):
             'email', 'password', 'full_name', 'phone', 'address',
             'experience', 'skills', 'resume'
         ]
-        
-    logger.info("Début serializer avant validate")
-    
+
     def validate(self, data):
         """
         Validation personnalisée des données.
