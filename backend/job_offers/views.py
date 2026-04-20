@@ -1,16 +1,15 @@
 from django.shortcuts import render
-from rest_framework import status, generics,viewsets, permissions
+from rest_framework import status, generics, permissions
 from rest_framework.exceptions import PermissionDenied
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from .serializers import JobOfferSerializer
-from .models    import JobOffer
-from rest_framework.permissions import IsAuthenticated, AllowAny
-from users.models   import Recruiter
-from users.permissions  import IsRecruiter
-from applications.models    import Application
+from .models import JobOffer
+from rest_framework.permissions import IsAuthenticated
+from users.models import Recruiter
+from users.permissions import IsRecruiter
+from applications.models import Application
 from applications.serializers import ApplicationSerializer
-from rest_framework.decorators import action
 
 # Create your views here.
 class CreateJobOfferView(generics.CreateAPIView):
@@ -136,40 +135,5 @@ class DeleteJobOfferView(generics.DestroyAPIView):
         if instance.recruiter.user != self.request.user:
             raise PermissionDenied("You are not allowed to delete this job offer.")
         instance.delete()
-"""
-class JobOfferViewSet(viewsets.ModelViewSet):
-    
-    ViewSet pour gérer les offres d'emploi.
-   
-    queryset = JobOffer.objects.all()
-    serializer_class = JobOfferSerializer
-    permission_classes = [AllowAny]
-
-    def get_queryset(self):
-        
-        Limite l'accès aux offres publiées par le recruteur connecté.
-        
-        theRecruiter = Recruiter.objects.filter(user=self.request.user).first()
-
-        return JobOffer.objects.filter(recruiter=theRecruiter)
-
-    def perform_create(self, serializer):
-        Associe automatiquement l'utilisateur connecté comme recruteur.
-        theRecruiter = Recruiter.objects.filter(user=self.request.user).first()
-        serializer.save(recruiter=theRecruiter)
-        
-    def create(self, request, *args, **kwargs):
-        print("Request received: ", request.data)
-        return super().create(request, *args, **kwargs)
-
-        
-    @action(detail=True, methods=['get'])
-    def applications(self, request, pk=None):
-        Action personnalisée pour voir les candidatures sur une offre spécifique.
-        job_offer = get_object_or_404(JobOffer, pk=pk, recruiter=request.user)
-        applications = Application.objects.filter(job_offer=job_offer)
-        serializer = ApplicationSerializer(applications, many=True)
-        return Response(serializer.data)
-        """
 
 
