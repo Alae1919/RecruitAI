@@ -75,13 +75,18 @@ def evaluate_response(question, transcript):
 # Celery tasks
 # ---------------------------------------------------------------------------
 
-@shared_task
-def generateQuestions(extracted_text, description, interview_id):
+@shared_task(bind=True, max_retries=3, autoretry_for=(Exception,), retry_backoff=True)
+def generateQuestions(self, extracted_text, description, interview_id):
     from .models import Interview, Question
     try:
         interview = Interview.objects.get(id=interview_id)
     except Interview.DoesNotExist:
         logger.error(f"Interview not found: id={interview_id}")
+        return
+
+    # Idempotency: skip if questions already created
+    if Question.objects.filter(interview=interview).exists():
+        logger.info(f"Interview {interview_id} already has questions; skipping generation.")
         return
 
     questions = get_llm().generate_questions(
@@ -94,21 +99,25 @@ def generateQuestions(extracted_text, description, interview_id):
         logger.error(f"No questions generated for interview {interview_id}")
         return
 
-    for question_text in questions:
-        if question_text and question_text.strip():
-            Question.objects.create(interview=interview, question_text=question_text)
-            logger.info(f"Added question to interview {interview_id}: {question_text}")
-        else:
-            logger.warning(f"Skipped empty question for interview {interview_id}")
+    Question.objects.bulk_create([
+        Question(interview=interview, question_text=q)
+        for q in questions if q and q.strip()
+    ])
+    logger.info(f"Created {len(questions)} questions for interview {interview_id}")
 
 
-@shared_task
-def evaluate_answer(answer_id):
+@shared_task(bind=True, max_retries=3, autoretry_for=(Exception,), retry_backoff=True)
+def evaluate_answer(self, answer_id):
     from .models import Answer, Interview, InterviewResult
     try:
         answer = Answer.objects.select_related('interview', 'question').get(id=answer_id)
     except Answer.DoesNotExist:
         logger.error(f"Answer {answer_id} not found.")
+        return
+
+    # Idempotency: skip if already scored
+    if answer.score is not None:
+        logger.info(f"Answer {answer_id} already scored ({answer.score}); skipping.")
         return
 
     video_path = answer.candidate_video.path
