@@ -1,5 +1,5 @@
 import { createContext, useContext, useState, useEffect, useCallback } from "react";
-import { fetchCurrentUser, logoutUser } from "../services/api";
+import { fetchCurrentUser, logoutUser } from "../shared/api/auth";
 
 const AuthContext = createContext(null);
 
