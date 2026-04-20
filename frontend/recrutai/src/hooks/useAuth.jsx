@@ -1,8 +1,6 @@
 import { createContext, useContext, useState, useEffect, useCallback } from "react";
-import axios from "axios";
-import { logoutUser } from "../services/api";
+import { fetchCurrentUser, logoutUser } from "../services/api";
 
-const API_BASE_URL = `${process.env.REACT_APP_BACKEND_URL}/api`;
 const AuthContext = createContext(null);
 
 export const AuthProvider = ({ children }) => {
@@ -17,9 +15,7 @@ export const AuthProvider = ({ children }) => {
       return null;
     }
     try {
-      const { data } = await axios.get(`${API_BASE_URL}/users/me/`, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
+      const data = await fetchCurrentUser();
       setUser(data);
       return data;
     } catch {
