@@ -4,7 +4,8 @@ import logging
 from rest_framework import status, generics, permissions
 from rest_framework.views import APIView
 from rest_framework.parsers import JSONParser
-from rest_framework.decorators import api_view
+from rest_framework.decorators import api_view, throttle_classes
+from rest_framework.throttling import ScopedRateThrottle
 from rest_framework.response import Response
 from django.http import JsonResponse
 
@@ -81,7 +82,12 @@ class RecruiterInterviewListAPI(generics.ListAPIView):
         ).prefetch_related('interviewresult')
 
 
+class _LLMScopedThrottle(ScopedRateThrottle):
+    scope = 'llm'
+
+
 @api_view(['POST'])
+@throttle_classes([_LLMScopedThrottle])
 def upload_video(request):
     try:
         interview_id = request.POST.get('interviewId')

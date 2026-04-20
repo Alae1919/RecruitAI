@@ -35,7 +35,9 @@ class ListInterviewView(generics.ListAPIView):
     permission_classes = [IsAuthenticated]
 
     def get_queryset(self):
-        return Interview.objects.filter(application__job_seeker=self.request.user.jobseeker)
+        return Interview.objects.filter(
+            application__job_seeker=self.request.user.jobseeker
+        ).select_related('application__job_offer', 'application__job_seeker__user')
 
 
 class FeedbackViewSet(viewsets.ModelViewSet):
@@ -65,6 +67,7 @@ class JobApplicationCreateView(APIView):
 
 class AcceptApplicationView(APIView):
     permission_classes = [IsAuthenticated]
+    throttle_scope = 'llm'
 
     def post(self, request, *args, **kwargs):
         application_id = request.data.get('application_id')

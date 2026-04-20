@@ -107,8 +107,10 @@ class ListCandidatesOnJobOfferView(APIView):
             return Response({"error": "Job offer not found or unauthorized access."}, status=status.HTTP_404_NOT_FOUND)
 
         # Get all applications for this job offer
-        applications = Application.objects.filter(job_offer=job_offer)
-        serializer = ApplicationSerializer(applications, many=True,context={'request': request})
+        applications = Application.objects.filter(job_offer=job_offer).select_related(
+            'job_seeker__user', 'job_offer'
+        )
+        serializer = ApplicationSerializer(applications, many=True, context={'request': request})
         return Response(serializer.data, status=status.HTTP_200_OK)
 
 
