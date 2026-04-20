@@ -1,6 +1,14 @@
 import React from 'react';
 
-export default function KpiCard({ label, value, sub, loading, accentColor = '#F59E0B' }) {
+interface KpiCardProps {
+  label: string;
+  value: React.ReactNode;
+  sub?: string;
+  loading?: boolean;
+  accentColor?: string;
+}
+
+export default function KpiCard({ label, value, sub, loading, accentColor = '#F59E0B' }: KpiCardProps) {
   return (
     <div className="rounded-xl p-5 relative overflow-hidden card-dark">
       <div className="absolute top-0 left-0 right-0 h-[2px] rounded-t-xl"

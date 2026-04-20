@@ -1,6 +1,18 @@
 import React from 'react';
 
-const PRESETS = {
+export type BadgeStatus =
+  | 'open' | 'active' | 'closed' | 'paused' | 'draft'
+  | 'pending' | 'accepted' | 'rejected'
+  | 'available' | 'completed' | 'evaluated' | 'processing';
+
+interface BadgePreset {
+  bg: string;
+  color: string;
+  border: string;
+  dot: string;
+}
+
+const PRESETS: Record<BadgeStatus, BadgePreset> = {
   // offer statuses
   open:       { bg: 'rgba(16,185,129,0.1)',  color: '#6EE7B7', border: 'rgba(16,185,129,0.2)',  dot: '#34D399' },
   active:     { bg: 'rgba(16,185,129,0.1)',  color: '#6EE7B7', border: 'rgba(16,185,129,0.2)',  dot: '#34D399' },
@@ -18,10 +30,15 @@ const PRESETS = {
   processing: { bg: 'rgba(245,158,11,0.1)',  color: '#FCD34D', border: 'rgba(245,158,11,0.25)', dot: '#F59E0B' },
 };
 
-const FALLBACK = { bg: 'rgba(35,42,62,0.6)', color: '#9BA6C4', border: 'rgba(35,42,62,0.8)', dot: '#59628A' };
+const FALLBACK: BadgePreset = { bg: 'rgba(35,42,62,0.6)', color: '#9BA6C4', border: 'rgba(35,42,62,0.8)', dot: '#59628A' };
 
-export default function StatusBadge({ status, label }) {
-  const key = (status || '').toLowerCase();
+interface StatusBadgeProps {
+  status?: BadgeStatus | string;
+  label?: string;
+}
+
+export default function StatusBadge({ status, label }: StatusBadgeProps) {
+  const key = (status || '') as BadgeStatus;
   const s = PRESETS[key] ?? FALLBACK;
   return (
     <span
