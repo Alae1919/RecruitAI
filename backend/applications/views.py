@@ -5,37 +5,18 @@ from rest_framework import status, generics, viewsets
 from .models import Application, Feedback
 from interviews.models import Interview
 from interviews.tasks import generateQuestions
-from .tasks import extract_cv_text
+from .tasks import extract_cv_text, send_acceptance_email
+from django.db import transaction
 from .serializers import ApplicationSerializer, FeedbackSerializer
 from interviews.serializers import InterviewSerializer
 from users.permissions import IsRecruiter, IsJobSeeker
 from users.models import Recruiter, JobSeeker
 from job_offers.models import JobOffer
-from django.core.mail import send_mail
 from django.utils import timezone
 from datetime import timedelta
 import logging
-from django.conf import settings
 
 logger = logging.getLogger(__name__)
-
-
-def send_email_to_candidate(email, message, interview_date=None, interview_link=None):
-    subject = "Statut de votre candidature"
-    body = f"""
-    {message}
-
-    Détails de l'entretien :
-    Date: {interview_date}
-    Lien: {interview_link}
-    """
-    send_mail(
-        subject,
-        body,
-        settings.EMAIL_HOST_USER,
-        [email],
-        fail_silently=False,
-    )
 
 
 class JobSeekerApplicationsView(APIView):
@@ -94,13 +75,16 @@ class JobApplicationCreateView(APIView):
 class AcceptApplicationView(APIView):
     permission_classes = [IsAuthenticated]
 
+    @transaction.atomic
     def post(self, request, *args, **kwargs):
         application_id = request.data.get('application_id')
         if not application_id:
             return Response({"error": "Missing application_id in request body."}, status=status.HTTP_400_BAD_REQUEST)
 
         try:
-            application = Application.objects.get(id=application_id)
+            application = Application.objects.select_related(
+                'job_offer__recruiter', 'job_seeker__user'
+            ).get(id=application_id)
         except Application.DoesNotExist:
             return Response({"error": "Application not found."}, status=status.HTTP_404_NOT_FOUND)
 
@@ -116,25 +100,14 @@ class AcceptApplicationView(APIView):
             }
         )
 
-        logger.info(f"Generating new questions for interview {interview.id}")
-        extracted_text = application.extracted_text
-        generateQuestions.delay(extracted_text, application.job_offer.description, interview.id)
-
-        candidate_email = application.job_seeker.user.email
-        message = "Votre candidature a été acceptée, vous pouvez passer un entretien."
-        try:
-            send_email_to_candidate(
-                candidate_email,
-                message,
-                interview_date=interview.interview_date,
-                interview_link=interview.interview_link,
-            )
-            logger.info(f"Acceptance email sent to {candidate_email}")
-        except Exception as e:
-            logger.warning(f"Failed to send acceptance email to {candidate_email}: {e}")
-
         application.status = Application.Status.ACCEPTED
-        application.save()
+        application.save(update_fields=['status', 'updated_at'])
+
+        logger.info(f"Generating new questions for interview {interview.id}")
+        transaction.on_commit(lambda: generateQuestions.delay(
+            application.extracted_text, application.job_offer.description, interview.id
+        ))
+        transaction.on_commit(lambda: send_acceptance_email.delay(application.id))
 
         serializer = ApplicationSerializer(application)
         return Response({
