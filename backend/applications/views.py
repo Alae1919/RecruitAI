@@ -2,9 +2,10 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework.permissions import IsAuthenticated
 from rest_framework import status, generics, viewsets
-from .models import Application, Feedback, CVExtractionError
+from .models import Application, Feedback
 from interviews.models import Interview
-from interviews.views import generateQuestions
+from interviews.tasks import generateQuestions
+from .tasks import extract_cv_text
 from .serializers import ApplicationSerializer, FeedbackSerializer
 from interviews.serializers import InterviewSerializer
 from users.permissions import IsRecruiter, IsJobSeeker
@@ -68,33 +69,26 @@ class JobApplicationCreateView(APIView):
     def post(self, request, *args, **kwargs):
         job_offer_id = request.data.get('job_offer_id')
         job_seeker = JobSeeker.objects.filter(user=request.user).first()
+        if not job_seeker:
+            return Response({"error": "Job seeker profile not found."}, status=status.HTTP_404_NOT_FOUND)
+
         try:
             job_offer = JobOffer.objects.get(id=job_offer_id)
-
-            existing_application = Application.objects.filter(job_seeker=job_seeker, job_offer=job_offer).first()
-            if existing_application:
-                return Response({"error": "You have already applied for this job."}, status=status.HTTP_400_BAD_REQUEST)
-
-            application = Application.objects.create(
-                job_seeker=job_seeker,
-                job_offer=job_offer,
-                status=Application.Status.PENDING,
-            )
-            try:
-                extracted_text = application.extract_text_from_resume()
-                if extracted_text:
-                    application.extracted_text = extracted_text
-                    application.save(update_fields=['extracted_text'])
-            except CVExtractionError as e:
-                application.delete()
-                return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
-
-            serializer = ApplicationSerializer(application)
-            return Response(serializer.data, status=status.HTTP_201_CREATED)
         except JobOffer.DoesNotExist:
             return Response({"error": "Job offer not found."}, status=status.HTTP_404_NOT_FOUND)
-        except JobSeeker.DoesNotExist:
-            return Response({"error": "Job seeker not found."}, status=status.HTTP_404_NOT_FOUND)
+
+        if Application.objects.filter(job_seeker=job_seeker, job_offer=job_offer).exists():
+            return Response({"error": "You have already applied for this job."}, status=status.HTTP_400_BAD_REQUEST)
+
+        application = Application.objects.create(
+            job_seeker=job_seeker,
+            job_offer=job_offer,
+            status=Application.Status.PENDING,
+        )
+        extract_cv_text.delay(application.id)
+
+        serializer = ApplicationSerializer(application)
+        return Response(serializer.data, status=status.HTTP_201_CREATED)
 
 
 class AcceptApplicationView(APIView):
