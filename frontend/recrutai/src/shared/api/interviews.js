@@ -4,10 +4,10 @@ export const getJobSeekerInterviews = () =>
   request({ method: "GET", url: "/applications/retreiveInterviews" });
 
 export const fetchRecruiterInterviews = () =>
-  request({ method: "GET", url: "/interviews/listrecruiterinterviews/" });
+  request({ method: "GET", url: "/interviews/listrecruiterinterviews/" }).then(d => d.results ?? d);
 
 export const fetchJobSeekerInterviews = () =>
-  request({ method: "GET", url: "/interviews/listinterviews/" });
+  request({ method: "GET", url: "/interviews/listinterviews/" }).then(d => d.results ?? d);
 
 export const fetchQuestions = (interviewId) =>
   request({

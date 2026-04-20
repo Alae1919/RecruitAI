@@ -93,6 +93,8 @@ REST_FRAMEWORK = {
         'login': '5/minute',
         'llm': '20/hour',
     },
+    'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.PageNumberPagination',
+    'PAGE_SIZE': 20,
 }
 
 SIMPLE_JWT = {

@@ -1,10 +1,10 @@
 import { request } from "../http/client";
 
 export const listOffers = () =>
-  request({ method: "GET", url: "/job_offers/list" });
+  request({ method: "GET", url: "/job_offers/list" }).then(d => d.results ?? d);
 
 export const listAllOffers = () =>
-  request({ method: "GET", url: "/job_offers/listALL" });
+  request({ method: "GET", url: "/job_offers/listALL" }).then(d => d.results ?? d);
 
 export const createOffer = (data) =>
   request({ method: "POST", url: "/job_offers/create", data });
