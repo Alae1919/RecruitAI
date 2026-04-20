@@ -27,8 +27,6 @@ export default function AddOffer() {
   const navigate = useNavigate();
 
   const handlePublish = async () => {
-    const token = localStorage.getItem('accessToken');
-    if (!token) { toast.error('Authentication required.'); return; }
     setPublishing(true);
     try {
       await createJobOffer({
@@ -37,7 +35,7 @@ export default function AddOffer() {
         requirements: [...data.mustSkills, ...data.niceSkills].join(', ') || data.requirements,
         salary_range: data.salary_range,
         location: data.location,
-      }, token);
+      });
       toast.success('Offer published!');
       navigate('/recruiter-dashboard/view-offers');
     } catch {

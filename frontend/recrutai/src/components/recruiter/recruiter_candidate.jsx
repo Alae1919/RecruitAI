@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { Viewer, Worker } from '@react-pdf-viewer/core';
 import '@react-pdf-viewer/core/lib/styles/index.css';
-import { fetchJobOffers, fetchCandidatesForJobOffer, acceptCandidate, rejectCandidate } from '../../services/api';
+import { apiClient, fetchJobOffers, fetchCandidatesForJobOffer, acceptCandidate, rejectCandidate } from '../../services/api';
 import { useToast } from '../../hooks/useToast';
 import { Modal } from '../ui/index';
 import pdfjsWorker from 'pdfjs-dist/build/pdf.worker.min.js';
@@ -27,9 +27,8 @@ function ResumeViewer({ resumeUrl }) {
     let alive = true;
     (async () => {
       try {
-        const res = await fetch(resumeUrl, { headers: { Authorization: `Bearer ${localStorage.getItem('accessToken')}` } });
-        const blob = await res.blob();
-        if (alive) setPdfBlob(URL.createObjectURL(blob));
+        const res = await apiClient.get(resumeUrl, { responseType: 'blob' });
+        if (alive) setPdfBlob(URL.createObjectURL(new Blob([res.data], { type: res.headers['content-type'] })));
       } catch {}
     })();
     return () => { alive = false; };
