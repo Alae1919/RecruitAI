@@ -1,7 +1,7 @@
 import { request } from "../http/client";
 
 export const getJobSeekerInterviews = () =>
-  request({ method: "GET", url: "/applications/retreiveInterviews" });
+  request({ method: "GET", url: "/applications/retreiveInterviews/" }).then(d => d.results ?? d);
 
 export const fetchRecruiterInterviews = () =>
   request({ method: "GET", url: "/interviews/listrecruiterinterviews/" }).then(d => d.results ?? d);
