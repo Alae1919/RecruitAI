@@ -1,11 +1,11 @@
 import React, { useState } from 'react';
-import { fetchJobOffers, editJobOffer, deleteJobOffer, fetchCandidatesForJobOffer } from '../../services/api';
-import { useApi } from '../../hooks/useApi';
+import { fetchCandidatesForJobOffer } from '../../services/api';
 import { useToast } from '../../hooks/useToast';
 import { Button, Input, Modal, ConfirmModal } from '../ui/index';
 import { useNavigate } from 'react-router-dom';
 import SearchComponent from '../ui/animated-glowing-search-bar';
 import { Search, Filter, Plus, Trash2, Pencil, ChevronLeft, ChevronRight, Bell, Briefcase, Users } from 'lucide-react';
+import { useJobOffers, useEditOffer, useDeleteOffer } from '../../shared/hooks/useJobOffers';
 
 const SearchIcon    = ({ size = 14 }) => <Search size={size} />;
 const FilterIcon    = ({ size = 13 }) => <Filter size={size} />;
@@ -123,15 +123,15 @@ function Topbar({ title, subtitle, actions }) {
 
 /* ── Main Component ─────────────────────────────────────────────────── */
 export default function ViewOffers() {
-  const { data: offers, loading, error, refetch } = useApi(fetchJobOffers, []);
+  const { data: offers, isLoading: loading, isError: error } = useJobOffers();
+  const editMutation   = useEditOffer();
+  const deleteMutation = useDeleteOffer();
   const { toast } = useToast();
   const navigate = useNavigate();
 
   const [q, setQ] = useState('');
   const [editingOffer, setEditingOffer] = useState(null);
   const [deleteTarget, setDeleteTarget] = useState(null);
-  const [deletingId, setDeletingId] = useState(null);
-  const [savingId, setSavingId] = useState(null);
   const [candidatesOffer, setCandidatesOffer] = useState(null);
   const [candidates, setCandidates] = useState([]);
   const [loadingCandidates, setLoadingCandidates] = useState(false);
@@ -139,29 +139,22 @@ export default function ViewOffers() {
   const handleEditChange = (e) => setEditingOffer(prev => ({ ...prev, [e.target.name]: e.target.value }));
 
   const handleSave = async () => {
-    setSavingId(editingOffer.id);
     try {
-      await editJobOffer(editingOffer.id, editingOffer);
+      await editMutation.mutateAsync({ id: editingOffer.id, data: editingOffer });
       toast.success('Offer updated successfully.');
-      refetch();
       setEditingOffer(null);
     } catch {
       toast.error('Failed to save changes. Please try again.');
-    } finally {
-      setSavingId(null);
     }
   };
 
   const handleDelete = async () => {
-    setDeletingId(deleteTarget.id);
     try {
-      await deleteJobOffer(deleteTarget.id);
+      await deleteMutation.mutateAsync(deleteTarget.id);
       toast.success('Offer deleted.');
-      refetch();
     } catch {
       toast.error('Failed to delete offer.');
     } finally {
-      setDeletingId(null);
       setDeleteTarget(null);
     }
   };
@@ -360,7 +353,7 @@ export default function ViewOffers() {
         footer={
           <>
             <Button variant="secondary" onClick={() => setEditingOffer(null)}>Cancel</Button>
-            <Button loading={!!savingId} onClick={handleSave}>Save Changes</Button>
+            <Button loading={editMutation.isPending} onClick={handleSave}>Save Changes</Button>
           </>
         }
       >
@@ -386,7 +379,7 @@ export default function ViewOffers() {
         message={`Delete "${deleteTarget?.title}"? This cannot be undone.`}
         confirmLabel="Delete"
         danger
-        loading={!!deletingId}
+        loading={deleteMutation.isPending}
       />
 
       {/* Candidates modal */}

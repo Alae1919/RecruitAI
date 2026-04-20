@@ -7,19 +7,26 @@ import { ToastProvider } from './context/ToastContext';
 import ErrorBoundary from './components/layout/ErrorBoundary';
 import ToastContainer from './components/feedback/ToastContainer';
 import FluidCursorEffect from './components/ui/smokey-cursor-effect';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+
+const queryClient = new QueryClient({
+  defaultOptions: { queries: { staleTime: 30_000, retry: 1 } },
+});
 
 function App() {
   return (
     <ErrorBoundary>
-      <ThemeProvider>
-        <ToastProvider>
-          <AuthProvider>
-            <FluidCursorEffect />
-            <AppRoutes />
-            <ToastContainer />
-          </AuthProvider>
-        </ToastProvider>
-      </ThemeProvider>
+      <QueryClientProvider client={queryClient}>
+        <ThemeProvider>
+          <ToastProvider>
+            <AuthProvider>
+              <FluidCursorEffect />
+              <AppRoutes />
+              <ToastContainer />
+            </AuthProvider>
+          </ToastProvider>
+        </ThemeProvider>
+      </QueryClientProvider>
     </ErrorBoundary>
   );
 }

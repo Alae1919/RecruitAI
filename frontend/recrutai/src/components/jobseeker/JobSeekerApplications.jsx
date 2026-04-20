@@ -1,10 +1,9 @@
 import React, { useState } from 'react';
-import { getJobOffers, applyForJob } from '../../services/api';
-import { useApi } from '../../hooks/useApi';
 import { useToast } from '../../hooks/useToast';
 import Button from '../ui/Button';
 import SearchComponent from '../ui/animated-glowing-search-bar';
 import { Search, MapPin, DollarSign, Tag, Briefcase, Bell, Sparkles } from 'lucide-react';
+import { useAllJobOffers, useApplyForJob } from '../../shared/hooks/useApplications';
 
 const SearchIcon   = ({ size = 15 }) => <Search size={size} />;
 const MapPinIcon   = ({ size = 13 }) => <MapPin size={size} />;
@@ -35,9 +34,9 @@ function SkeletonCard() {
 }
 
 export default function JobSeekerApplications() {
-  const { data, loading, error, refetch } = useApi(getJobOffers, []);
+  const { data, isLoading: loading, isError: error, refetch } = useAllJobOffers();
+  const applyMutation = useApplyForJob();
   const { toast } = useToast();
-  const [applying, setApplying] = useState(null);
   const [applied, setApplied] = useState(new Set());
   const [search, setSearch] = useState('');
 
@@ -47,16 +46,13 @@ export default function JobSeekerApplications() {
   );
 
   const handleApply = async (offerId) => {
-    setApplying(offerId);
     try {
-      await applyForJob(offerId);
+      await applyMutation.mutateAsync(offerId);
       setApplied(prev => new Set([...prev, offerId]));
       toast.success('Application submitted successfully!');
     } catch (err) {
-      const msg = err?.response?.data?.detail || 'Failed to submit application.';
+      const msg = err?.message || 'Failed to submit application.';
       toast.error(msg);
-    } finally {
-      setApplying(null);
     }
   };
 
@@ -185,7 +181,7 @@ export default function JobSeekerApplications() {
                       ) : (
                         <Button
                           size="sm"
-                          loading={applying === offer.id}
+                          loading={applyMutation.isPending && applyMutation.variables === offer.id}
                           onClick={() => handleApply(offer.id)}
                         >
                           Apply
