@@ -2,6 +2,7 @@ import React, { lazy, Suspense } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
 import Spinner from '../components/ui/Spinner';
+import ErrorBoundary from '../components/layout/ErrorBoundary';
 
 import Home     from '../pages/home';
 import Login    from '../pages/login';
@@ -32,11 +33,19 @@ function LoadingScreen() {
   );
 }
 
+const ROLE_HOME = {
+  RECRUITER: '/recruiter-dashboard',
+  JOBSEEKER: '/jobseeker-dashboard',
+};
+
 function ProtectedRoute({ children, requiredRole }) {
   const { user, loading } = useAuth();
   if (loading) return <LoadingScreen />;
   if (!user) return <Navigate to="/login" replace />;
-  if (requiredRole && user.role !== requiredRole) return <Navigate to="/login" replace />;
+  if (requiredRole && user.role !== requiredRole) {
+    const home = ROLE_HOME[user.role] ?? '/';
+    return <Navigate to={home} replace />;
+  }
   return children;
 }
 
@@ -53,7 +62,9 @@ export default function AppRoutes() {
             path="/recruiter-dashboard"
             element={
               <ProtectedRoute requiredRole="RECRUITER">
-                <RecruiterDashboard />
+                <ErrorBoundary>
+                  <RecruiterDashboard />
+                </ErrorBoundary>
               </ProtectedRoute>
             }
           >
@@ -69,7 +80,9 @@ export default function AppRoutes() {
             path="/jobseeker-dashboard"
             element={
               <ProtectedRoute requiredRole="JOBSEEKER">
-                <JobseekerDashboard />
+                <ErrorBoundary>
+                  <JobseekerDashboard />
+                </ErrorBoundary>
               </ProtectedRoute>
             }
           >
