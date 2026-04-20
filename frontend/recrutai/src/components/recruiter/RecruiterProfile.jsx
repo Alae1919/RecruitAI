@@ -5,28 +5,11 @@ import { useToast } from '../../hooks/useToast';
 import Input from '../ui/Input';
 import Button from '../ui/Button';
 import { Bell, Pencil, Building2 } from 'lucide-react';
+import Avatar from '../ui/Avatar';
 
 const BellIcon     = ({ size = 15 }) => <Bell size={size} />;
 const EditIcon     = ({ size = 14 }) => <Pencil size={size} />;
 const BuildingIcon = ({ size = 15 }) => <Building2 size={size} />;
-
-/* ── Avatar ─────────────────────────────────────────────────────────── */
-function Avatar({ name, size = 72 }) {
-  const initials = (name || '?').split(' ').map(s => s[0]).slice(0, 2).join('').toUpperCase();
-  let h = 0;
-  for (let i = 0; i < (name || '').length; i++) h = (h * 31 + name.charCodeAt(i)) % 360;
-  return (
-    <div className="rounded-2xl grid place-items-center font-bold text-white shrink-0"
-      style={{
-        width: size, height: size,
-        background: `oklch(0.52 0.12 ${h})`,
-        boxShadow: `0 0 24px oklch(0.52 0.12 ${h} / 0.45)`,
-        fontSize: size > 48 ? 22 : 13,
-      }}>
-      {initials}
-    </div>
-  );
-}
 
 /* ── Section label ──────────────────────────────────────────────────── */
 function SectionLabel({ icon: Icon, children }) {

@@ -1,6 +1,7 @@
 import React, { useEffect, useRef, useState, useCallback } from 'react';
 import { Link } from 'react-router-dom';
 import { Logo } from '../components/navigation/PublicHeader';
+import Avatar from '../components/ui/Avatar';
 
 /* ── Icons ─────────────────────────────────────────────────────────── */
 function ArrowRight({ size = 14 }) {
@@ -61,19 +62,6 @@ function useScrollReveal() {
     document.querySelectorAll('[data-reveal]').forEach(el => io.observe(el));
     return () => io.disconnect();
   }, []);
-}
-
-/* ── Avatar ────────────────────────────────────────────────────────── */
-function Avatar({ name, size = 36 }) {
-  const initials = (name || '?').split(' ').map(s => s[0]).slice(0, 2).join('').toUpperCase();
-  let h = 0;
-  for (let i = 0; i < (name || '').length; i++) h = (h * 31 + name.charCodeAt(i)) % 360;
-  return (
-    <div className="rounded-full grid place-items-center font-semibold text-xs text-white shrink-0"
-      style={{ width: size, height: size, background: `oklch(0.55 0.1 ${h})` }}>
-      {initials}
-    </div>
-  );
 }
 
 /* ── Match Ring ────────────────────────────────────────────────────── */

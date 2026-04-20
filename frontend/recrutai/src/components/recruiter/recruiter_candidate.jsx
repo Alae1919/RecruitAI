@@ -7,6 +7,8 @@ import { Modal } from '../ui/index';
 import pdfjsWorker from 'pdfjs-dist/build/pdf.worker.min.js';
 import SearchComponent from '../ui/animated-glowing-search-bar';
 import { Search, Sparkles, List, Columns2, Check, X, Download, Briefcase, Bell, ArrowLeft, Plus } from 'lucide-react';
+import Avatar from '../ui/Avatar';
+import StatusBadge from '../ui/StatusBadge';
 
 const SearchIcon   = ({ size = 14 }) => <Search size={size} />;
 const SparklesIcon = ({ size = 13 }) => <Sparkles size={size} />;
@@ -19,36 +21,6 @@ const BriefcaseIcon = ({ size = 14 }) => <Briefcase size={size} />;
 const BellIcon     = ({ size = 15 }) => <Bell size={size} />;
 const ArrowLeftIcon = ({ size = 13 }) => <ArrowLeft size={size} />;
 const PlusIcon     = ({ size = 12 }) => <Plus size={size} strokeWidth={2.5} />;
-
-/* ── Avatar ─────────────────────────────────────────────────────────── */
-function Avatar({ name, size = 36 }) {
-  const initials = (name || '?').split(' ').map(s => s[0]).slice(0, 2).join('').toUpperCase();
-  let hash = 0;
-  for (let i = 0; i < (name || '').length; i++) hash = (hash * 31 + name.charCodeAt(i)) % 360;
-  return (
-    <div className="rounded-full grid place-items-center font-semibold text-xs text-white shrink-0"
-      style={{ width: size, height: size, background: `oklch(0.52 0.12 ${hash})`, boxShadow: `0 0 10px oklch(0.52 0.12 ${hash} / 0.35)`, fontSize: size > 40 ? 16 : 11 }}>
-      {initials}
-    </div>
-  );
-}
-
-/* ── Status badge ───────────────────────────────────────────────────── */
-function StatusBadge({ status }) {
-  const map = {
-    pending:  { bg: 'rgba(245,158,11,0.1)', color: '#FCD34D', border: 'rgba(245,158,11,0.25)', dot: '#F59E0B' },
-    accepted: { bg: 'rgba(16,185,129,0.1)', color: '#6EE7B7', border: 'rgba(16,185,129,0.25)', dot: '#34D399' },
-    rejected: { bg: 'rgba(239,68,68,0.1)',  color: '#FCA5A5', border: 'rgba(239,68,68,0.25)',  dot: '#F87171' },
-  };
-  const s = map[status] || { bg: 'rgba(35,42,62,0.6)', color: '#9BA6C4', border: 'rgba(35,42,62,0.8)', dot: '#59628A' };
-  return (
-    <span className="inline-flex items-center gap-1 text-[11px] px-2 py-0.5 rounded-full font-medium"
-      style={{ background: s.bg, color: s.color, border: `1px solid ${s.border}` }}>
-      <span className="w-1.5 h-1.5 rounded-full" style={{ background: s.dot }} />
-      {status || 'pending'}
-    </span>
-  );
-}
 
 /* ── PDF Viewer ─────────────────────────────────────────────────────── */
 function ResumeViewer({ resumeUrl }) {

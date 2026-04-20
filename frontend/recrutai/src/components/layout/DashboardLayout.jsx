@@ -3,19 +3,7 @@ import { NavLink, Outlet, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../hooks/useAuth';
 import { Logo } from '../navigation/PublicHeader';
 import { Briefcase, Users, Plus, LogOut, User, Calendar } from 'lucide-react';
-
-/* ── Avatar ────────────────────────────────────────────────────────── */
-function Avatar({ name, size = 30 }) {
-  const initials = (name || '?').split(' ').map(s => s[0]).slice(0, 2).join('').toUpperCase();
-  let h = 0;
-  for (let i = 0; i < (name || '').length; i++) h = (h * 31 + name.charCodeAt(i)) % 360;
-  return (
-    <div className="rounded-full grid place-items-center font-semibold text-xs text-white shrink-0"
-      style={{ width: size, height: size, background: `oklch(0.52 0.12 ${h})`, boxShadow: `0 0 12px oklch(0.52 0.12 ${h} / 0.4)` }}>
-      {initials}
-    </div>
-  );
-}
+import Avatar from '../ui/Avatar';
 
 /* ── Sidebar ───────────────────────────────────────────────────────── */
 function Sidebar({ navItems, user, onLogout }) {

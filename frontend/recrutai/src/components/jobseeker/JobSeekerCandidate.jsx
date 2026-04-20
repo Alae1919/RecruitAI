@@ -2,28 +2,11 @@ import React from 'react';
 import { getJobSeekerApplications } from '../../services/api';
 import { useApi } from '../../hooks/useApi';
 import Button from '../ui/Button';
+import StatusBadge from '../ui/StatusBadge';
 import { Bell, FileText } from 'lucide-react';
 
 const BellIcon     = ({ size = 15 }) => <Bell size={size} />;
 const FileTextIcon = ({ size = 22 }) => <FileText size={size} strokeWidth={1.5} />;
-
-/* ── Status badge ───────────────────────────────────────────────────── */
-function StatusBadge({ status }) {
-  const s = status?.toLowerCase();
-  const map = {
-    accepted: { bg: 'rgba(16,185,129,0.1)',  color: '#6EE7B7', border: 'rgba(16,185,129,0.25)', dot: '#34D399' },
-    rejected: { bg: 'rgba(239,68,68,0.1)',   color: '#FCA5A5', border: 'rgba(239,68,68,0.25)',  dot: '#F87171' },
-    pending:  { bg: 'rgba(245,158,11,0.1)',  color: '#FCD34D', border: 'rgba(245,158,11,0.25)', dot: '#F59E0B' },
-  };
-  const cfg = map[s] || map.pending;
-  return (
-    <span className="inline-flex items-center gap-1 text-[11px] px-2 py-0.5 rounded-full font-medium"
-      style={{ background: cfg.bg, color: cfg.color, border: `1px solid ${cfg.border}` }}>
-      <span className="w-1.5 h-1.5 rounded-full" style={{ background: cfg.dot }} />
-      {status || 'pending'}
-    </span>
-  );
-}
 
 /* ── Skeleton row ───────────────────────────────────────────────────── */
 function SkeletonRow() {

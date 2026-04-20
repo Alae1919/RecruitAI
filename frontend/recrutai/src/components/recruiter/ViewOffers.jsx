@@ -6,6 +6,7 @@ import { useNavigate } from 'react-router-dom';
 import SearchComponent from '../ui/animated-glowing-search-bar';
 import { Search, Filter, Plus, Trash2, Pencil, ChevronLeft, ChevronRight, Bell, Briefcase, Users } from 'lucide-react';
 import { useJobOffers, useEditOffer, useDeleteOffer } from '../../shared/hooks/useJobOffers';
+import { StatusBadge, KpiCard } from '../ui/index';
 
 const SearchIcon    = ({ size = 14 }) => <Search size={size} />;
 const FilterIcon    = ({ size = 13 }) => <Filter size={size} />;
@@ -17,44 +18,6 @@ const ChevronRightIcon = ({ size = 12 }) => <ChevronRight size={size} />;
 const BellIcon      = ({ size = 15 }) => <Bell size={size} />;
 const BriefcaseIcon = ({ size = 20 }) => <Briefcase size={size} />;
 const UsersIcon     = ({ size = 14 }) => <Users size={size} />;
-
-/* ── Status badge ──────────────────────────────────────────────────── */
-function StatusBadge({ status }) {
-  const map = {
-    open:    { bg: 'rgba(16,185,129,0.1)', color: '#6EE7B7', border: 'rgba(16,185,129,0.2)', dot: '#34D399' },
-    active:  { bg: 'rgba(16,185,129,0.1)', color: '#6EE7B7', border: 'rgba(16,185,129,0.2)', dot: '#34D399' },
-    draft:   { bg: 'rgba(35,42,62,0.6)',   color: '#9BA6C4', border: 'rgba(35,42,62,0.8)',   dot: '#59628A' },
-    paused:  { bg: 'rgba(245,158,11,0.1)', color: '#FCD34D', border: 'rgba(245,158,11,0.2)', dot: '#F59E0B' },
-    pending: { bg: 'rgba(245,158,11,0.1)', color: '#FCD34D', border: 'rgba(245,158,11,0.2)', dot: '#F59E0B' },
-    closed:  { bg: 'rgba(239,68,68,0.1)',  color: '#FCA5A5', border: 'rgba(239,68,68,0.2)',  dot: '#F87171' },
-  };
-  const s = map[status] || map.draft;
-  return (
-    <span className="inline-flex items-center gap-1 text-[11px] px-2 py-0.5 rounded-full font-medium"
-      style={{ background: s.bg, color: s.color, border: `1px solid ${s.border}` }}>
-      <span className="w-1.5 h-1.5 rounded-full" style={{ background: s.dot }} />
-      {status || 'draft'}
-    </span>
-  );
-}
-
-/* ── KPI card ───────────────────────────────────────────────────────── */
-function KpiCard({ label, value, sub, loading, accentColor = '#F59E0B' }) {
-  return (
-    <div className="rounded-xl p-5 relative overflow-hidden"
-      style={{ background: '#101420', border: '1px solid rgba(35,42,62,0.8)', boxShadow: '0 4px 20px rgba(0,0,0,0.3)' }}>
-      <div className="absolute top-0 left-0 right-0 h-[2px] rounded-t-xl"
-        style={{ background: `linear-gradient(90deg, ${accentColor}60 0%, ${accentColor}20 100%)` }} />
-      <div className="text-[10px] font-mono uppercase tracking-widest text-brand-text-disabled">{label}</div>
-      <div className="mt-2 text-3xl font-bold font-mono tracking-tight text-brand-text-primary">
-        {loading
-          ? <span className="inline-block w-12 h-8 rounded animate-pulse" style={{ background: 'rgba(35,42,62,0.8)' }} />
-          : value}
-      </div>
-      {sub && <div className="text-[11px] text-brand-text-disabled mt-1">{sub}</div>}
-    </div>
-  );
-}
 
 /* ── Inline search input ────────────────────────────────────────────── */
 function SearchInput({ value, onChange, placeholder }) {

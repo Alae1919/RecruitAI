@@ -3,6 +3,8 @@ import { fetchRecruiterInterviews } from '../../services/api';
 import { useApi } from '../../hooks/useApi';
 import Button from '../ui/Button';
 import { Bell, Video, Mic, Sparkles, ExternalLink } from 'lucide-react';
+import Avatar from '../ui/Avatar';
+import StatusBadge from '../ui/StatusBadge';
 
 const BellIcon        = ({ size = 15 }) => <Bell size={size} />;
 const VideoIcon       = ({ size = 14 }) => <Video size={size} />;
@@ -10,33 +12,10 @@ const MicIcon         = ({ size = 40 }) => <Mic size={size} strokeWidth={1.5} />
 const SparklesIcon    = ({ size = 12 }) => <Sparkles size={size} />;
 const ExternalLinkIcon = ({ size = 12 }) => <ExternalLink size={size} />;
 
-/* ── Avatar ─────────────────────────────────────────────────────────── */
-function Avatar({ name, size = 32 }) {
-  const initials = (name || '?').split(' ').map(s => s[0]).slice(0, 2).join('').toUpperCase();
-  let h = 0;
-  for (let i = 0; i < (name || '').length; i++) h = (h * 31 + name.charCodeAt(i)) % 360;
-  return (
-    <div className="rounded-full grid place-items-center font-semibold text-xs text-white shrink-0"
-      style={{ width: size, height: size, background: `oklch(0.52 0.12 ${h})`, boxShadow: `0 0 10px oklch(0.52 0.12 ${h} / 0.3)` }}>
-      {initials}
-    </div>
-  );
-}
-
-/* ── Status badge ───────────────────────────────────────────────────── */
-function StatusBadge({ status }) {
-  const map = {
-    evaluated:  { cls: 'bg-emerald-500/10 text-emerald-300 border-emerald-500/20', dot: 'bg-emerald-400', label: 'Evaluated' },
-    processing: { cls: 'bg-amber-500/10 text-amber-300 border-amber-500/20',   dot: 'bg-amber-400',   label: 'Processing' },
-    available:  { cls: 'bg-brand-elevated text-brand-text-muted border-brand-border', dot: 'bg-brand-text-disabled', label: 'Pending' },
-  };
-  const s = map[status] || map.available;
-  return (
-    <span className={`inline-flex items-center gap-1 text-[11px] px-2 py-0.5 rounded-full border font-medium ${s.cls}`}>
-      <span className={`w-1.5 h-1.5 rounded-full ${s.dot}`} />
-      {s.label}
-    </span>
-  );
+/* ── Status badge label map (entretien uses different display labels) ── */
+function InterviewStatusBadge({ status }) {
+  const labelMap = { evaluated: 'Evaluated', processing: 'Processing', available: 'Pending' };
+  return <StatusBadge status={status === 'available' ? 'pending' : status} label={labelMap[status] ?? status} />;
 }
 
 /* ── Score ring ─────────────────────────────────────────────────────── */
@@ -221,7 +200,7 @@ export default function RecruiterInterviews() {
                             <ScoreRing score={i.score?.score ?? null} />
                           </td>
                           <td className="px-6 py-4">
-                            <StatusBadge status={i.status} />
+                            <InterviewStatusBadge status={i.status} />
                           </td>
                           <td className="px-6 py-4">
                             {i.status !== 'available' && i.video ? (

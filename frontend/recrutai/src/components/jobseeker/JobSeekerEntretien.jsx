@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { fetchJobSeekerInterviews } from '../../services/api';
 import { useApi } from '../../hooks/useApi';
 import Button from '../ui/Button';
+import StatusBadge from '../ui/StatusBadge';
 import JobSeekerInterviewProcess from './JobSeekerInterviewProcess';
 import JobSeekerInterviewAnswers from './JobSeekerInterviewAnswers';
 import { Bell, Mic, Play, Eye } from 'lucide-react';
@@ -11,22 +12,9 @@ const MicIcon  = ({ size = 22 }) => <Mic size={size} strokeWidth={1.5} />;
 const PlayIcon = ({ size = 12 }) => <Play size={size} fill="currentColor" stroke="none" />;
 const EyeIcon  = ({ size = 12 }) => <Eye size={size} />;
 
-/* ── Status badge ───────────────────────────────────────────────────── */
-function StatusBadge({ status }) {
-  const map = {
-    available:  { bg: 'rgba(59,130,246,0.1)',  color: '#93C5FD', border: 'rgba(59,130,246,0.25)',  dot: '#60A5FA', label: 'Available' },
-    completed:  { bg: 'rgba(16,185,129,0.1)',  color: '#6EE7B7', border: 'rgba(16,185,129,0.25)', dot: '#34D399', label: 'Completed' },
-    evaluated:  { bg: 'rgba(16,185,129,0.1)',  color: '#6EE7B7', border: 'rgba(16,185,129,0.25)', dot: '#34D399', label: 'Evaluated' },
-    processing: { bg: 'rgba(245,158,11,0.1)',  color: '#FCD34D', border: 'rgba(245,158,11,0.25)', dot: '#F59E0B', label: 'Processing' },
-  };
-  const s = map[status] || { bg: 'rgba(35,42,62,0.6)', color: '#9BA6C4', border: 'rgba(35,42,62,0.8)', dot: '#59628A', label: status };
-  return (
-    <span className="inline-flex items-center gap-1 text-[11px] px-2 py-0.5 rounded-full font-medium"
-      style={{ background: s.bg, color: s.color, border: `1px solid ${s.border}` }}>
-      <span className="w-1.5 h-1.5 rounded-full" style={{ background: s.dot }} />
-      {s.label}
-    </span>
-  );
+const INTERVIEW_LABELS = { available: 'Available', completed: 'Completed', evaluated: 'Evaluated', processing: 'Processing' };
+function InterviewStatusBadge({ status }) {
+  return <StatusBadge status={status} label={INTERVIEW_LABELS[status] ?? status} />;
 }
 
 /* ── Score ring ─────────────────────────────────────────────────────── */
@@ -166,7 +154,7 @@ export default function JobSeekerEntretien() {
                           onMouseEnter={e => e.currentTarget.style.background = 'rgba(24,30,46,0.6)'}
                           onMouseLeave={e => e.currentTarget.style.background = 'transparent'}>
                           <td className="px-6 py-4 font-semibold text-brand-text-primary">{i.offerName}</td>
-                          <td className="px-6 py-4"><StatusBadge status={i.status} /></td>
+                          <td className="px-6 py-4"><InterviewStatusBadge status={i.status} /></td>
                           <td className="px-6 py-4"><Score value={i.score} /></td>
                           <td className="px-6 py-4">
                             <button
@@ -213,7 +201,7 @@ export default function JobSeekerEntretien() {
                             <div className="mt-1"><Score value={i.score} /></div>
                           )}
                         </div>
-                        <StatusBadge status={i.status} />
+                        <InterviewStatusBadge status={i.status} />
                       </div>
                       <div className="flex gap-2">
                         <button

@@ -6,3 +6,6 @@ export { default as Modal, ConfirmModal } from './Modal';
 export { default as Alert } from './Alert';
 export { default as Skeleton, SkeletonCard, SkeletonTable, SkeletonForm } from './Skeleton';
 export { default as Spinner } from './Spinner';
+export { default as Avatar } from './Avatar';
+export { default as StatusBadge } from './StatusBadge';
+export { default as KpiCard } from './KpiCard';
