@@ -24,6 +24,12 @@ class Application(models.Model):
     applied_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
+    class Meta:
+        indexes = [
+            models.Index(fields=['status']),
+            models.Index(fields=['status', 'job_offer']),
+        ]
+
     def __str__(self):
         return f"{self.job_seeker.user.email} -> {self.job_offer.title}"
 

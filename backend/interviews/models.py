@@ -17,6 +17,11 @@ class Interview(models.Model):
     status = models.CharField(max_length=16, choices=Status.choices, default=Status.AVAILABLE)
     created_at = models.DateTimeField(auto_now_add=True)
 
+    class Meta:
+        indexes = [
+            models.Index(fields=['status']),
+        ]
+
     def __str__(self):
         return f"Interview for {self.application.job_seeker.user.email}"
 
