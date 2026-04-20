@@ -12,10 +12,15 @@ class CVExtractionError(Exception):
     """Raised when the resume PDF cannot be read or parsed."""
 
 class Application(models.Model):
+    class Status(models.TextChoices):
+        PENDING = 'pending', 'Pending'
+        ACCEPTED = 'accepted', 'Accepted'
+        REJECTED = 'rejected', 'Rejected'
+
     job_seeker = models.ForeignKey(JobSeeker, on_delete=models.CASCADE)
     job_offer = models.ForeignKey(JobOffer, on_delete=models.CASCADE)
     extracted_text = models.TextField(blank=True, null=True)
-    status = models.CharField(max_length=50, default='pending')  # pending, accepted, rejected
+    status = models.CharField(max_length=16, choices=Status.choices, default=Status.PENDING)
     applied_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 

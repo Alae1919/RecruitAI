@@ -78,7 +78,7 @@ class JobApplicationCreateView(APIView):
             application = Application.objects.create(
                 job_seeker=job_seeker,
                 job_offer=job_offer,
-                status='pending'
+                status=Application.Status.PENDING,
             )
             try:
                 extracted_text = application.extract_text_from_resume()
@@ -118,7 +118,7 @@ class AcceptApplicationView(APIView):
             application=application,
             defaults={
                 "interview_date": timezone.now() + timedelta(days=1),
-                "status": "available",
+                "status": Interview.Status.AVAILABLE,
             }
         )
 
@@ -139,7 +139,7 @@ class AcceptApplicationView(APIView):
         except Exception as e:
             logger.warning(f"Failed to send acceptance email to {candidate_email}: {e}")
 
-        application.status = "accepted"
+        application.status = Application.Status.ACCEPTED
         application.save()
 
         serializer = ApplicationSerializer(application)
@@ -171,7 +171,7 @@ class RejectApplicationView(APIView):
         if not recruiter or application.job_offer.recruiter != recruiter:
             return Response({"error": "Not authorized."}, status=status.HTTP_403_FORBIDDEN)
 
-        application.status = "rejected"
+        application.status = Application.Status.REJECTED
         application.save()
 
         serializer = ApplicationSerializer(application)

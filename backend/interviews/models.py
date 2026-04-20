@@ -5,10 +5,16 @@ from django.db import models
 class Interview(models.Model):
     from applications.models import Application
 
+    class Status(models.TextChoices):
+        AVAILABLE = 'available', 'Available'
+        SCHEDULED = 'scheduled', 'Scheduled'
+        COMPLETED = 'completed', 'Completed'
+        CANCELED = 'canceled', 'Canceled'
+
     application = models.ForeignKey(Application, on_delete=models.CASCADE)
-    interview_date = models.DateTimeField(default='19/03/2002')
+    interview_date = models.DateTimeField(null=True, blank=True)
     interview_link = models.URLField(blank=True, null=True)
-    status = models.CharField(max_length=50, default='available')  # scheduled, completed, canceled
+    status = models.CharField(max_length=16, choices=Status.choices, default=Status.AVAILABLE)
     created_at = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):

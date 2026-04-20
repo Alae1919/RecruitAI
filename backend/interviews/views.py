@@ -442,7 +442,7 @@ def upload_video(request):
             # Trigger the background task for evaluation
             evaluate_answer.delay(answer.id)
             try:
-                interview.status = 'completed'
+                interview.status = Interview.Status.COMPLETED
                 interview.save()
             
             except Exception as e:
