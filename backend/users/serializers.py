@@ -241,7 +241,6 @@ class RecruiterSignupSerializer(serializers.ModelSerializer):
         Validation personnalisée des données.
         """
 
-        print(data)
         logger.info("Début validate serial recruiter")
         email=data.get('email')
         password=data.get('password', '')
@@ -310,8 +309,6 @@ class RecruiterSignupSerializer(serializers.ModelSerializer):
                 address=address
             )
         logger.debug("debut create recruiter object ")
-        print(company_website)
-        print(industry)
         # Créer l'objet Recruiter
         Recruiter.objects.create(
             user=user,
@@ -372,14 +369,8 @@ class LoginSpecialSerializer(serializers.ModelSerializer):
         if not user:
             raise serializers.ValidationError("Email ou mot de passe incorrect.")
 
-        print(role)
-
         recruiter_role = Role.objects.filter(role_name=role).first()
-        
-        print(recruiter_role)
-        
-        if  not UserRole.objects.filter(user=user, role=recruiter_role).exists():
-            print("not exist")
+        if not UserRole.objects.filter(user=user, role=recruiter_role).exists():
             raise serializers.ValidationError(f"L'utilisateur n'est pas enregistré en tant que {role}.")
 
 

@@ -12,8 +12,6 @@ class ApplicationSerializer(serializers.ModelSerializer):
     def get_resume_url(self, obj):
         request = self.context.get('request')  # Récupère l'objet `request` du contexte
         if obj.job_seeker.resume and request is not None:
-            print(obj.job_seeker.resume.url)
-            print(request.build_absolute_uri(obj.job_seeker.resume.url))
             return request.build_absolute_uri(obj.job_seeker.resume.url)
         return None
 
