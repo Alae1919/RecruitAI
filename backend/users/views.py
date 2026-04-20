@@ -123,9 +123,14 @@ class MeView(APIView):
     permission_classes = [IsAuthenticated]
 
     def get(self, request):
-        user = request.user
-        user_role = UserRole.objects.filter(user=user).select_related('role').first()
-        return Response({
-            'email': user.email,
-            'role': user_role.role.role_name if user_role else None,
-        })
+        token = getattr(request, 'auth', None)
+        role = None
+        if token is not None and hasattr(token, '__getitem__'):
+            try:
+                role = token['role']
+            except KeyError:
+                pass
+        if role is None:
+            user_role = UserRole.objects.filter(user=request.user).select_related('role').first()
+            role = user_role.role.role_name if user_role else None
+        return Response({'email': request.user.email, 'role': role})
