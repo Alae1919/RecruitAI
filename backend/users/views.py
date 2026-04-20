@@ -46,9 +46,10 @@ class LoginView(APIView):
         serializer.is_valid(raise_exception=True)
 
         user = serializer.validated_data['user']
+        role = serializer.validated_data.get('role', '')
 
-        # Génère un jeton d'accès JWT
         refresh = RefreshToken.for_user(user)
+        refresh['role'] = role
         return Response({
             "refresh": str(refresh),
             "access": str(refresh.access_token),
