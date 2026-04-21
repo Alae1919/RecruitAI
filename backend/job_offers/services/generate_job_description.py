@@ -6,7 +6,7 @@ logger = logging.getLogger(__name__)
 
 
 def generate_job_description(*, title: str, skills: list, experience_level: str) -> dict:
-    skills_list = [str(s).strip() for s in skills if s]
+    skills_list = [s for s in (str(x).strip() for x in skills) if s]
     result = get_llm().generate_job_description(
         title=title,
         skills=skills_list,
