@@ -1,15 +1,46 @@
 from django.db import models
 from users.models import JobSeeker, Recruiter
-from job_offers.models  import  JobOffer
-import PyPDF2
-import io
-import logging
-
-logger = logging.getLogger(__name__)
+from job_offers.models import JobOffer
 
 
-class CVExtractionError(Exception):
-    """Raised when the resume PDF cannot be read or parsed."""
+class Resume(models.Model):
+    class ParsingStatus(models.TextChoices):
+        PENDING = 'pending', 'Pending'
+        READY = 'ready', 'Ready'
+        FAILED = 'failed', 'Failed'
+
+    job_seeker = models.ForeignKey(JobSeeker, on_delete=models.CASCADE, related_name='resumes')
+    original_file = models.FileField(upload_to='resumes/')
+    label = models.CharField(max_length=100, blank=True)
+    is_default = models.BooleanField(default=False)
+    parsing_status = models.CharField(
+        max_length=10, choices=ParsingStatus.choices, default=ParsingStatus.PENDING
+    )
+    task_id = models.CharField(max_length=255, blank=True)
+    uploaded_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        indexes = [
+            models.Index(fields=['job_seeker', 'is_default']),
+        ]
+
+    def __str__(self):
+        return f"Resume {self.id} ({self.job_seeker.user.email}) – {self.parsing_status}"
+
+
+class ResumeData(models.Model):
+    resume = models.OneToOneField(Resume, on_delete=models.CASCADE, related_name='parsed')
+    raw_text = models.TextField(blank=True)
+    skills = models.JSONField(default=list)
+    experience = models.JSONField(default=list)
+    education = models.JSONField(default=list)
+    languages = models.JSONField(default=list)
+    summary = models.TextField(blank=True)
+    parsed_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f"ResumeData for resume {self.resume_id}"
+
 
 class Application(models.Model):
     class Status(models.TextChoices):
@@ -19,7 +50,9 @@ class Application(models.Model):
 
     job_seeker = models.ForeignKey(JobSeeker, on_delete=models.CASCADE)
     job_offer = models.ForeignKey(JobOffer, on_delete=models.CASCADE)
-    extracted_text = models.TextField(blank=True, null=True)
+    resume = models.ForeignKey(
+        Resume, null=True, blank=True, on_delete=models.SET_NULL, related_name='applications'
+    )
     status = models.CharField(max_length=16, choices=Status.choices, default=Status.PENDING)
     applied_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
@@ -33,40 +66,17 @@ class Application(models.Model):
     def __str__(self):
         return f"{self.job_seeker.user.email} -> {self.job_offer.title}"
 
-    def extract_text_from_resume(self):
-        """Extrait le texte du CV du candidat."""
-        if not self.job_seeker.resume:
-            return None
-        try:
-            pdf_bytes = self.job_seeker.resume.read()
-            pdf_reader = PyPDF2.PdfReader(io.BytesIO(pdf_bytes))
-            text = ""
-            for page in pdf_reader.pages:
-                text += page.extract_text() or ""
-            return " ".join(text.split())
-        except PyPDF2.errors.PdfReadError as e:
-            logger.error(f"PDF parse error for job seeker {self.job_seeker_id}: {e}")
-            raise CVExtractionError(f"Could not parse the uploaded resume: {e}") from e
-        except Exception as e:
-            logger.exception(f"Unexpected error extracting resume for job seeker {self.job_seeker_id}")
-            raise CVExtractionError("Unexpected error reading the resume file.") from e
-
-
-
 
 class Feedback(models.Model):
-    from interviews.models import Interview
-
-    interview = models.ForeignKey(Interview, on_delete=models.CASCADE)
+    interview = models.ForeignKey('interviews.Interview', on_delete=models.CASCADE)
     recruiter = models.ForeignKey(Recruiter, on_delete=models.CASCADE)
     comments = models.TextField(blank=True, null=True)
-    rating = models.IntegerField()  # Contrainte dans le modèle ci-dessous
-
+    rating = models.IntegerField()
     created_at = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
-        return f"Feedback for {self.interview.application.job_seeker.user.email}"
-    
+        return f"Feedback for interview {self.interview_id}"
+
     def save(self, *args, **kwargs):
         if self.rating < 1 or self.rating > 5:
             raise ValueError("Rating must be between 1 and 5")

@@ -133,4 +133,72 @@ class MeView(APIView):
         if role is None:
             user_role = UserRole.objects.filter(user=request.user).select_related('role').first()
             role = user_role.role.role_name if user_role else None
-        return Response({'email': request.user.email, 'role': role})
+        return Response({
+            'id': request.user.id,
+            'email': request.user.email,
+            'first_name': request.user.first_name,
+            'last_name': request.user.last_name,
+            'role': role,
+        })
+
+
+class MeProfileView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        token = getattr(request, 'auth', None)
+        role = None
+        if token is not None and hasattr(token, '__getitem__'):
+            try:
+                role = token['role']
+            except KeyError:
+                pass
+        if role is None:
+            user_role = UserRole.objects.filter(user=request.user).select_related('role').first()
+            role = user_role.role.role_name if user_role else None
+
+        if role == 'RECRUITER':
+            try:
+                recruiter = request.user.recruiter
+                serializer = RecruiterProfileSerializer(recruiter)
+                return Response({'role': role, 'profile': serializer.data})
+            except Exception:
+                return Response({'error': 'Recruiter profile not found.'}, status=404)
+        elif role == 'JOBSEEKER':
+            try:
+                job_seeker = request.user.jobseeker
+                serializer = JobSeekerProfileSerializer(job_seeker)
+                return Response({'role': role, 'profile': serializer.data})
+            except Exception:
+                return Response({'error': 'Job seeker profile not found.'}, status=404)
+        return Response({'error': 'Role not determined.'}, status=400)
+
+    def patch(self, request):
+        token = getattr(request, 'auth', None)
+        role = None
+        if token is not None and hasattr(token, '__getitem__'):
+            try:
+                role = token['role']
+            except KeyError:
+                pass
+        if role is None:
+            user_role = UserRole.objects.filter(user=request.user).select_related('role').first()
+            role = user_role.role.role_name if user_role else None
+
+        if role == 'RECRUITER':
+            recruiter = request.user.recruiter
+            serializer = RecruiterProfileUpdateSerializer(
+                recruiter, data=request.data, partial=True, context={'request': request}
+            )
+            serializer.is_valid(raise_exception=True)
+            serializer.save()
+            return Response(RecruiterProfileSerializer(recruiter).data)
+        elif role == 'JOBSEEKER':
+            job_seeker = request.user.jobseeker
+            serializer = JobSeekerProfileUpdateSerializer(
+                job_seeker, data=request.data, partial=True, context={'request': request}
+            )
+            serializer.is_valid(raise_exception=True)
+            serializer.save()
+            return Response(JobSeekerProfileSerializer(job_seeker).data)
+        return Response({'error': 'Role not determined.'}, status=400)

@@ -166,7 +166,29 @@ class JobSeekerSignupSerializer(serializers.ModelSerializer):
             skills=skills,
             resume=resume
         )
-        logger.info("fin jobseeker create")   
+        logger.info("fin jobseeker create")
+
+        # Create a Resume row so the new JobSeeker has at least one resume
+        try:
+            from applications.models import Resume
+            from django.db import transaction
+            job_seeker_obj = JobSeeker.objects.get(user=user)
+            new_resume = Resume.objects.create(
+                job_seeker=job_seeker_obj,
+                original_file=resume,
+                label='CV initial',
+                is_default=True,
+                parsing_status='pending',
+            )
+
+            def _parse():
+                from applications.tasks import parse_resume_task
+                parse_resume_task.delay(new_resume.id)
+
+            transaction.on_commit(_parse)
+        except Exception as _e:
+            logger.warning(f"Could not create Resume row on registration: {_e}")
+
         # Ensure the Role exists, or create it if not
         logger.info("debut get role")
         rol, created = Role.objects.get_or_create(

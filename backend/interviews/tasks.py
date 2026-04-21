@@ -1,25 +1,15 @@
+import logging
 import os
 import subprocess
-import logging
 
-import spacy
 import whisper
 from celery import shared_task
 from django.db.models import Avg
 
-from .adapters.llm_client import get_llm
+from .adapters.llm_client import PROMPT_VERSION, get_llm
 
 logger = logging.getLogger(__name__)
 
-# --- spaCy ---
-_spacy_model_path = os.environ.get('SPACY_MODEL_PATH', '')
-try:
-    nlp_model = spacy.load(_spacy_model_path) if _spacy_model_path else None
-except Exception as _e:
-    logger.warning(f"spaCy model not loaded: {_e}")
-    nlp_model = None
-
-# --- Whisper ---
 _whisper_model = None
 
 
@@ -27,97 +17,188 @@ def _get_whisper_model():
     global _whisper_model
     if _whisper_model is None:
         try:
-            _whisper_model = whisper.load_model("small")
-        except Exception as _e:
-            logger.warning(f"Whisper model not loaded: {_e}")
+            _whisper_model = whisper.load_model('small')
+        except Exception as e:
+            logger.warning(f'Whisper model not loaded: {e}')
     return _whisper_model
 
 
-def extract_audio_ffmpeg(video_path):
+def extract_audio_ffmpeg(video_path: str) -> str:
     from django.conf import settings as django_settings
+
     audio_path = os.path.splitext(video_path)[0] + '.wav'
     media_root = os.path.realpath(django_settings.MEDIA_ROOT)
     if not os.path.realpath(video_path).startswith(media_root + os.sep):
-        raise ValueError("Video path is outside MEDIA_ROOT.")
+        raise ValueError('Video path is outside MEDIA_ROOT.')
     command = [
         'ffmpeg', '-nostdin',
         '-i', video_path,
         '-vn', '-acodec', 'pcm_s16le', '-ar', '44100', '-ac', '2',
         audio_path,
     ]
-    logger.info("Running ffmpeg audio extraction")
     try:
         subprocess.run(command, check=True, timeout=60)
-        logger.info(f"Audio extraction successful: {audio_path}")
         return audio_path
     except subprocess.CalledProcessError as e:
-        logger.error(f"FFmpeg failed: {e}")
-        raise RuntimeError("Failed to extract audio from video.") from e
+        raise RuntimeError('Failed to extract audio from video.') from e
 
 
-def transcribe_audio(audio_path):
+def transcribe_audio(audio_path: str) -> str:
     whisper_model = _get_whisper_model()
     if whisper_model is None:
-        raise RuntimeError("Whisper model is not available.")
-    with open(audio_path, 'rb'):  # ensures file is readable before transcribing
+        raise RuntimeError('Whisper model is not available.')
+    with open(audio_path, 'rb'):
         result = whisper_model.transcribe(audio_path)
         return result['text']  # type: ignore
 
 
-def evaluate_response(question, transcript):
-    return get_llm().evaluate_answer(
-        question_text=question.question_text,
-        transcript=transcript,
-    )
-
-
 # ---------------------------------------------------------------------------
-# Celery tasks
+# QuestionSet tasks
 # ---------------------------------------------------------------------------
 
 @shared_task(bind=True, max_retries=3, autoretry_for=(Exception,), retry_backoff=True)
-def generateQuestions(self, extracted_text, description, interview_id):
-    from .models import Interview, Question
+def generate_question_set_task(self, question_set_id: int):
+    from .models import QuestionSet, Question
+
     try:
-        interview = Interview.objects.get(id=interview_id)
-    except Interview.DoesNotExist:
-        logger.error(f"Interview not found: id={interview_id}")
+        qs = QuestionSet.objects.select_related('job_offer').get(id=question_set_id)
+    except QuestionSet.DoesNotExist:
+        logger.error(f'QuestionSet {question_set_id} not found.')
         return
 
-    # Idempotency: skip if questions already created
-    if Question.objects.filter(interview=interview).exists():
-        logger.info(f"Interview {interview_id} already has questions; skipping generation.")
+    if qs.status not in (QuestionSet.Status.DRAFT, QuestionSet.Status.FAILED):
+        logger.info(f'QuestionSet {question_set_id} is already {qs.status}; skipping.')
         return
 
-    questions = get_llm().generate_questions(
-        cv_text=extracted_text or '',
-        job_description=description,
-        n=2,
-    )
+    if Question.objects.filter(question_set=qs).exists():
+        logger.info(f'QuestionSet {question_set_id} already has questions; marking READY.')
+        qs.status = QuestionSet.Status.READY
+        qs.save(update_fields=['status', 'updated_at'])
+        return
+
+    job_offer = qs.job_offer
+    job_offer_snapshot = {
+        'title': job_offer.title,
+        'description': job_offer.description,
+        'requirements': job_offer.requirements or '',
+        'skills': job_offer.skills if isinstance(job_offer.skills, list) else [],
+    }
+
+    try:
+        questions = get_llm().generate_question_set(
+            job_offer_snapshot=job_offer_snapshot,
+            instructions=qs.recruiter_instructions,
+            count=qs.target_count,
+            question_type=qs.question_type,
+        )
+    except Exception as e:
+        logger.error(f'LLM call failed for QuestionSet {question_set_id}: {e}')
+        qs.status = QuestionSet.Status.FAILED
+        qs.save(update_fields=['status', 'updated_at'])
+        raise
 
     if not questions:
-        logger.error(f"No questions generated for interview {interview_id}")
+        logger.error(f'No questions generated for QuestionSet {question_set_id}')
+        qs.status = QuestionSet.Status.FAILED
+        qs.save(update_fields=['status', 'updated_at'])
         return
 
     Question.objects.bulk_create([
-        Question(interview=interview, question_text=q)
-        for q in questions if q and q.strip()
+        Question(question_set=qs, source=Question.Source.BASE, order=i, question_text=q)
+        for i, q in enumerate(questions) if q and q.strip()
     ])
-    logger.info(f"Created {len(questions)} questions for interview {interview_id}")
+
+    qs.status = QuestionSet.Status.READY
+    qs.model_used = 'deepseek-reasoner'
+    qs.prompt_version = PROMPT_VERSION
+    qs.save(update_fields=['status', 'model_used', 'prompt_version', 'updated_at'])
+    logger.info(f'QuestionSet {question_set_id} ready with {len(questions)} questions.')
 
 
 @shared_task(bind=True, max_retries=3, autoretry_for=(Exception,), retry_backoff=True)
-def evaluate_answer(self, answer_id):
-    from .models import Answer, Interview, InterviewResult
+def generate_probe_questions_task(self, interview_id: int):
+    from .models import Interview, Question
+
+    try:
+        interview = Interview.objects.select_related(
+            'application__resume__parsed',
+            'application__job_offer',
+            'question_set',
+        ).get(id=interview_id)
+    except Interview.DoesNotExist:
+        logger.error(f'Interview {interview_id} not found.')
+        return
+
+    if Question.objects.filter(interview=interview, source=Question.Source.PROBE).exists():
+        logger.info(f'Probe questions already exist for interview {interview_id}; skipping.')
+        return
+
+    job_offer = interview.application.job_offer
+    job_offer_snapshot = {
+        'title': job_offer.title,
+        'description': job_offer.description,
+        'requirements': job_offer.requirements or '',
+    }
+
+    cv_data: dict = {}
+    try:
+        if interview.application.resume:
+            parsed = interview.application.resume.parsed
+            cv_data = {
+                'skills': parsed.skills,
+                'experience': parsed.experience,
+                'summary': parsed.summary,
+            }
+    except Exception:
+        logger.warning(f'Could not load ResumeData for interview {interview_id}; using empty cv_data.')
+
+    base_questions = list(
+        Question.objects.filter(question_set=interview.question_set)
+        .values_list('question_text', flat=True)
+        .order_by('order')
+    ) if interview.question_set else []
+
+    from django.conf import settings as django_settings
+    n = getattr(django_settings, 'RECRUITMENT', {}).get('PROBE_QUESTION_COUNT', 2)
+
+    try:
+        probe_texts = get_llm().generate_probe_questions(
+            cv_data=cv_data,
+            job_offer_snapshot=job_offer_snapshot,
+            base_questions=base_questions,
+            n=n,
+        )
+    except Exception as e:
+        logger.error(f'Probe generation failed for interview {interview_id}: {e}')
+        raise
+
+    if probe_texts:
+        Question.objects.bulk_create([
+            Question(interview=interview, source=Question.Source.PROBE, order=i, question_text=q)
+            for i, q in enumerate(probe_texts) if q and q.strip()
+        ])
+        logger.info(f'Created {len(probe_texts)} probe questions for interview {interview_id}.')
+    else:
+        logger.warning(f'No probe questions generated for interview {interview_id}.')
+
+
+# ---------------------------------------------------------------------------
+# Evaluation task
+# ---------------------------------------------------------------------------
+
+@shared_task(bind=True, max_retries=3, autoretry_for=(Exception,), retry_backoff=True)
+def evaluate_answer(self, answer_id: int):
+    from .models import Answer, AnswerEvaluation
+    from .services.create_evaluation import create_answer_evaluation
+
     try:
         answer = Answer.objects.select_related('interview', 'question').get(id=answer_id)
     except Answer.DoesNotExist:
-        logger.error(f"Answer {answer_id} not found.")
+        logger.error(f'Answer {answer_id} not found.')
         return
 
-    # Idempotency: skip if already scored
-    if answer.score is not None:
-        logger.info(f"Answer {answer_id} already scored ({answer.score}); skipping.")
+    if AnswerEvaluation.objects.filter(answer=answer).exists():
+        logger.info(f'Answer {answer_id} already evaluated; skipping.')
         return
 
     video_path = answer.candidate_video.path
@@ -125,43 +206,41 @@ def evaluate_answer(self, answer_id):
     try:
         audio_path = extract_audio_ffmpeg(video_path)
         if not os.path.exists(audio_path) or os.path.getsize(audio_path) == 0:
-            logger.error("Audio extraction produced an empty file.")
-            return
+            raise RuntimeError('Audio extraction produced an empty file.')
     except Exception as e:
-        logger.error(f"Audio extraction failed for answer {answer_id}: {e}", exc_info=True)
-        return
+        logger.error(f'Audio extraction failed for answer {answer_id}: {e}', exc_info=True)
+        answer.evaluation_error = f'Audio extraction: {e}'
+        answer.save(update_fields=['evaluation_error'])
+        raise
 
     try:
         transcript = transcribe_audio(audio_path)
         if not transcript:
-            logger.error(f"Transcription returned empty for answer {answer_id}.")
-            return
+            raise RuntimeError('Transcription returned empty.')
         answer.transcript = transcript
         answer.save(update_fields=['transcript'])
     except Exception as e:
-        logger.error(f"Transcription failed for answer {answer_id}: {e}", exc_info=True)
-        return
+        logger.error(f'Transcription failed for answer {answer_id}: {e}', exc_info=True)
+        answer.evaluation_error = f'Transcription: {e}'
+        answer.save(update_fields=['evaluation_error'])
+        raise
 
     try:
-        score = evaluate_response(answer.question, transcript)
-        answer.score = score
-        answer.save(update_fields=['score'])
-    except Exception as e:
-        logger.error(f"Scoring failed for answer {answer_id}: {e}", exc_info=True)
-        return
-
-    interview = answer.interview
-    total_answers = Answer.objects.filter(interview=interview).count()
-    evaluated_answers = Answer.objects.filter(interview=interview).exclude(score=None).count()
-    logger.info(f"Interview {interview.id}: {evaluated_answers}/{total_answers} answers evaluated")
-
-    if total_answers == evaluated_answers:
-        overall_score = Answer.objects.filter(interview=interview).aggregate(Avg('score'))['score__avg']
-        interview_result, created = InterviewResult.objects.update_or_create(
-            interview=interview,
-            defaults={'score': overall_score},
+        result = get_llm().evaluate_answer_with_reasoning(
+            question_text=answer.question.question_text,
+            transcript=transcript,
         )
-        action = "Created" if created else "Updated"
-        logger.info(f"{action} InterviewResult for interview {interview.id} with score {overall_score}")
+        create_answer_evaluation(
+            answer=answer,
+            score=result['score'],
+            explanation=result['explanation'],
+            model_used='deepseek-reasoner',
+            prompt_version=PROMPT_VERSION,
+        )
+    except Exception as e:
+        logger.error(f'Scoring/evaluation failed for answer {answer_id}: {e}', exc_info=True)
+        answer.evaluation_error = f'Scoring: {e}'
+        answer.save(update_fields=['evaluation_error'])
+        raise
 
-    logger.info(f"evaluate_answer completed for answer {answer_id}")
+    logger.info(f'evaluate_answer completed for answer {answer_id}')
