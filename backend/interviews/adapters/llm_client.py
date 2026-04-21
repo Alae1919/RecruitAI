@@ -41,9 +41,8 @@ class DeepSeekClient:
         timeout = getattr(settings, 'RECRUITMENT', {}).get('LLM_TIMEOUT', 60)
         self._client = OpenAI(api_key=api_key, base_url=base_url, timeout=timeout)
 
-    def _chat(self, system: str, user: str, *, temperature: float = 0.5, max_tokens: int = 1000,
-              json_mode: bool = False) -> str:
-        kwargs: dict = dict(
+    def _chat(self, system: str, user: str, *, temperature: float = 0.5, max_tokens: int = 1000) -> str:
+        response = self._client.chat.completions.create(
             model='deepseek-reasoner',
             messages=[
                 {'role': 'system', 'content': system},
@@ -55,9 +54,6 @@ class DeepSeekClient:
             top_p=0.9,
             frequency_penalty=0.2,
         )
-        if json_mode:
-            kwargs['response_format'] = {'type': 'json_object'}
-        response = self._client.chat.completions.create(**kwargs)
         return response.choices[0].message.content.strip()  # type: ignore
 
     def generate_question_set(
@@ -146,7 +142,6 @@ class DeepSeekClient:
             user=user_prompt,
             temperature=0.2,
             max_tokens=300,
-            json_mode=True,
         )
         try:
             parsed = json.loads(raw)
@@ -174,7 +169,6 @@ class DeepSeekClient:
             user=user_prompt,
             temperature=0.1,
             max_tokens=800,
-            json_mode=True,
         )
         try:
             parsed = json.loads(raw)
@@ -205,7 +199,6 @@ class DeepSeekClient:
             user=user_prompt,
             temperature=0.2,
             max_tokens=500,
-            json_mode=True,
         )
         try:
             parsed = json.loads(raw)

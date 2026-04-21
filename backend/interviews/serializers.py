@@ -42,7 +42,7 @@ class QuestionSetSerializer(serializers.ModelSerializer):
             'created_at', 'updated_at', 'locked_at',
         ]
         read_only_fields = [
-            'id', 'version', 'model_used', 'prompt_version', 'task_id',
+            'id', 'job_offer', 'version', 'model_used', 'prompt_version', 'task_id',
             'created_at', 'updated_at', 'locked_at',
         ]
 

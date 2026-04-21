@@ -82,17 +82,21 @@ class QuestionSetDetailView(APIView):
         qs = self._get_qs(pk, request.user.recruiter)
         if qs.status == QuestionSet.Status.LOCKED:
             return Response({'error': 'Cannot modify a LOCKED QuestionSet.'}, status=status.HTTP_400_BAD_REQUEST)
-        # Only allow status transition to LOCKED or READY via PATCH
+
         new_status = request.data.get('status')
         if new_status == QuestionSet.Status.LOCKED:
             try:
                 lock_question_set(question_set_id=pk, recruiter=request.user.recruiter)
             except Exception as e:
                 return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
-        elif new_status:
-            serializer = QuestionSetSerializer(qs, data=request.data, partial=True)
+        else:
+            # Only allow safe recruiter-editable fields; all others are read-only on the serializer.
+            allowed_keys = {'status', 'question_type', 'target_count', 'recruiter_instructions'}
+            data = {k: v for k, v in request.data.items() if k in allowed_keys}
+            serializer = QuestionSetSerializer(qs, data=data, partial=True)
             serializer.is_valid(raise_exception=True)
             serializer.save()
+
         return Response(QuestionSetSerializer(self._get_qs(pk, request.user.recruiter)).data)
 
     def delete(self, request, pk):

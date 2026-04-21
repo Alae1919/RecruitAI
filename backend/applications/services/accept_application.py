@@ -2,7 +2,7 @@ from datetime import timedelta
 
 from django.db import transaction
 from django.utils import timezone
-from rest_framework.exceptions import PermissionDenied
+from rest_framework.exceptions import PermissionDenied, ValidationError
 
 from applications.models import Application
 from applications.tasks import send_acceptance_email
@@ -11,8 +11,6 @@ from users.models import Recruiter
 
 
 def accept_application(*, application_id: int, recruiter: Recruiter):
-    from rest_framework.exceptions import ValidationError
-
     with transaction.atomic():
         application = Application.objects.select_related(
             'job_offer__recruiter', 'job_seeker__user'

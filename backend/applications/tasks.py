@@ -44,9 +44,13 @@ def parse_resume_task(self, resume_id: int):
     from .models import Resume
 
     try:
-        Resume.objects.get(id=resume_id)
+        resume = Resume.objects.get(id=resume_id)
     except Resume.DoesNotExist:
         logger.error(f'Resume {resume_id} not found.')
+        return
+
+    if resume.parsing_status == Resume.ParsingStatus.READY:
+        logger.info(f'Resume {resume_id} already parsed; skipping.')
         return
 
     parse_resume(resume_id)

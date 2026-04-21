@@ -160,8 +160,8 @@ class InterviewEvaluation(models.Model):
 
     def save(self, *args, **kwargs):
         if self.pk and not self._state.adding:
-            update_fields = set(kwargs.get('update_fields') or [])
-            if update_fields and not update_fields.issubset(self._MUTABLE_FIELDS):
+            update_fields = kwargs.get('update_fields')
+            if update_fields is None or not set(update_fields).issubset(self._MUTABLE_FIELDS):
                 raise RuntimeError(
                     'InterviewEvaluation: only decision, decision_source, and reasoning are mutable.'
                 )

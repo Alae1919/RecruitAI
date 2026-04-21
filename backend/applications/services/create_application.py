@@ -1,4 +1,5 @@
 from django.db import transaction
+from rest_framework.exceptions import ValidationError
 
 from applications.models import Application, Resume
 from job_offers.models import JobOffer
@@ -6,7 +7,6 @@ from users.models import JobSeeker
 
 
 def create_application(*, job_seeker: JobSeeker, job_offer_id: int, resume_id: int | None = None) -> Application:
-    from rest_framework.exceptions import ValidationError, PermissionDenied
 
     job_offer = JobOffer.objects.get(id=job_offer_id)
 

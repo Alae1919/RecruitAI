@@ -1,4 +1,7 @@
+import uuid
+
 from django.db import transaction
+from rest_framework.exceptions import PermissionDenied, ValidationError
 
 from interviews.models import QuestionSet
 from job_offers.models import JobOffer
@@ -13,7 +16,6 @@ def generate_question_set(
     target_count: int = 5,
     recruiter_instructions: str = '',
 ) -> QuestionSet:
-    from rest_framework.exceptions import PermissionDenied
 
     job_offer = JobOffer.objects.select_related('recruiter').get(id=job_offer_id)
     if job_offer.recruiter_id != recruiter.id:
@@ -37,10 +39,12 @@ def generate_question_set(
             recruiter_instructions=recruiter_instructions,
         )
 
+        task_id = str(uuid.uuid4())
+        QuestionSet.objects.filter(id=qs.id).update(task_id=task_id)
+
         def _dispatch():
             from interviews.tasks import generate_question_set_task
-            result = generate_question_set_task.delay(qs.id)
-            QuestionSet.objects.filter(id=qs.id).update(task_id=result.id)
+            generate_question_set_task.apply_async(args=[qs.id], task_id=task_id)
 
         transaction.on_commit(_dispatch)
 
@@ -48,7 +52,6 @@ def generate_question_set(
 
 
 def regenerate_question_set(*, question_set_id: int, recruiter: Recruiter, instructions: str = '') -> QuestionSet:
-    from rest_framework.exceptions import PermissionDenied, ValidationError
 
     qs = QuestionSet.objects.select_related('job_offer__recruiter').get(id=question_set_id)
     if qs.job_offer.recruiter_id != recruiter.id:
@@ -63,10 +66,12 @@ def regenerate_question_set(*, question_set_id: int, recruiter: Recruiter, instr
             qs.recruiter_instructions = instructions
         qs.save(update_fields=['status', 'recruiter_instructions', 'updated_at'])
 
+        task_id = str(uuid.uuid4())
+        QuestionSet.objects.filter(id=qs.id).update(task_id=task_id)
+
         def _dispatch():
             from interviews.tasks import generate_question_set_task
-            result = generate_question_set_task.delay(qs.id)
-            QuestionSet.objects.filter(id=qs.id).update(task_id=result.id)
+            generate_question_set_task.apply_async(args=[qs.id], task_id=task_id)
 
         transaction.on_commit(_dispatch)
 
