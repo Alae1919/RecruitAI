@@ -40,4 +40,15 @@ export {
   fetchQuestions,
   sendVideo,
   fetchAnswers,
+  getInterviewEvaluation,
+  overrideEvaluationDecision,
 } from "../shared/api/interviews";
+
+export { generateJobDescription } from "../shared/api/jobOffers";
+export { fetchMe, fetchMeProfile, updateMeProfile } from "../shared/api/auth";
+export { listMyResumes, createResume, patchResume, deleteResume } from "../shared/api/resumes";
+export {
+  listQuestionSets, createQuestionSet, getQuestionSet, patchQuestionSet,
+  deleteQuestionSet, regenerateQuestionSet, createQuestion, patchQuestion, deleteQuestion,
+} from "../shared/api/questionSets";
+export { getInterviewEvaluation as getEvaluation, overrideDecision } from "../shared/api/evaluations";

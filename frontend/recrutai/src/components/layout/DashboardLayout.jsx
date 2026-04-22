@@ -5,6 +5,8 @@ import { Logo } from '../navigation/PublicHeader';
 import { Briefcase, Users, Plus, LogOut, User, Calendar } from 'lucide-react';
 import Avatar from '../ui/Avatar';
 
+const BriefcaseIcon = Briefcase;
+
 /* ── Sidebar ───────────────────────────────────────────────────────── */
 function Sidebar({ navItems, user, onLogout }) {
   const displayName = user?.first_name

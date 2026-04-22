@@ -17,3 +17,6 @@ export const deleteOffer = (id) =>
 
 export const listCandidates = (jobOfferId) =>
   request({ method: "GET", url: `/job_offers/${jobOfferId}/Candidates/` });
+
+export const generateJobDescription = (data) =>
+  request({ method: "POST", url: "/job_offers/generate-description/", data });

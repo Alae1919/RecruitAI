@@ -10,11 +10,7 @@ export const fetchJobSeekerInterviews = () =>
   request({ method: "GET", url: "/interviews/listinterviews/" }).then(d => d.results ?? d);
 
 export const fetchQuestions = (interviewId) =>
-  request({
-    method: "POST",
-    url: "/interviews/questions/",
-    data: { interview_id: interviewId },
-  });
+  request({ method: "GET", url: `/interviews/${interviewId}/questions/` });
 
 export const sendVideo = (formData) =>
   request({
@@ -30,3 +26,10 @@ export const fetchAnswers = (interviewId) =>
     url: "/interviews/answers/",
     data: { interview_id: interviewId },
   });
+
+// New evaluation endpoints
+export const getInterviewEvaluation = (interviewId) =>
+  request({ method: "GET", url: `/interviews/${interviewId}/evaluation/` });
+
+export const overrideEvaluationDecision = (interviewId, data) =>
+  request({ method: "PATCH", url: `/interviews/${interviewId}/evaluation/decision/`, data });

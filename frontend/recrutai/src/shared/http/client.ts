@@ -108,6 +108,13 @@ interface ErrorResponseData {
   errors?: Record<string, string[]>;
 }
 
+export function resolveMediaUrl(relativePath: string): string {
+  if (!relativePath) return '';
+  if (relativePath.startsWith('http')) return relativePath;
+  const base = process.env.REACT_APP_BACKEND_URL ?? '';
+  return `${base}/${relativePath.replace(/^\//, '')}`;
+}
+
 export async function request<T = unknown>(config: AxiosRequestConfig): Promise<T> {
   try {
     const res = await apiClient(config);

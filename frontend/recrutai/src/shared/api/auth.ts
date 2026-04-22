@@ -49,3 +49,13 @@ export const refreshToken = (refresh: string) =>
   apiClient
     .post<Pick<AuthTokens, 'access' | 'refresh'>>('/users/token/refresh/', { refresh })
     .then(r => r.data);
+
+// New profile-separation endpoints
+export const fetchMe = () =>
+  request<AuthUser>({ method: 'GET', url: '/users/me/' });
+
+export const fetchMeProfile = () =>
+  request({ method: 'GET', url: '/users/me/profile/' });
+
+export const updateMeProfile = (data: Record<string, unknown> | FormData) =>
+  request({ method: 'PATCH', url: '/users/me/profile/', data });

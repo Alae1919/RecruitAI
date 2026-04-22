@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { fetchAnswers } from '../../services/api';
+import { resolveMediaUrl } from '../../shared/http/client';
 import { ArrowLeft, VideoOff, FileText, Mic } from 'lucide-react';
 
 const ArrowLeftIcon = ({ size = 14 }) => <ArrowLeft size={size} strokeWidth={2.5} />;
@@ -147,7 +148,7 @@ export default function JobSeekerInterviewAnswers({ interviewId, onBack }) {
                     className="w-full"
                   >
                     <source
-                      src={`${process.env.REACT_APP_BACKEND_URL}${selected.video_url}`}
+                      src={resolveMediaUrl(selected.video_url)}
                       type="video/webm"
                     />
                     Your browser does not support the video tag.
