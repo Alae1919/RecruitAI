@@ -5,6 +5,7 @@ import Button from '../ui/Button';
 import SearchComponent from '../ui/animated-glowing-search-bar';
 import Pagination from '../ui/Pagination';
 import JobOffersFilters from '../jobOffers/JobOffersFilters';
+import ResumePickerModal from './resumes/ResumePickerModal';
 import { MapPin, DollarSign, Tag, Briefcase, Bell, Sparkles } from 'lucide-react';
 import { useAllJobOffers, useApplyForJob } from '../../shared/hooks/useApplications';
 
@@ -39,7 +40,8 @@ function SkeletonCard() {
 export default function JobSeekerApplications() {
   const [searchParams, setSearchParams] = useSearchParams();
   const { toast } = useToast();
-  const [applied, setApplied] = useState(new Set());
+  const [applied, setApplied]       = useState(new Set());
+  const [pickerOffer, setPickerOffer] = useState(null);
 
   const page    = parseInt(searchParams.get('page') || '1', 10);
   const search  = searchParams.get('search') || '';
@@ -81,10 +83,12 @@ export default function JobSeekerApplications() {
     });
   };
 
-  const handleApply = async (offerId) => {
+  const handleConfirmApply = async (resumeId) => {
+    if (!pickerOffer) return;
     try {
-      await applyMutation.mutateAsync(offerId);
-      setApplied(prev => new Set([...prev, offerId]));
+      await applyMutation.mutateAsync({ jobOfferId: pickerOffer.id, resumeId });
+      setApplied(prev => new Set([...prev, pickerOffer.id]));
+      setPickerOffer(null);
       toast.success('Application submitted successfully!');
     } catch (err) {
       toast.error(err?.message || 'Failed to submit application.');
@@ -215,8 +219,8 @@ export default function JobSeekerApplications() {
                       ) : (
                         <Button
                           size="sm"
-                          loading={applyMutation.isPending && applyMutation.variables === offer.id}
-                          onClick={() => handleApply(offer.id)}
+                          loading={applyMutation.isPending && applyMutation.variables?.jobOfferId === offer.id}
+                          onClick={() => setPickerOffer(offer)}
                         >
                           Apply
                         </Button>
@@ -236,6 +240,14 @@ export default function JobSeekerApplications() {
           </div>
         )}
       </div>
+
+      <ResumePickerModal
+        isOpen={!!pickerOffer}
+        onClose={() => setPickerOffer(null)}
+        offerTitle={pickerOffer?.title}
+        onConfirm={handleConfirmApply}
+        loading={applyMutation.isPending}
+      />
     </div>
   );
 }
