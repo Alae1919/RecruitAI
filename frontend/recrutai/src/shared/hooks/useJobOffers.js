@@ -1,10 +1,13 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { listOffers, createOffer, editOffer, deleteOffer, listCandidates } from '../api/jobOffers';
+import { listOffers, createOffer, editOffer, deleteOffer, listCandidates, generateJobDescription } from '../api/jobOffers';
 
 export const JOB_OFFERS_KEY = ['jobOffers'];
 
-export function useJobOffers() {
-  return useQuery({ queryKey: JOB_OFFERS_KEY, queryFn: listOffers });
+export function useJobOffers(params = {}) {
+  return useQuery({
+    queryKey: [...JOB_OFFERS_KEY, params],
+    queryFn: () => listOffers(params),
+  });
 }
 
 export function useCreateOffer() {
@@ -37,4 +40,8 @@ export function useCandidates(jobOfferId) {
     queryFn: () => listCandidates(jobOfferId),
     enabled: !!jobOfferId,
   });
+}
+
+export function useGenerateJobDescription() {
+  return useMutation({ mutationFn: generateJobDescription });
 }

@@ -4,11 +4,12 @@ import { fetchCandidatesForJobOffer } from '../../services/api';
 import { useToast } from '../../hooks/useToast';
 import { Button, Input, Modal, ConfirmModal } from '../ui/index';
 import SearchComponent from '../ui/animated-glowing-search-bar';
-import { Search, Filter, Plus, Trash2, Pencil, Bell, Briefcase, Users, MessageSquare } from 'lucide-react';
-import { useJobOffers, useEditOffer, useDeleteOffer } from '../../shared/hooks/useJobOffers';
+import { Search, Plus, Trash2, Pencil, Bell, Briefcase, Users, MessageSquare, Sparkles } from 'lucide-react';
+import { useJobOffers, useEditOffer, useDeleteOffer, useGenerateJobDescription } from '../../shared/hooks/useJobOffers';
 import { StatusBadge, KpiCard } from '../ui/index';
 import Pagination from '../ui/Pagination';
 import JobOffersFilters from '../jobOffers/JobOffersFilters';
+import AsyncTaskBanner from '../ui/AsyncTaskBanner';
 
 const SearchIcon    = ({ size = 14 }) => <Search size={size} />;
 const PlusIcon      = ({ size = 14 }) => <Plus size={size} />;
@@ -94,8 +95,9 @@ export default function ViewOffers() {
   const queryParams = { ...filters, page, page_size: PAGE_SIZE, ...(search ? { search } : {}) };
   const { data, isLoading: loading, isError: error } = useJobOffers(queryParams);
 
-  const editMutation   = useEditOffer();
-  const deleteMutation = useDeleteOffer();
+  const editMutation     = useEditOffer();
+  const deleteMutation   = useDeleteOffer();
+  const generateMutation = useGenerateJobDescription();
   const { toast } = useToast();
 
   const [editingOffer, setEditingOffer]   = useState(null);
@@ -103,6 +105,7 @@ export default function ViewOffers() {
   const [candidatesOffer, setCandidatesOffer] = useState(null);
   const [candidates, setCandidates]       = useState([]);
   const [loadingCandidates, setLoadingCandidates] = useState(false);
+  const [regenState, setRegenState]       = useState('idle');
 
   const offersList = data?.results ?? (Array.isArray(data) ? data : []);
   const totalCount = data?.count ?? offersList.length;
@@ -138,8 +141,27 @@ export default function ViewOffers() {
       await editMutation.mutateAsync({ id: editingOffer.id, data: editingOffer });
       toast.success('Offer updated successfully.');
       setEditingOffer(null);
+      setRegenState('idle');
     } catch {
       toast.error('Failed to save changes. Please try again.');
+    }
+  };
+
+  const handleRegenerate = async () => {
+    if (!editingOffer?.title) return;
+    const skills = (editingOffer.requirements || '').split(',').map(s => s.trim()).filter(Boolean);
+    if (!skills.length) { toast.error('Add requirements (comma-separated skills) first.'); return; }
+    setRegenState('pending');
+    try {
+      const result = await generateMutation.mutateAsync({
+        title: editingOffer.title,
+        skills,
+        experience_level: 'mid',
+      });
+      setEditingOffer(prev => ({ ...prev, description: result.description }));
+      setRegenState('success');
+    } catch {
+      setRegenState('failed');
     }
   };
 
@@ -343,12 +365,12 @@ export default function ViewOffers() {
       {/* Edit modal */}
       <Modal
         isOpen={!!editingOffer}
-        onClose={() => setEditingOffer(null)}
+        onClose={() => { setEditingOffer(null); setRegenState('idle'); }}
         title="Edit Offer"
         size="lg"
         footer={
           <>
-            <Button variant="secondary" onClick={() => setEditingOffer(null)}>Cancel</Button>
+            <Button variant="secondary" onClick={() => { setEditingOffer(null); setRegenState('idle'); }}>Cancel</Button>
             <Button loading={editMutation.isPending} onClick={handleSave}>Save Changes</Button>
           </>
         }
@@ -356,8 +378,31 @@ export default function ViewOffers() {
         {editingOffer && (
           <div className="space-y-4">
             <Input label="Job Title" name="title" value={editingOffer.title || ''} onChange={handleEditChange} required />
-            <Input label="Description" name="description" as="textarea" value={editingOffer.description || ''} onChange={handleEditChange} className="min-h-[80px]" />
-            <Input label="Requirements" name="requirements" value={editingOffer.requirements || ''} onChange={handleEditChange} />
+            <div>
+              <div className="flex items-center justify-between mb-1">
+                <label className="block text-[11px] font-medium text-brand-text-muted uppercase tracking-wider">Description</label>
+                <button
+                  type="button"
+                  onClick={handleRegenerate}
+                  disabled={regenState === 'pending'}
+                  className="inline-flex items-center gap-1 h-6 px-2 rounded-md text-[11px] font-medium transition-all disabled:opacity-50"
+                  style={{ background: 'rgba(245,158,11,0.08)', border: '1px solid rgba(245,158,11,0.2)', color: '#F59E0B' }}>
+                  <Sparkles size={11} />
+                  {regenState === 'pending' ? 'Generating…' : 'Regenerate with AI'}
+                </button>
+              </div>
+              {regenState !== 'idle' && (
+                <div className="mb-2">
+                  <AsyncTaskBanner
+                    state={regenState}
+                    label="Regenerating description"
+                    onRetry={() => setRegenState('idle')}
+                  />
+                </div>
+              )}
+              <Input name="description" as="textarea" value={editingOffer.description || ''} onChange={handleEditChange} className="min-h-[80px]" />
+            </div>
+            <Input label="Requirements" name="requirements" value={editingOffer.requirements || ''} onChange={handleEditChange} placeholder="comma-separated skills, e.g. Go, Docker, PostgreSQL" />
             <div className="grid grid-cols-2 gap-4">
               <Input label="Salary Range" name="salary_range" value={editingOffer.salary_range || ''} onChange={handleEditChange} />
               <Input label="Location" name="location" value={editingOffer.location || ''} onChange={handleEditChange} />
