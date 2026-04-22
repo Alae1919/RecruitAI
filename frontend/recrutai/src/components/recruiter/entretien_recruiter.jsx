@@ -1,16 +1,20 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { fetchRecruiterInterviews } from '../../services/api';
 import { useApi } from '../../hooks/useApi';
 import Button from '../ui/Button';
-import { Bell, Video, Mic, Sparkles, ExternalLink } from 'lucide-react';
+import Modal from '../ui/Modal';
+import { Bell, Video, Mic, Sparkles, ExternalLink, BarChart2 } from 'lucide-react';
 import Avatar from '../ui/Avatar';
 import StatusBadge from '../ui/StatusBadge';
+import EvaluationPanel from '../interviews/EvaluationPanel';
+import OverrideDecisionForm from '../interviews/OverrideDecisionForm';
 
 const BellIcon        = ({ size = 15 }) => <Bell size={size} />;
 const VideoIcon       = ({ size = 14 }) => <Video size={size} />;
 const MicIcon         = ({ size = 40 }) => <Mic size={size} strokeWidth={1.5} />;
 const SparklesIcon    = ({ size = 12 }) => <Sparkles size={size} />;
 const ExternalLinkIcon = ({ size = 12 }) => <ExternalLink size={size} />;
+const EvalIcon        = ({ size = 12 }) => <BarChart2 size={size} />;
 
 /* ── Status badge label map (entretien uses different display labels) ── */
 function InterviewStatusBadge({ status }) {
@@ -73,6 +77,7 @@ function EmptyState() {
 /* ── Main component ─────────────────────────────────────────────────── */
 export default function RecruiterInterviews() {
   const { data, loading, error, refetch } = useApi(fetchRecruiterInterviews, []);
+  const [evalInterview, setEvalInterview] = useState(null);
 
   const interviews = Array.isArray(data)
     ? data.map(i => ({
@@ -203,6 +208,7 @@ export default function RecruiterInterviews() {
                             <InterviewStatusBadge status={i.status} />
                           </td>
                           <td className="px-6 py-4">
+                            <div className="flex items-center gap-1.5">
                             {i.status !== 'available' && i.video ? (
                               <button
                                 onClick={() => window.open(i.video, '_blank')}
@@ -215,6 +221,17 @@ export default function RecruiterInterviews() {
                             ) : (
                               <span className="text-xs text-brand-text-disabled font-mono">No video</span>
                             )}
+                            {i.status === 'evaluated' && (
+                              <button
+                                onClick={() => setEvalInterview(i)}
+                                className="h-7 px-2.5 text-xs rounded-lg inline-flex items-center gap-1.5 transition-colors font-medium"
+                                style={{ background: 'rgba(99,102,241,0.1)', border: '1px solid rgba(99,102,241,0.25)', color: '#818CF8' }}
+                                onMouseEnter={e => e.currentTarget.style.background = 'rgba(99,102,241,0.18)'}
+                                onMouseLeave={e => e.currentTarget.style.background = 'rgba(99,102,241,0.1)'}>
+                                <EvalIcon /> Evaluation
+                              </button>
+                            )}
+                            </div>
                           </td>
                         </tr>
                       ))
@@ -265,6 +282,27 @@ export default function RecruiterInterviews() {
           )}
         </div>
       </div>
+
+      {/* Evaluation modal */}
+      <Modal
+        isOpen={!!evalInterview}
+        onClose={() => setEvalInterview(null)}
+        title={`Evaluation — ${evalInterview?.candidateName}`}
+        size="lg"
+      >
+        {evalInterview && (
+          <EvaluationPanel
+            interviewId={evalInterview.id}
+            readOnly={false}
+            footer={
+              <OverrideDecisionForm
+                interviewId={evalInterview.id}
+                currentDecision={evalInterview.decision}
+              />
+            }
+          />
+        )}
+      </Modal>
     </div>
   );
 }

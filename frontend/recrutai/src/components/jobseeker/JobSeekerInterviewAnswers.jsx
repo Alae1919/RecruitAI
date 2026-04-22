@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { fetchAnswers } from '../../services/api';
 import { resolveMediaUrl } from '../../shared/http/client';
 import { ArrowLeft, VideoOff, FileText, Mic } from 'lucide-react';
+import EvaluationPanel from '../interviews/EvaluationPanel';
 
 const ArrowLeftIcon = ({ size = 14 }) => <ArrowLeft size={size} strokeWidth={2.5} />;
 const VideoOffIcon  = ({ size = 22 }) => <VideoOff size={size} strokeWidth={1.5} />;
@@ -215,6 +216,17 @@ export default function JobSeekerInterviewAnswers({ interviewId, onBack }) {
                 </button>
               </div>
             </div>
+          </div>
+        )}
+
+        {/* Evaluation section */}
+        {!loading && !error && answers.length > 0 && (
+          <div className="mt-6 rounded-2xl p-6"
+            style={{ background: '#101420', border: '1px solid rgba(35,42,62,0.8)' }}>
+            <div className="text-[10px] font-mono uppercase tracking-widest text-brand-text-disabled mb-4">
+              Interview Evaluation
+            </div>
+            <EvaluationPanel interviewId={interviewId} readOnly />
           </div>
         )}
       </div>
