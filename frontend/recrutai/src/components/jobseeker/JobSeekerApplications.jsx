@@ -1,11 +1,13 @@
 import React, { useState } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { useToast } from '../../hooks/useToast';
 import Button from '../ui/Button';
 import SearchComponent from '../ui/animated-glowing-search-bar';
-import { Search, MapPin, DollarSign, Tag, Briefcase, Bell, Sparkles } from 'lucide-react';
+import Pagination from '../ui/Pagination';
+import JobOffersFilters from '../jobOffers/JobOffersFilters';
+import { MapPin, DollarSign, Tag, Briefcase, Bell, Sparkles } from 'lucide-react';
 import { useAllJobOffers, useApplyForJob } from '../../shared/hooks/useApplications';
 
-const SearchIcon   = ({ size = 15 }) => <Search size={size} />;
 const MapPinIcon   = ({ size = 13 }) => <MapPin size={size} />;
 const DollarIcon   = ({ size = 13 }) => <DollarSign size={size} />;
 const TagIcon      = ({ size = 13 }) => <Tag size={size} />;
@@ -13,7 +15,8 @@ const BriefcaseIcon = ({ size = 22 }) => <Briefcase size={size} strokeWidth={1.5
 const BellIcon     = ({ size = 15 }) => <Bell size={size} />;
 const SparklesIcon = ({ size = 12 }) => <Sparkles size={size} />;
 
-/* ── Skeleton card ──────────────────────────────────────────────────── */
+const PAGE_SIZE = 20;
+
 function SkeletonCard() {
   return (
     <div className="rounded-2xl p-5 animate-pulse" style={{ background: '#101420', border: '1px solid rgba(35,42,62,0.8)' }}>
@@ -34,16 +37,49 @@ function SkeletonCard() {
 }
 
 export default function JobSeekerApplications() {
-  const { data, isLoading: loading, isError: error, refetch } = useAllJobOffers();
-  const applyMutation = useApplyForJob();
+  const [searchParams, setSearchParams] = useSearchParams();
   const { toast } = useToast();
   const [applied, setApplied] = useState(new Set());
-  const [search, setSearch] = useState('');
 
-  const offers = Array.isArray(data) ? data : [];
-  const filtered = offers.filter(o =>
-    [o.title, o.description, o.location].some(f => f?.toLowerCase().includes(search.toLowerCase()))
-  );
+  const page    = parseInt(searchParams.get('page') || '1', 10);
+  const search  = searchParams.get('search') || '';
+  const filters = {
+    title:          searchParams.get('title')          || '',
+    location:       searchParams.get('location')       || '',
+    experience_min: searchParams.get('experience_min') || '',
+    ordering:       searchParams.get('ordering')       || '-created_at',
+  };
+
+  const queryParams = { ...filters, page, page_size: PAGE_SIZE, ...(search ? { search } : {}) };
+  const { data, isLoading: loading, isError: error, refetch } = useAllJobOffers(queryParams);
+  const applyMutation = useApplyForJob();
+
+  const offers = data?.results ?? (Array.isArray(data) ? data : []);
+  const totalCount = data?.count ?? offers.length;
+
+  const setParam = (key, value) => {
+    setSearchParams(prev => {
+      const next = new URLSearchParams(prev);
+      if (value) next.set(key, value); else next.delete(key);
+      return next;
+    });
+  };
+
+  const handleFiltersChange = (newFilters) => {
+    setSearchParams(prev => {
+      const next = new URLSearchParams(prev);
+      Object.entries(newFilters).forEach(([k, v]) => {
+        if (v && v !== '' && !(k === 'ordering' && v === '-created_at') && k !== 'page') {
+          next.set(k, v);
+        } else {
+          next.delete(k);
+        }
+      });
+      if (newFilters.page && newFilters.page !== 1) next.set('page', String(newFilters.page));
+      else next.delete('page');
+      return next;
+    });
+  };
 
   const handleApply = async (offerId) => {
     try {
@@ -51,8 +87,7 @@ export default function JobSeekerApplications() {
       setApplied(prev => new Set([...prev, offerId]));
       toast.success('Application submitted successfully!');
     } catch (err) {
-      const msg = err?.message || 'Failed to submit application.';
-      toast.error(msg);
+      toast.error(err?.message || 'Failed to submit application.');
     }
   };
 
@@ -67,7 +102,7 @@ export default function JobSeekerApplications() {
         <div className="flex items-center gap-2">
           {!loading && (
             <span className="text-xs text-brand-text-disabled font-mono">
-              {filtered.length} offer{filtered.length !== 1 ? 's' : ''}
+              {totalCount} offer{totalCount !== 1 ? 's' : ''}
             </span>
           )}
           <span className="inline-flex items-center gap-1.5 h-7 px-2.5 rounded-lg text-[11px] font-medium"
@@ -84,13 +119,14 @@ export default function JobSeekerApplications() {
 
       <div className="px-8 py-6 max-w-[960px] mx-auto">
 
-        {/* Search bar */}
-        <div className="flex justify-center mb-10">
-          <SearchComponent 
-            value={search} 
-            onChange={e => setSearch(e.target.value)} 
-            placeholder="Search by title, location, description…" 
+        {/* Search + filters */}
+        <div className="flex items-center justify-between gap-3 mb-8 flex-wrap">
+          <SearchComponent
+            value={search}
+            onChange={e => { setParam('search', e.target.value); setParam('page', ''); }}
+            placeholder="Search by title, location, description…"
           />
+          <JobOffersFilters filters={filters} onChange={handleFiltersChange} />
         </div>
 
         {/* Error */}
@@ -110,7 +146,7 @@ export default function JobSeekerApplications() {
         )}
 
         {/* Empty */}
-        {!loading && filtered.length === 0 && (
+        {!loading && offers.length === 0 && (
           <div className="flex flex-col items-center py-20 gap-4">
             <div className="w-14 h-14 rounded-2xl grid place-items-center text-brand-text-disabled"
               style={{ background: 'rgba(35,42,62,0.5)', border: '1px solid rgba(35,42,62,0.8)' }}>
@@ -118,28 +154,27 @@ export default function JobSeekerApplications() {
             </div>
             <div className="text-center">
               <div className="text-sm font-semibold text-brand-text-primary">
-                {search ? 'No matching offers' : 'No offers available'}
+                {search || Object.values(filters).some(Boolean) ? 'No matching offers' : 'No offers available'}
               </div>
               <div className="text-xs text-brand-text-muted mt-1">
-                {search ? 'Try a different search term.' : 'Check back later for new opportunities.'}
+                {search || Object.values(filters).some(Boolean) ? 'Try adjusting your filters.' : 'Check back later for new opportunities.'}
               </div>
             </div>
           </div>
         )}
 
         {/* Offer cards */}
-        {!loading && filtered.length > 0 && (
+        {!loading && offers.length > 0 && (
           <div className="space-y-3">
-            {filtered.map(offer => {
+            {offers.map(offer => {
               const isApplied = applied.has(offer.id);
               return (
-                <div key={offer.id} className="rounded-2xl p-5 transition-all group"
+                <div key={offer.id} className="rounded-2xl p-5 transition-all"
                   style={{ background: '#101420', border: '1px solid rgba(35,42,62,0.8)' }}
                   onMouseEnter={e => { e.currentTarget.style.borderColor = 'rgba(245,158,11,0.25)'; e.currentTarget.style.background = 'rgba(24,30,46,0.9)'; }}
                   onMouseLeave={e => { e.currentTarget.style.borderColor = 'rgba(35,42,62,0.8)'; e.currentTarget.style.background = '#101420'; }}>
                   <div className="flex items-start justify-between gap-4">
                     <div className="flex gap-4 flex-1 min-w-0">
-                      {/* Icon */}
                       <div className="w-10 h-10 rounded-xl grid place-items-center shrink-0 mt-0.5"
                         style={{ background: 'rgba(245,158,11,0.1)', border: '1px solid rgba(245,158,11,0.2)', color: '#F59E0B' }}>
                         <BriefcaseIcon size={17} />
@@ -170,7 +205,6 @@ export default function JobSeekerApplications() {
                       </div>
                     </div>
 
-                    {/* Apply button */}
                     <div className="shrink-0">
                       {isApplied ? (
                         <span className="inline-flex items-center gap-1.5 h-8 px-3 rounded-xl text-xs font-semibold"
@@ -192,6 +226,13 @@ export default function JobSeekerApplications() {
                 </div>
               );
             })}
+
+            <Pagination
+              count={totalCount}
+              page={page}
+              pageSize={PAGE_SIZE}
+              onChange={p => setParam('page', p === 1 ? '' : String(p))}
+            />
           </div>
         )}
       </div>
