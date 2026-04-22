@@ -8,12 +8,13 @@ import Home     from '../pages/home';
 import Login    from '../pages/login';
 import Register from '../pages/Register';
 
-const RecruiterDashboard    = lazy(() => import('../pages/RecruiterDashboard'));
-const ViewOffers            = lazy(() => import('../components/recruiter/ViewOffers'));
-const AddOffer              = lazy(() => import('../components/recruiter/AddOffer'));
-const RecruiterProfile      = lazy(() => import('../components/recruiter/RecruiterProfile'));
-const RecruiterCandidates   = lazy(() => import('../components/recruiter/recruiter_candidate'));
-const RecruiterInterviews   = lazy(() => import('../components/recruiter/entretien_recruiter'));
+const RecruiterDashboard       = lazy(() => import('../pages/RecruiterDashboard'));
+const ViewOffers               = lazy(() => import('../components/recruiter/ViewOffers'));
+const AddOffer                 = lazy(() => import('../components/recruiter/AddOffer'));
+const RecruiterProfile         = lazy(() => import('../components/recruiter/RecruiterProfile'));
+const RecruiterCandidates      = lazy(() => import('../components/recruiter/recruiter_candidate'));
+const RecruiterInterviews      = lazy(() => import('../components/recruiter/entretien_recruiter'));
+const InterviewQuestionsPage   = lazy(() => import('../components/recruiter/questions/InterviewQuestionsPage'));
 const JobseekerDashboard    = lazy(() => import('../pages/JobseekerDashboard'));
 const JobSeekerEntretien    = lazy(() => import('../components/jobseeker/JobSeekerEntretien'));
 const JobSeekerProfile      = lazy(() => import('../components/jobseeker/JobSeekerProfile'));
@@ -74,6 +75,7 @@ export default function AppRoutes() {
             <Route path="profile" element={<RecruiterProfile />} />
             <Route path="recruiter_candidate" element={<RecruiterCandidates />} />
             <Route path="recruiter_candidate_entretien" element={<RecruiterInterviews />} />
+            <Route path="offers/:offerId/questions" element={<InterviewQuestionsPage />} />
           </Route>
 
           <Route
