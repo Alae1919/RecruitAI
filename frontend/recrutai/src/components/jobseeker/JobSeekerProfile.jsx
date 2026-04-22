@@ -1,17 +1,15 @@
-import React, { useRef, useState } from 'react';
+import React, { useState } from 'react';
 import { getJobSeekerProfile, updateJobSeekerProfile } from '../../services/api';
 import { useApi } from '../../hooks/useApi';
 import { useToast } from '../../hooks/useToast';
 import Input from '../ui/Input';
 import Button from '../ui/Button';
-import { Bell, Pencil, File, Upload, ExternalLink } from 'lucide-react';
+import { Bell, Pencil } from 'lucide-react';
 import Avatar from '../ui/Avatar';
+import ResumeManager from './resumes/ResumeManager';
 
-const BellIcon         = ({ size = 15 }) => <Bell size={size} />;
-const EditIcon         = ({ size = 14 }) => <Pencil size={size} />;
-const FileIcon         = ({ size = 18 }) => <File size={size} />;
-const UploadIcon       = ({ size = 18 }) => <Upload size={size} />;
-const ExternalLinkIcon = ({ size = 14 }) => <ExternalLink size={size} />;
+const BellIcon = ({ size = 15 }) => <Bell size={size} />;
+const EditIcon = ({ size = 14 }) => <Pencil size={size} />;
 
 /* ── Section label ──────────────────────────────────────────────────── */
 function SectionLabel({ children }) {
@@ -22,66 +20,6 @@ function SectionLabel({ children }) {
         {children}
       </div>
       <div className="flex-1 h-px" style={{ background: 'rgba(245,158,11,0.12)' }} />
-    </div>
-  );
-}
-
-/* ── File upload zone ───────────────────────────────────────────────── */
-function FileUploadZone({ file, onChange, inputRef }) {
-  const [dragging, setDragging] = useState(false);
-  const onDrop = (e) => {
-    e.preventDefault();
-    setDragging(false);
-    const f = e.dataTransfer.files[0];
-    if (f) onChange({ target: { files: [f] } });
-  };
-  return (
-    <div className="space-y-1.5">
-      <label className="block text-xs font-medium text-brand-text-muted">
-        CV / Resume
-      </label>
-      <div
-        className="relative rounded-xl cursor-pointer transition-all duration-200"
-        style={{
-          border: dragging ? '1.5px dashed rgba(245,158,11,0.6)' : '1.5px dashed rgba(35,42,62,0.9)',
-          background: dragging ? 'rgba(245,158,11,0.04)' : 'rgba(16,20,32,0.6)',
-          boxShadow: dragging ? '0 0 20px rgba(245,158,11,0.08)' : 'none',
-        }}
-        onClick={() => inputRef.current?.click()}
-        onDragOver={e => { e.preventDefault(); setDragging(true); }}
-        onDragLeave={() => setDragging(false)}
-        onDrop={onDrop}
-        onMouseEnter={e => { if (!dragging) e.currentTarget.style.borderColor = 'rgba(245,158,11,0.3)'; }}
-        onMouseLeave={e => { if (!dragging) e.currentTarget.style.borderColor = 'rgba(35,42,62,0.9)'; }}>
-        <input ref={inputRef} type="file" name="resume" accept=".pdf,.doc,.docx" onChange={onChange} className="sr-only" />
-        <div className="p-5 flex flex-col items-center gap-2 text-center">
-          {file ? (
-            <>
-              <div className="w-9 h-9 rounded-xl grid place-items-center"
-                style={{ background: 'rgba(245,158,11,0.12)', border: '1px solid rgba(245,158,11,0.25)', color: '#F59E0B' }}>
-                <FileIcon />
-              </div>
-              <div>
-                <p className="text-sm font-medium" style={{ color: '#F59E0B' }}>{file.name}</p>
-                <p className="text-[11px] text-brand-text-disabled mt-0.5">{(file.size / 1024 / 1024).toFixed(2)} MB · Click to change</p>
-              </div>
-            </>
-          ) : (
-            <>
-              <div className="w-9 h-9 rounded-xl grid place-items-center text-brand-text-disabled"
-                style={{ background: 'rgba(35,42,62,0.6)', border: '1px solid rgba(35,42,62,0.8)' }}>
-                <UploadIcon />
-              </div>
-              <div>
-                <p className="text-sm font-medium text-brand-text-muted">
-                  Drop your CV here, or <span style={{ color: '#F59E0B' }}>browse</span>
-                </p>
-                <p className="text-[11px] text-brand-text-disabled mt-0.5">PDF, DOC, DOCX · Max 10 MB</p>
-              </div>
-            </>
-          )}
-        </div>
-      </div>
     </div>
   );
 }
@@ -108,16 +46,14 @@ export default function JobSeekerProfile() {
   const [isEditing, setIsEditing] = useState(false);
   const [draft, setDraft]         = useState(null);
   const [saving, setSaving]       = useState(false);
-  const fileInputRef = useRef(null);
 
   const profile = raw
-    ? { email: raw.email, fullName: raw.full_name, phone: raw.phone, address: raw.address, experience: raw.experience, skills: raw.skills, cv: raw.resume, resume: null }
+    ? { email: raw.email, fullName: raw.full_name, phone: raw.phone, address: raw.address, experience: raw.experience, skills: raw.skills }
     : null;
 
   const handleEdit = () => { setDraft({ ...profile }); setIsEditing(true); };
   const handleCancel = () => { setDraft(null); setIsEditing(false); };
   const handleChange = (e) => setDraft(p => ({ ...p, [e.target.name]: e.target.value }));
-  const handleFile   = (e) => setDraft(p => ({ ...p, resume: e.target.files[0] }));
 
   const handleSave = async () => {
     setSaving(true);
@@ -127,7 +63,6 @@ export default function JobSeekerProfile() {
       toast.success('Profile saved successfully.');
       setIsEditing(false);
       setDraft(null);
-      if (fileInputRef.current) fileInputRef.current.value = '';
     } catch {
       toast.error('Failed to save profile. Please try again.');
     } finally {
@@ -186,15 +121,6 @@ export default function JobSeekerProfile() {
                 <>
                   <h2 className="text-xl font-bold text-brand-text-primary truncate">{displayName}</h2>
                   <div className="text-xs text-brand-text-disabled mt-1 font-mono">{profile?.email}</div>
-                  {profile?.cv && !isEditing && (
-                    <a href={profile.cv} target="_blank" rel="noopener noreferrer"
-                      className="inline-flex items-center gap-1.5 text-xs font-medium mt-2 transition-colors"
-                      style={{ color: '#F59E0B' }}
-                      onMouseEnter={e => e.currentTarget.style.color = '#FCD34D'}
-                      onMouseLeave={e => e.currentTarget.style.color = '#F59E0B'}>
-                      <ExternalLinkIcon size={12} /> View current CV
-                    </a>
-                  )}
                 </>
               )}
             </div>
@@ -267,30 +193,10 @@ export default function JobSeekerProfile() {
         {/* Resume section */}
         <div className="rounded-2xl overflow-hidden mb-8" style={{ background: '#101420', border: '1px solid rgba(35,42,62,0.8)' }}>
           <div className="px-6 py-4" style={{ borderBottom: '1px solid rgba(35,42,62,0.6)' }}>
-            <SectionLabel>Resume</SectionLabel>
+            <SectionLabel>Resumes</SectionLabel>
           </div>
           <div className="p-6">
-            {isEditing ? (
-              <FileUploadZone file={draft?.resume} onChange={handleFile} inputRef={fileInputRef} />
-            ) : (
-              <div className="flex items-center gap-3">
-                <div className="w-9 h-9 rounded-xl grid place-items-center text-brand-text-disabled"
-                  style={{ background: 'rgba(35,42,62,0.6)', border: '1px solid rgba(35,42,62,0.8)' }}>
-                  <FileIcon />
-                </div>
-                {profile?.cv ? (
-                  <a href={profile.cv} target="_blank" rel="noopener noreferrer"
-                    className="text-sm font-medium inline-flex items-center gap-1.5 transition-colors"
-                    style={{ color: '#F59E0B' }}
-                    onMouseEnter={e => e.currentTarget.style.color = '#FCD34D'}
-                    onMouseLeave={e => e.currentTarget.style.color = '#F59E0B'}>
-                    <ExternalLinkIcon size={13} /> View current CV
-                  </a>
-                ) : (
-                  <span className="text-sm text-brand-text-disabled">No CV uploaded yet</span>
-                )}
-              </div>
-            )}
+            <ResumeManager />
           </div>
         </div>
 
