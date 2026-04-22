@@ -1,5 +1,5 @@
 import { createContext, useContext, useState, useEffect, useCallback } from "react";
-import { fetchCurrentUser, logoutUser } from "../shared/api/auth";
+import { fetchMe as apiFetchMe, logoutUser } from "../shared/api/auth";
 
 const AuthContext = createContext(null);
 
@@ -15,7 +15,7 @@ export const AuthProvider = ({ children }) => {
       return null;
     }
     try {
-      const data = await fetchCurrentUser();
+      const data = await apiFetchMe();
       setUser(data);
       return data;
     } catch {
