@@ -51,10 +51,22 @@ export default function JobOffersFilters({ filters = {}, onChange }) {
     onChange({ ordering: '-created_at', page: 1 });
   };
 
+  const panelRef = useRef(null);
+  useEffect(() => {
+    if (!open) return;
+    const handleClick = (e) => {
+      if (panelRef.current && !panelRef.current.contains(e.target)) setOpen(false);
+    };
+    document.addEventListener('mousedown', handleClick);
+    return () => document.removeEventListener('mousedown', handleClick);
+  }, [open]);
+
   return (
-    <div className="relative">
+    <div className="relative" ref={panelRef}>
       <button
         onClick={() => setOpen(v => !v)}
+        aria-expanded={open}
+        aria-haspopup="true"
         className="h-9 px-3 rounded-lg text-xs inline-flex items-center gap-1.5 transition-all"
         style={{
           border: `1px solid ${open || hasActive ? 'rgba(245,158,11,0.4)' : 'rgba(35,42,62,0.8)'}`,
@@ -82,7 +94,8 @@ export default function JobOffersFilters({ filters = {}, onChange }) {
                   Reset
                 </button>
               )}
-              <button onClick={() => setOpen(false)} className="text-brand-text-disabled hover:text-brand-text-muted transition-colors">
+              <button onClick={() => setOpen(false)} aria-label="Close filters"
+                className="text-brand-text-disabled hover:text-brand-text-muted transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-amber-400/50 rounded">
                 <X size={14} />
               </button>
             </div>

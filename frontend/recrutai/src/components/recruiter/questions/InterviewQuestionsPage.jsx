@@ -112,7 +112,8 @@ export default function InterviewQuestionsPage() {
       <div className="h-14 px-6 flex items-center gap-3 sticky top-0 z-20"
         style={{ borderBottom: '1px solid rgba(35,42,62,0.7)', background: 'rgba(9,12,20,0.85)', backdropFilter: 'blur(12px)' }}>
         <button onClick={() => navigate(-1)}
-          className="w-8 h-8 rounded-lg grid place-items-center text-brand-text-muted transition-colors"
+          aria-label="Go back"
+          className="w-8 h-8 rounded-lg grid place-items-center text-brand-text-muted transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-400/50"
           style={{ border: '1px solid rgba(35,42,62,0.7)' }}
           onMouseEnter={e => e.currentTarget.style.background = 'rgba(35,42,62,0.5)'}
           onMouseLeave={e => e.currentTarget.style.background = 'transparent'}>

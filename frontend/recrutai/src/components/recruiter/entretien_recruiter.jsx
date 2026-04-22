@@ -115,7 +115,7 @@ export default function RecruiterInterviews() {
             style={{ background: 'rgba(245,158,11,0.08)', border: '1px solid rgba(245,158,11,0.2)', color: '#F59E0B' }}>
             <SparklesIcon /> AI-evaluated
           </span>
-          <button className="w-9 h-9 rounded-lg text-brand-text-muted grid place-items-center transition-colors"
+          <button aria-label="Notifications" className="w-9 h-9 rounded-lg text-brand-text-muted grid place-items-center transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-400/50"
             onMouseEnter={e => e.currentTarget.style.background = 'rgba(35,42,62,0.6)'}
             onMouseLeave={e => e.currentTarget.style.background = 'transparent'}>
             <BellIcon />

@@ -56,7 +56,8 @@ export default function ResumeCard({ resume, onSetDefault, onDelete, isSettingDe
         <div className="flex items-center gap-1 shrink-0">
           {resume.file_url && (
             <a href={resume.file_url} target="_blank" rel="noopener noreferrer"
-              className="w-7 h-7 rounded-md grid place-items-center transition-colors text-brand-text-disabled"
+              aria-label={`View ${resume.label || `Resume #${resume.id}`}`}
+              className="w-7 h-7 rounded-md grid place-items-center transition-colors text-brand-text-disabled focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-400/50"
               style={{ border: '1px solid rgba(35,42,62,0.7)', background: 'rgba(35,42,62,0.4)' }}
               onMouseEnter={e => { e.currentTarget.style.color = '#F59E0B'; e.currentTarget.style.borderColor = 'rgba(245,158,11,0.3)'; }}
               onMouseLeave={e => { e.currentTarget.style.color = ''; e.currentTarget.style.borderColor = 'rgba(35,42,62,0.7)'; }}>
@@ -67,7 +68,8 @@ export default function ResumeCard({ resume, onSetDefault, onDelete, isSettingDe
             <button
               onClick={() => onSetDefault(resume.id)}
               disabled={isSettingDefault}
-              className="h-7 px-2 rounded-md text-[11px] inline-flex items-center gap-1 transition-colors text-brand-text-disabled disabled:opacity-50"
+              aria-label="Set as default resume"
+              className="h-7 px-2 rounded-md text-[11px] inline-flex items-center gap-1 transition-colors text-brand-text-disabled disabled:opacity-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-400/50"
               style={{ border: '1px solid rgba(35,42,62,0.7)', background: 'rgba(35,42,62,0.4)' }}
               onMouseEnter={e => { e.currentTarget.style.color = '#F59E0B'; e.currentTarget.style.borderColor = 'rgba(245,158,11,0.3)'; }}
               onMouseLeave={e => { e.currentTarget.style.color = ''; e.currentTarget.style.borderColor = 'rgba(35,42,62,0.7)'; }}>
@@ -77,7 +79,8 @@ export default function ResumeCard({ resume, onSetDefault, onDelete, isSettingDe
           <button
             onClick={() => setShowConfirm(true)}
             disabled={isDeleting}
-            className="w-7 h-7 rounded-md grid place-items-center transition-colors text-brand-text-disabled disabled:opacity-50"
+            aria-label="Delete resume"
+            className="w-7 h-7 rounded-md grid place-items-center transition-colors text-brand-text-disabled disabled:opacity-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-400/50"
             style={{ border: '1px solid rgba(35,42,62,0.7)', background: 'rgba(35,42,62,0.4)' }}
             onMouseEnter={e => { e.currentTarget.style.color = '#F87171'; e.currentTarget.style.borderColor = 'rgba(239,68,68,0.3)'; e.currentTarget.style.background = 'rgba(239,68,68,0.08)'; }}
             onMouseLeave={e => { e.currentTarget.style.color = ''; e.currentTarget.style.borderColor = 'rgba(35,42,62,0.7)'; e.currentTarget.style.background = 'rgba(35,42,62,0.4)'; }}>

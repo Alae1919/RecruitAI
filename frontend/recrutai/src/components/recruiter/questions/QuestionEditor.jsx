@@ -43,22 +43,26 @@ export default function QuestionEditor({ question, onSave, onDelete, readOnly, i
           {editing ? (
             <>
               <button onClick={handleSave} disabled={isSaving}
-                className="w-6 h-6 rounded grid place-items-center text-green-400 hover:text-green-300 transition-colors disabled:opacity-50">
+                aria-label="Save changes"
+                className="w-6 h-6 rounded grid place-items-center text-green-400 hover:text-green-300 transition-colors disabled:opacity-50 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-green-400/60">
                 <Check size={13} />
               </button>
               <button onClick={handleCancel}
-                className="w-6 h-6 rounded grid place-items-center text-brand-text-disabled hover:text-brand-text-muted transition-colors">
+                aria-label="Cancel editing"
+                className="w-6 h-6 rounded grid place-items-center text-brand-text-disabled hover:text-brand-text-muted transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-amber-400/40">
                 <X size={13} />
               </button>
             </>
           ) : (
             <>
               <button onClick={() => setEditing(true)}
-                className="w-6 h-6 rounded grid place-items-center text-brand-text-disabled hover:text-amber-400 transition-colors opacity-0 group-hover:opacity-100">
+                aria-label="Edit question"
+                className="w-6 h-6 rounded grid place-items-center text-brand-text-disabled hover:text-amber-400 transition-colors opacity-0 group-hover:opacity-100 focus-visible:opacity-100 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-amber-400/60">
                 <Pencil size={12} />
               </button>
               <button onClick={() => onDelete(question.id)} disabled={isDeleting}
-                className="w-6 h-6 rounded grid place-items-center text-brand-text-disabled hover:text-red-400 transition-colors opacity-0 group-hover:opacity-100 disabled:opacity-50">
+                aria-label="Delete question"
+                className="w-6 h-6 rounded grid place-items-center text-brand-text-disabled hover:text-red-400 transition-colors opacity-0 group-hover:opacity-100 disabled:opacity-50 focus-visible:opacity-100 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-red-400/60">
                 <Trash2 size={12} />
               </button>
             </>
