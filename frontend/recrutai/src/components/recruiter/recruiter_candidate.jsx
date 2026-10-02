@@ -1,5 +1,5 @@
 import { useQueryClient } from '@tanstack/react-query';
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { Viewer, Worker } from '@react-pdf-viewer/core';
 import '@react-pdf-viewer/core/lib/styles/index.css';
@@ -140,6 +140,7 @@ export default function JobOffersWithCandidates() {
   const [searchParams, setSearchParams] = useSearchParams();
   const navigate = useNavigate();
   const offerId = searchParams.get('offer');
+  const candidateParam = Number(searchParams.get('candidate')) || null;
 
   const [jobOffers, setJobOffers] = useState([]);
   const [candidates, setCandidates] = useState([]);
@@ -199,6 +200,18 @@ export default function JobOffersWithCandidates() {
     setQ('');
     if (offerId) loadCandidates(offerId);
   }, [offerId, loadCandidates]);
+
+  // arriving from the command palette: preselect that candidate (once per link)
+  const appliedLinkRef = useRef(null);
+  useEffect(() => {
+    const link = `${offerId}:${candidateParam}`;
+    if (candidateParam && appliedLinkRef.current !== link && candidates.some(c => c.id === candidateParam)) {
+      appliedLinkRef.current = link;
+      setMode('list');
+      setStage('all');
+      setSelectedId(candidateParam);
+    }
+  }, [offerId, candidateParam, candidates]);
 
   const counts = useMemo(() => countByStage(candidates), [candidates]);
   const visible = useMemo(

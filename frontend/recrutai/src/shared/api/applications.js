@@ -27,6 +27,9 @@ export const advanceCandidate = (applicationId) =>
 export const sendCandidateMessage = (applicationId, data) =>
   request({ method: "POST", url: `/applications/${applicationId}/messages/`, data });
 
+export const searchCandidates = (q) =>
+  request({ method: "GET", url: `/applications/search/?q=${encodeURIComponent(q)}` });
+
 export const getPipelineSummary = () =>
   request({ method: "GET", url: "/applications/pipeline/" });
 
