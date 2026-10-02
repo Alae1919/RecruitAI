@@ -30,6 +30,8 @@ An AI-powered recruitment platform built as a final-year internship project (PFE
 - **Post-a-job wizard**: Describe, then Details, Requirements, Screening and Preview. AI drafts the description. Must-have and nice-to-have skills, experience range, department, employment type and screening options are all saved. "Save draft" works.
 - **Candidate pipeline**: Applied, Screening, Interview, Offer, Hired. Stage tabs with counts, a 5-column Kanban, and match-score rings. Strong CVs (≥ 7.5/10) are auto-shortlisted into Screening, which can be switched off per offer. One click moves a candidate forward (invite, then offer, then hired).
 - **Candidate detail**: contact info, AI assessment (recommendation, strengths, gaps), parsed CV (summary, experience, skills, languages), the interview questions with the CV-based ones flagged, the AI score, and a stage timeline.
+- **Candidate actions**: drag a card one stage forward on the Kanban board, schedule when the interview is due (the candidate is emailed), and send an email to the candidate from a template, with the history kept on their profile.
+- **Quick search**: Ctrl/⌘+K opens a command palette to jump to any candidate, offer or page.
 - **Interview question sets**: versioned DRAFT, READY, LOCKED lifecycle per offer. Generate, edit, add and delete questions before they are locked for candidates.
 - **Transparent evaluation**: per-answer scores, AI explanations, model name and prompt version, plus a recruiter decision override with reasoning.
 - **Sidebar**: offer and candidate counts and a live per-stage Pipeline block.
@@ -427,7 +429,6 @@ docker compose -f docker-compose.prod.yml up --build -d
 - **JWT in `localStorage`** is vulnerable to XSS. Moving the refresh token to an `HttpOnly` cookie is the recommended next step.
 - **No per-user LLM cost cap.** There is rate limiting (`llm`: 20/hour per user), but no daily budget.
 - **Polling, not push.** Async task completion uses 2–5 s polling rather than WebSockets.
-- **Recruiter actions not implemented yet**: scheduling an interview date, messaging a candidate, and drag-and-drop between Kanban columns.
 
 ---
 
