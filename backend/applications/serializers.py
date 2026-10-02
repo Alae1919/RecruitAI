@@ -44,11 +44,12 @@ class ApplicationSerializer(serializers.ModelSerializer):
     candidate_name = serializers.SerializerMethodField()
     resume_url = serializers.SerializerMethodField()
     eligibility_score = serializers.SerializerMethodField()
+    stage = serializers.CharField(read_only=True)
 
     class Meta:
         model = Application
         fields = [
-            'id', 'job_offer_title', 'status', 'applied_at', 'updated_at',
+            'id', 'job_offer_title', 'status', 'stage', 'applied_at', 'updated_at',
             'candidate_name', 'resume_url', 'eligibility_score',
         ]
 

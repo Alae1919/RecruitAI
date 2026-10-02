@@ -4,7 +4,7 @@ from rest_framework import status, generics, viewsets
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework.permissions import IsAuthenticated
-from rest_framework.exceptions import PermissionDenied
+from rest_framework.exceptions import PermissionDenied, ValidationError
 from rest_framework.parsers import MultiPartParser, FormParser
 
 from .models import Application, Feedback, Resume
@@ -23,6 +23,7 @@ from job_offers.models import JobOffer
 
 from .services.create_application import create_application
 from .services.accept_application import accept_application
+from .services.advance_application import advance_application
 from .services.reject_application import reject_application
 from .services.upload_resume import upload_resume, set_default_resume
 from .selectors import list_jobseeker_applications, list_jobseeker_resumes
@@ -196,5 +197,28 @@ class RejectApplicationView(APIView):
             return Response({'error': 'Application not found.'}, status=status.HTTP_404_NOT_FOUND)
         except PermissionDenied as e:
             return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
+
+        return Response(ApplicationSerializer(application, context={'request': request}).data)
+
+
+class AdvanceApplicationView(APIView):
+    permission_classes = [IsAuthenticated, IsRecruiter]
+    throttle_scope = 'llm'
+
+    def post(self, request, *args, **kwargs):
+        application_id = request.data.get('application_id')
+        if not application_id:
+            return Response({'error': 'Missing application_id.'}, status=status.HTTP_400_BAD_REQUEST)
+
+        try:
+            application = advance_application(
+                application_id=application_id, recruiter=request.user.recruiter
+            )
+        except Application.DoesNotExist:
+            return Response({'error': 'Application not found.'}, status=status.HTTP_404_NOT_FOUND)
+        except PermissionDenied as e:
+            return Response({'error': str(e)}, status=status.HTTP_403_FORBIDDEN)
+        except ValidationError as e:
+            return Response({'error': ' '.join(str(m) for m in e.detail)}, status=status.HTTP_400_BAD_REQUEST)
 
         return Response(ApplicationSerializer(application, context={'request': request}).data)

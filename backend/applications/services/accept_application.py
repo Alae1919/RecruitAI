@@ -19,6 +19,9 @@ def accept_application(*, application_id: int, recruiter: Recruiter):
         if application.job_offer.recruiter_id != recruiter.id:
             raise PermissionDenied('Not the owner of this job offer.')
 
+        if application.status in (Application.Status.OFFER, Application.Status.HIRED):
+            raise ValidationError('This candidate is already past the interview stage.')
+
         # Find a READY QuestionSet before committing status change
         qs = (
             QuestionSet.objects.filter(

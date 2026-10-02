@@ -105,6 +105,7 @@ REST_FRAMEWORK = {
 
 RECRUITMENT = {
     'EVALUATION_PASS_THRESHOLD': float(os.environ.get('EVALUATION_PASS_THRESHOLD', '6.0')),
+    'AUTO_SHORTLIST_SCORE': float(os.environ.get('AUTO_SHORTLIST_SCORE', '7.5')),
     'PROBE_QUESTION_COUNT': int(os.environ.get('PROBE_QUESTION_COUNT', '2')),
     'LLM_TIMEOUT': int(os.environ.get('LLM_TIMEOUT', '60')),
 }

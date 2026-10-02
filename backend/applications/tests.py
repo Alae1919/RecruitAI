@@ -271,3 +271,86 @@ class TestParseResumeService(TestCase):
         from applications.services.parse_resume import parse_resume
         parse_resume(self.resume.id)
         mock_extract.assert_not_called()
+
+
+# ---------------------------------------------------------------------------
+# Pipeline stage + advance_application
+# ---------------------------------------------------------------------------
+
+from core.models import CVAnalysis
+from applications.services.advance_application import advance_application
+
+
+class TestApplicationStage(TestCase):
+    def setUp(self):
+        self.recruiter = _make_recruiter()
+        self.job_offer = _make_job_offer(self.recruiter)
+        self.job_seeker = _make_job_seeker()
+        self.app = Application.objects.create(job_seeker=self.job_seeker, job_offer=self.job_offer)
+
+    def test_pending_without_analysis_is_applied(self):
+        self.assertEqual(self.app.stage, 'applied')
+
+    def test_pending_below_threshold_is_applied(self):
+        CVAnalysis.objects.create(application=self.app, eligibility_score=5.0)
+        self.app.refresh_from_db()
+        self.assertEqual(self.app.stage, 'applied')
+
+    def test_pending_above_threshold_is_screening(self):
+        CVAnalysis.objects.create(application=self.app, eligibility_score=8.0)
+        self.app.refresh_from_db()
+        self.assertEqual(self.app.stage, 'screening')
+
+    def test_status_maps_to_later_stages(self):
+        for status_, stage in [
+            (Application.Status.ACCEPTED, 'interview'),
+            (Application.Status.OFFER, 'offer'),
+            (Application.Status.HIRED, 'hired'),
+            (Application.Status.REJECTED, 'rejected'),
+        ]:
+            self.app.status = status_
+            self.assertEqual(self.app.stage, stage)
+
+
+class TestAdvanceApplicationService(TestCase):
+    def setUp(self):
+        self.recruiter = _make_recruiter()
+        self.job_offer = _make_job_offer(self.recruiter)
+        _make_question_set(self.job_offer, qs_status=QuestionSet.Status.READY)
+        job_seeker = _make_job_seeker()
+        self.app = Application.objects.create(
+            job_seeker=job_seeker, job_offer=self.job_offer,
+            resume=_make_resume(job_seeker), status=Application.Status.PENDING,
+        )
+
+    def _advance(self):
+        return advance_application(application_id=self.app.id, recruiter=self.recruiter)
+
+    def test_full_pipeline_pending_to_hired(self):
+        self.assertEqual(self._advance().status, Application.Status.ACCEPTED)
+        self.assertTrue(Interview.objects.filter(application=self.app).exists())
+        self.assertEqual(self._advance().status, Application.Status.OFFER)
+        self.assertEqual(self._advance().status, Application.Status.HIRED)
+
+    def test_cannot_advance_past_hired(self):
+        self.app.status = Application.Status.HIRED
+        self.app.save()
+        with self.assertRaises(ValidationError):
+            self._advance()
+
+    def test_cannot_advance_rejected(self):
+        self.app.status = Application.Status.REJECTED
+        self.app.save()
+        with self.assertRaises(ValidationError):
+            self._advance()
+
+    def test_other_recruiter_is_denied(self):
+        other = _make_recruiter('other@test.com')
+        with self.assertRaises(PermissionDenied):
+            advance_application(application_id=self.app.id, recruiter=other)
+
+    def test_accept_cannot_regress_offer_stage(self):
+        self.app.status = Application.Status.OFFER
+        self.app.save()
+        with self.assertRaises(ValidationError):
+            accept_application(application_id=self.app.id, recruiter=self.recruiter)

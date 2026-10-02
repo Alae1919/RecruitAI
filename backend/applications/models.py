@@ -1,3 +1,5 @@
+from django.conf import settings
+from django.core.exceptions import ObjectDoesNotExist
 from django.db import models
 from users.models import JobSeeker, Recruiter
 from job_offers.models import JobOffer
@@ -46,6 +48,8 @@ class Application(models.Model):
     class Status(models.TextChoices):
         PENDING = 'pending', 'Pending'
         ACCEPTED = 'accepted', 'Accepted'
+        OFFER = 'offer', 'Offer'
+        HIRED = 'hired', 'Hired'
         REJECTED = 'rejected', 'Rejected'
 
     job_seeker = models.ForeignKey(JobSeeker, on_delete=models.CASCADE)
@@ -65,6 +69,27 @@ class Application(models.Model):
 
     def __str__(self):
         return f"{self.job_seeker.user.email} -> {self.job_offer.title}"
+
+    @property
+    def stage(self) -> str:
+        """Recruiter-facing pipeline stage derived from status + CV analysis.
+
+        applied -> screening (CV score above the auto-shortlist bar) -> interview
+        (accepted) -> offer -> hired; 'rejected' sits outside the pipeline.
+        """
+        S = self.Status
+        fixed = {
+            S.REJECTED: 'rejected', S.HIRED: 'hired',
+            S.OFFER: 'offer', S.ACCEPTED: 'interview',
+        }
+        if self.status in fixed:
+            return fixed[self.status]
+        try:
+            score = self.cv_analysis.eligibility_score
+        except ObjectDoesNotExist:
+            return 'applied'
+        threshold = settings.RECRUITMENT['AUTO_SHORTLIST_SCORE']
+        return 'screening' if score >= threshold else 'applied'
 
 
 class Feedback(models.Model):

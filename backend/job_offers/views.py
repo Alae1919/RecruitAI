@@ -111,7 +111,7 @@ class ListCandidatesOnJobOfferView(APIView):
                 status=status.HTTP_404_NOT_FOUND,
             )
         applications = Application.objects.filter(job_offer=job_offer).select_related(
-            'job_seeker__user', 'job_offer', 'resume'
+            'job_seeker__user', 'job_offer', 'resume', 'cv_analysis'
         )
         serializer = ApplicationSerializer(applications, many=True, context={'request': request})
         return Response(serializer.data)
