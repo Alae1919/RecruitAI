@@ -1,4 +1,4 @@
-import { STAGES, nextStageAction, canReject, countByStage, visibleCandidates, buildTimeline } from '../stages';
+import { STAGES, nextStageAction, canReject, countByStage, visibleCandidates, buildTimeline, dropTargetFor, canDrop } from '../stages';
 
 const mk = (id, stage, match_score, applied_at, name = `Cand ${id}`) =>
   ({ id, stage, match_score, applied_at, candidate_name: name });
@@ -102,5 +102,35 @@ describe('buildTimeline', () => {
 
   it('starts at Applied even with no events', () => {
     expect(buildTimeline()[0]).toMatchObject({ key: 'applied', state: 'upcoming' });
+  });
+});
+
+describe('dropTargetFor / canDrop', () => {
+  it('moves a card one step forward, matching the primary action', () => {
+    expect(dropTargetFor('applied')).toBe('interview');
+    expect(dropTargetFor('screening')).toBe('interview');
+    expect(dropTargetFor('interview')).toBe('offer');
+    expect(dropTargetFor('offer')).toBe('hired');
+  });
+
+  it('never allows dragging out of hired or rejected', () => {
+    expect(dropTargetFor('hired')).toBeNull();
+    expect(dropTargetFor('rejected')).toBeNull();
+    expect(dropTargetFor(undefined)).toBeNull();
+  });
+
+  it('allows only the single next column', () => {
+    expect(canDrop('screening', 'interview')).toBe(true);
+    expect(canDrop('screening', 'screening')).toBe(false);
+    expect(canDrop('applied', 'screening')).toBe(false);
+    expect(canDrop('interview', 'hired')).toBe(false);
+    expect(canDrop('interview', 'applied')).toBe(false);
+    expect(canDrop('hired', 'hired')).toBe(false);
+  });
+
+  it('agrees with nextStageAction: a drop is possible exactly when an advance is', () => {
+    ['applied', 'screening', 'interview', 'offer', 'hired', 'rejected'].forEach(stage => {
+      expect(dropTargetFor(stage) !== null).toBe(nextStageAction(stage) !== null);
+    });
   });
 });

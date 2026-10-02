@@ -84,3 +84,23 @@ export function buildTimeline(events = []) {
     state: !s.reached ? 'upcoming' : i === lastReached ? 'current' : 'done',
   }));
 }
+
+/**
+ * The column a card may be dropped on, or null. Stages are derived on the server, so a card
+ * can only move one step forward: applied/screening -> interview, interview -> offer, offer -> hired.
+ */
+export function dropTargetFor(stage) {
+  switch (stage) {
+    case 'applied':
+    case 'screening':
+      return 'interview';
+    case 'interview':
+      return 'offer';
+    case 'offer':
+      return 'hired';
+    default:
+      return null;
+  }
+}
+
+export const canDrop = (fromStage, toStage) => dropTargetFor(fromStage) === toStage;

@@ -337,7 +337,7 @@ export default function JobOffersWithCandidates() {
               style={{ borderColor: 'rgba(245,158,11,0.4)', borderTopColor: 'transparent' }} />
           </div>
         ) : (
-          <Kanban candidates={candidates} onSelect={openFromKanban} />
+          <Kanban candidates={candidates} onSelect={openFromKanban} onAdvance={handleAdvance} busyId={busyId} />
         )
       ) : (
         <div className="flex-1 grid grid-cols-[minmax(420px,480px)_1fr] min-h-0">
