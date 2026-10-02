@@ -490,12 +490,8 @@ def _video(name='answer.webm'):
     return SimpleUploadedFile(name, b'\x1a\x45\xdf\xa3fake-webm-bytes', content_type='video/webm')
 
 
-@override_settings(MEDIA_ROOT=_MEDIA)
-class TestInterviewMediaAccess(APITestCase):
-    @classmethod
-    def tearDownClass(cls):
-        super().tearDownClass()
-        shutil.rmtree(_MEDIA, ignore_errors=True)
+class _InterviewMediaFixture:
+    """One interview with a base and a probe question, plus a foreign question and strangers."""
 
     def setUp(self):
         self.recruiter = _make_recruiter('owner@rec.com')
@@ -519,6 +515,14 @@ class TestInterviewMediaAccess(APITestCase):
         return self.client.post('/api/interviews/uploadVideo/', {
             'interviewId': self.interview.id, 'questionId': question.id, 'video': _video(),
         }, format='multipart')
+
+
+@override_settings(MEDIA_ROOT=_MEDIA)
+class TestInterviewMediaAccess(_InterviewMediaFixture, APITestCase):
+    @classmethod
+    def tearDownClass(cls):
+        super().tearDownClass()
+        shutil.rmtree(_MEDIA, ignore_errors=True)
 
     @patch('interviews.tasks.evaluate_answer.delay')
     def test_candidate_can_upload_base_and_probe_answers(self, _):
@@ -563,3 +567,36 @@ class TestInterviewMediaAccess(APITestCase):
         for user in (self.other_candidate.user, self.other_recruiter.user):
             self.client.force_authenticate(user=user)
             self.assertEqual(self._answers().status_code, 403)
+
+
+# ---------------------------------------------------------------------------
+# Interview completion waits for every question
+# ---------------------------------------------------------------------------
+
+@override_settings(MEDIA_ROOT=_MEDIA)
+class TestInterviewCompletion(_InterviewMediaFixture, APITestCase):
+
+    @patch('interviews.tasks.evaluate_answer.delay')
+    def test_interview_completes_only_after_last_question(self, _):
+        self.client.force_authenticate(user=self.candidate.user)
+        self._upload(self.base_q)
+        self.interview.refresh_from_db()
+        self.assertEqual(self.interview.status, Interview.Status.AVAILABLE)
+        self._upload(self.probe_q)
+        self.interview.refresh_from_db()
+        self.assertEqual(self.interview.status, Interview.Status.COMPLETED)
+
+    def _eval(self, answer, score):
+        return create_answer_evaluation(
+            answer=answer, score=score, explanation='ok', model_used='m', prompt_version='v',
+        )
+
+    def test_not_finalized_while_a_question_is_unanswered(self):
+        a1 = _make_answer(self.interview, self.base_q)
+        self._eval(a1, 9.0)
+        self.assertFalse(InterviewEvaluation.objects.filter(interview=self.interview).exists())
+
+        a2 = _make_answer(self.interview, self.probe_q)
+        self._eval(a2, 5.0)
+        ie = InterviewEvaluation.objects.get(interview=self.interview)
+        self.assertAlmostEqual(ie.total_score, 7.0)

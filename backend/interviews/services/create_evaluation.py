@@ -4,6 +4,7 @@ from django.conf import settings
 from django.db import transaction
 
 from interviews.models import Answer, AnswerEvaluation, Interview, InterviewEvaluation
+from interviews.selectors import interview_question_ids
 
 logger = logging.getLogger(__name__)
 
@@ -49,14 +50,18 @@ def _try_finalize_interview(interview_id: int) -> None:
             logger.info(f'InterviewEvaluation already exists for interview {interview_id}; skipping.')
             return
 
-        total_answers = interview.answers.count()
-        if total_answers == 0:
+        # Finalize only once every interview question has an evaluated answer,
+        # not merely every answer uploaded so far.
+        question_ids = interview_question_ids(interview)
+        if not question_ids:
             return
 
-        evaluations = list(AnswerEvaluation.objects.filter(answer__interview=interview))
-        logger.info(f'Interview {interview_id}: {len(evaluations)}/{total_answers} answers evaluated')
+        evaluations = list(AnswerEvaluation.objects.filter(
+            answer__interview=interview, answer__question_id__in=question_ids,
+        ))
+        logger.info(f'Interview {interview_id}: {len(evaluations)}/{len(question_ids)} questions evaluated')
 
-        if len(evaluations) < total_answers:
+        if len(evaluations) < len(question_ids):
             return
 
         scores = [e.final_score for e in evaluations]

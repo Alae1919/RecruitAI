@@ -1,4 +1,4 @@
-from interviews.models import Interview, QuestionSet, Question
+from interviews.models import Answer, Interview, QuestionSet, Question
 from users.models import Recruiter, JobSeeker
 
 
@@ -31,6 +31,20 @@ def get_interview_questions(interview: Interview) -> list:
         Question.objects.filter(interview=interview).order_by('order', 'created_at')
     )
     return base_questions + probe_questions
+
+
+def interview_question_ids(interview: Interview) -> set[int]:
+    return {q.id for q in get_interview_questions(interview)}
+
+
+def all_questions_answered(interview: Interview) -> bool:
+    expected = interview_question_ids(interview)
+    if not expected:
+        return False
+    answered = set(
+        Answer.objects.filter(interview=interview, question_id__in=expected).values_list('question_id', flat=True)
+    )
+    return expected <= answered
 
 
 def list_question_sets(job_offer_id: int, recruiter: Recruiter):

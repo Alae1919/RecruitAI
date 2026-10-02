@@ -20,7 +20,9 @@ from .serializers import (
     InterviewEvaluationSerializer,
     InterviewEvaluationDecisionSerializer,
 )
-from .selectors import list_recruiter_interviews, list_jobseeker_interviews, get_interview_questions
+from .selectors import (
+    list_recruiter_interviews, list_jobseeker_interviews, get_interview_questions, all_questions_answered,
+)
 from .services.generate_question_set import generate_question_set, regenerate_question_set
 from .services.lock_question_set import lock_question_set
 from .services.override_decision import override_decision
@@ -345,11 +347,10 @@ def upload_video(request):
             return JsonResponse({'error': 'Video file is invalid or empty.'}, status=400)
 
         eval_task.delay(answer.id)
-        try:
+        # stays AVAILABLE (resumable) until the last question is answered
+        if interview.status != Interview.Status.COMPLETED and all_questions_answered(interview):
             interview.status = Interview.Status.COMPLETED
-            interview.save()
-        except Exception as e:
-            logger.error(f'Failed to update interview status: {e}', exc_info=True)
+            interview.save(update_fields=['status'])
 
         return JsonResponse({
             'success': True,
