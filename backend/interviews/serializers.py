@@ -118,6 +118,11 @@ class InterviewEvaluationDecisionSerializer(serializers.Serializer):
     reasoning = serializers.CharField()
 
 
+class InterviewScheduleSerializer(serializers.Serializer):
+    interview_date = serializers.DateTimeField()
+    interview_link = serializers.URLField(required=False, allow_blank=True)
+
+
 class InterviewSerializer(serializers.ModelSerializer):
     offer_name = serializers.CharField(source='application.job_offer.title', read_only=True)
     status_display = serializers.CharField(source='get_status_display', read_only=True)

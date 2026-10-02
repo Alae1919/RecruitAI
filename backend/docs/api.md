@@ -200,6 +200,7 @@ The recruiter manages versioned question sets per offer: `draft → ready → lo
 | POST | `interviews/answers/` | candidate or owning recruiter | `{interview_id}` → `{answers: [{question_id, question_text, video_url, transcript, score}]}` |
 | GET | `interviews/<id>/evaluation/` | candidate or owning recruiter | Full evaluation with per-answer breakdown. Returns `202` until it exists. |
 | PATCH | `interviews/<id>/evaluation/decision/` | owning recruiter | `{decision, reasoning}` → override (`decision_source` becomes `recruiter`) |
+| PATCH | `interviews/<id>/schedule/` | owning recruiter | `{interview_date, interview_link?}`: sets when the (asynchronous) interview is due and emails the candidate. The date must be in the future and the interview not yet completed. |
 
 ---
 
@@ -213,6 +214,7 @@ Celery workers use Redis as the broker. Tasks are idempotent and retry with back
 | `analyze_cv_task` | application created | LLM scores the CV against the offer → `CVAnalysis` |
 | `generate_question_set_task` | question-set create / regenerate | LLM base questions for the offer |
 | `generate_probe_questions_task` | candidate accepted | LLM CV-specific probe questions for that interview |
+| `send_interview_scheduled_email` | interview scheduled | Tells the candidate the due date and link |
 | `send_acceptance_email` | candidate accepted | Invitation email (SMTP). Addresses on `@recrutai.demo` (seed data) are never emailed; without SMTP credentials emails print to the worker log. |
 | `evaluate_answer` | video upload | ffmpeg → Whisper transcript (language taken from the question, because auto-detection mislabelled clear English as French) → LLM score → `AnswerEvaluation`; finalizes the interview when every question is scored |
 

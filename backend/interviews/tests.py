@@ -600,3 +600,90 @@ class TestInterviewCompletion(_InterviewMediaFixture, APITestCase):
         self._eval(a2, 5.0)
         ie = InterviewEvaluation.objects.get(interview=self.interview)
         self.assertAlmostEqual(ie.total_score, 7.0)
+
+
+# ---------------------------------------------------------------------------
+# Scheduling an interview
+# ---------------------------------------------------------------------------
+
+from datetime import timedelta
+
+from django.core import mail
+from django.utils import timezone
+
+
+class TestScheduleInterviewAPI(APITestCase):
+    def setUp(self):
+        self.recruiter = _make_recruiter('sched@rec.com')
+        self.offer = _make_job_offer(self.recruiter)
+        self.qs = _make_question_set(self.offer, qs_status=QuestionSet.Status.LOCKED)
+        self.candidate = _make_job_seeker('sched@real-person.com')
+        self.interview = _make_interview(_make_application(self.candidate, self.offer), self.qs)
+        self.url = f'/api/interviews/{self.interview.id}/schedule/'
+        self.when = (timezone.now() + timedelta(days=3)).replace(microsecond=0)
+
+    def _patch(self, user, **data):
+        self.client.force_authenticate(user=user)
+        payload = {'interview_date': self.when.isoformat(), **data}
+        return self.client.patch(self.url, payload, format='json')
+
+    @patch('applications.tasks.send_interview_scheduled_email.delay')
+    def test_owner_schedules_and_the_candidate_is_notified(self, delay):
+        with self.captureOnCommitCallbacks(execute=True):
+            res = self._patch(self.recruiter.user, interview_link='https://meet.example.com/abc')
+        self.assertEqual(res.status_code, 200, res.content)
+        self.interview.refresh_from_db()
+        self.assertEqual(self.interview.interview_date, self.when)
+        self.assertEqual(self.interview.interview_link, 'https://meet.example.com/abc')
+        delay.assert_called_once_with(self.interview.id)
+
+    @patch('applications.tasks.send_interview_scheduled_email.delay')
+    def test_failed_validation_sends_nothing(self, delay):
+        with self.captureOnCommitCallbacks(execute=True):
+            self._patch(self.candidate.user)
+        delay.assert_not_called()
+
+    def test_email_task_tells_the_candidate_when_and_where(self):
+        from applications.tasks import send_interview_scheduled_email
+        self.interview.interview_date = self.when
+        self.interview.interview_link = 'https://meet.example.com/abc'
+        self.interview.save()
+        send_interview_scheduled_email(self.interview.id)
+        self.assertEqual([m.to for m in mail.outbox], [['sched@real-person.com']])
+        self.assertIn('https://meet.example.com/abc', mail.outbox[0].body)
+        self.assertIn(self.offer.title, mail.outbox[0].body)
+
+    def test_email_task_skips_demo_candidates(self):
+        from applications.tasks import send_interview_scheduled_email
+        demo = _make_job_seeker('amira@recrutai.demo')
+        interview = _make_interview(_make_application(demo, self.offer), self.qs)
+        interview.interview_date = self.when
+        interview.save()
+        send_interview_scheduled_email(interview.id)
+        self.assertEqual(len(mail.outbox), 0)
+
+    def test_date_must_be_in_the_future(self):
+        self.client.force_authenticate(user=self.recruiter.user)
+        res = self.client.patch(self.url, {'interview_date': (timezone.now() - timedelta(hours=1)).isoformat()}, format='json')
+        self.assertEqual(res.status_code, 400)
+        self.assertIn('future', res.data['error'])
+
+    def test_invalid_payloads_are_rejected(self):
+        self.client.force_authenticate(user=self.recruiter.user)
+        self.assertEqual(self.client.patch(self.url, {}, format='json').status_code, 400)
+        self.assertEqual(self._patch(self.recruiter.user, interview_link='not-a-url').status_code, 400)
+
+    def test_other_recruiter_and_candidates_are_denied(self):
+        other = _make_recruiter('other-sched@rec.com')
+        self.assertEqual(self._patch(other.user).status_code, 403)
+        self.assertEqual(self._patch(self.candidate.user).status_code, 403)
+
+    def test_completed_interview_cannot_be_rescheduled(self):
+        self.interview.status = Interview.Status.COMPLETED
+        self.interview.save()
+        self.assertEqual(self._patch(self.recruiter.user).status_code, 400)
+
+    def test_unknown_interview_is_404(self):
+        self.client.force_authenticate(user=self.recruiter.user)
+        res = self.client.patch('/api/interviews/999999/schedule/', {'interview_date': self.when.isoformat()}, format='json')
+        self.assertEqual(res.status_code, 404)

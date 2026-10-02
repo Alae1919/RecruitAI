@@ -161,6 +161,7 @@ class CandidateSerializer(ApplicationSerializer):
             'id': interview.id,
             'status': interview.status,
             'interview_date': interview.interview_date,
+            'interview_link': interview.interview_link,
             'questions': [
                 {'id': q.id, 'text': q.question_text, 'source': q.source}
                 for q in get_interview_questions(interview)

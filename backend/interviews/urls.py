@@ -6,6 +6,7 @@ from .views import (
     InterviewQuestionsAPI,
     InterviewEvaluationView,
     InterviewEvaluationDecisionView,
+    InterviewScheduleView,
     QuestionSetListCreateView,
     QuestionSetDetailView,
     QuestionSetRegenerateView,
@@ -26,6 +27,7 @@ urlpatterns = [
     # Evaluation
     path('<int:interview_id>/evaluation/', InterviewEvaluationView.as_view(), name='interview-evaluation'),
     path('<int:interview_id>/evaluation/decision/', InterviewEvaluationDecisionView.as_view(), name='interview-evaluation-decision'),
+    path('<int:interview_id>/schedule/', InterviewScheduleView.as_view(), name='interview-schedule'),
 
     # Video upload & answers
     path('uploadVideo/', upload_video, name='upload_video'),

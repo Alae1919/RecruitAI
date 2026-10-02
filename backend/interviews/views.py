@@ -19,6 +19,7 @@ from .serializers import (
     QuestionWriteSerializer,
     InterviewEvaluationSerializer,
     InterviewEvaluationDecisionSerializer,
+    InterviewScheduleSerializer,
 )
 from .selectors import (
     list_recruiter_interviews, list_jobseeker_interviews, get_interview_questions, all_questions_answered,
@@ -26,6 +27,8 @@ from .selectors import (
 from .services.generate_question_set import generate_question_set, regenerate_question_set
 from .services.lock_question_set import lock_question_set
 from .services.override_decision import override_decision
+from .services.schedule_interview import schedule_interview
+from rest_framework.exceptions import PermissionDenied, ValidationError
 from users.permissions import IsRecruiter, IsJobSeeker, IsRecruiterOwner
 from job_offers.models import JobOffer
 from applications.models import Application
@@ -270,6 +273,31 @@ class InterviewEvaluationDecisionView(APIView):
         except Exception as e:
             return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
         return Response(InterviewEvaluationSerializer(evaluation).data)
+
+
+class InterviewScheduleView(APIView):
+    permission_classes = [permissions.IsAuthenticated, IsRecruiter]
+
+    def patch(self, request, interview_id):
+        serializer = InterviewScheduleSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        try:
+            interview = schedule_interview(
+                interview_id=interview_id,
+                recruiter=request.user.recruiter,
+                interview_date=serializer.validated_data['interview_date'],
+                interview_link=serializer.validated_data.get('interview_link', ''),
+            )
+        except Interview.DoesNotExist:
+            return Response({'error': 'Interview not found.'}, status=status.HTTP_404_NOT_FOUND)
+        except PermissionDenied as e:
+            return Response({'error': str(e)}, status=status.HTTP_403_FORBIDDEN)
+        except ValidationError as e:
+            return Response({'error': ' '.join(str(m) for m in e.detail)}, status=status.HTTP_400_BAD_REQUEST)
+        return Response({
+            'id': interview.id, 'interview_date': interview.interview_date,
+            'interview_link': interview.interview_link, 'status': interview.status,
+        })
 
 
 # ---------------------------------------------------------------------------

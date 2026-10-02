@@ -17,6 +17,29 @@ def send_candidate_email(subject: str, body: str, to_email: str) -> bool:
 
 
 @shared_task(bind=True, max_retries=3, autoretry_for=(Exception,), retry_backoff=True)
+def send_interview_scheduled_email(self, interview_id: int):
+    from interviews.models import Interview
+
+    try:
+        interview = Interview.objects.select_related(
+            'application__job_seeker__user', 'application__job_offer'
+        ).get(id=interview_id)
+    except Interview.DoesNotExist:
+        logger.error(f'Interview {interview_id} not found for scheduling email.')
+        return
+
+    when = interview.interview_date.strftime('%d/%m/%Y à %H:%M UTC') if interview.interview_date else 'à définir'
+    lines = [
+        f"Votre entretien pour le poste « {interview.application.job_offer.title} » est à passer avant le {when}.",
+    ]
+    if interview.interview_link:
+        lines.append(f'Lien : {interview.interview_link}')
+    lines += ['', 'Connectez-vous à votre espace candidat, rubrique Entretiens, pour répondre aux questions en vidéo.']
+    body = '\n'.join(lines)
+    send_candidate_email('Entretien planifié', body, interview.application.job_seeker.user.email)
+
+
+@shared_task(bind=True, max_retries=3, autoretry_for=(Exception,), retry_backoff=True)
 def send_acceptance_email(self, application_id: int):
     from .models import Application
 
