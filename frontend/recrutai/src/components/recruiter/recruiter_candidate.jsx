@@ -13,7 +13,10 @@ import StatusBadge from '../ui/StatusBadge';
 import MatchRing from './candidates/MatchRing';
 import CandidateDetail from './candidates/CandidateDetail';
 import ScheduleInterviewModal from './candidates/ScheduleInterviewModal';
+import MessageModal from './candidates/MessageModal';
+import { useAuth } from '../../hooks/useAuth';
 import { scheduleInterview } from '../../shared/api/interviews';
+import { sendCandidateMessage } from '../../shared/api/applications';
 import Kanban from './candidates/Kanban';
 import { STAGES, STAGE_META, nextStageAction, countByStage, visibleCandidates } from './candidates/stages';
 import { timeAgo } from '../../shared/utils/time';
@@ -150,6 +153,9 @@ export default function JobOffersWithCandidates() {
   const [q, setQ] = useState('');
   const [resumeUrl, setResumeUrl] = useState(null);
   const [scheduling, setScheduling] = useState(null);
+  const [messaging, setMessaging] = useState(null);
+  const [messageBusy, setMessageBusy] = useState(false);
+  const { user } = useAuth();
   const [scheduleBusy, setScheduleBusy] = useState(false);
   const { toast } = useToast();
   const queryClient = useQueryClient();
@@ -243,6 +249,20 @@ export default function JobOffersWithCandidates() {
       toast.error(err.message || 'Could not schedule the interview.');
     } finally {
       setScheduleBusy(false);
+    }
+  };
+
+  const handleSendMessage = async (data) => {
+    setMessageBusy(true);
+    try {
+      await sendCandidateMessage(messaging.id, data);
+      toast.success('Message sent.');
+      setMessaging(null);
+      await loadCandidates(offerId, { silent: true });
+    } catch (err) {
+      toast.error(err.message || 'Could not send the message.');
+    } finally {
+      setMessageBusy(false);
     }
   };
 
@@ -402,6 +422,7 @@ export default function JobOffersWithCandidates() {
                 onReject={handleReject}
                 onViewResume={setResumeUrl}
                 onSchedule={setScheduling}
+                onMessage={setMessaging}
               />
             ) : (
               <div className="h-full flex flex-col items-center justify-center gap-3 text-brand-text-disabled">
@@ -415,6 +436,15 @@ export default function JobOffersWithCandidates() {
           </div>
         </div>
       )}
+
+      <MessageModal
+        isOpen={!!messaging}
+        onClose={() => setMessaging(null)}
+        candidate={messaging}
+        recruiterName={[user?.first_name, user?.last_name].filter(Boolean).join(' ')}
+        onSubmit={handleSendMessage}
+        busy={messageBusy}
+      />
 
       <ScheduleInterviewModal
         isOpen={!!scheduling}

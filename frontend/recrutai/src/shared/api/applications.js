@@ -24,6 +24,9 @@ export const advanceCandidate = (applicationId) =>
     data: { application_id: applicationId },
   });
 
+export const sendCandidateMessage = (applicationId, data) =>
+  request({ method: "POST", url: `/applications/${applicationId}/messages/`, data });
+
 export const getPipelineSummary = () =>
   request({ method: "GET", url: "/applications/pipeline/" });
 

@@ -1,5 +1,5 @@
 import React from 'react';
-import { Brain, Check, X, Download, MapPin, Mail, Phone, ArrowRight, CalendarClock } from 'lucide-react';
+import { Brain, Check, X, Download, MapPin, Mail, Phone, ArrowRight, CalendarClock, MessageSquare } from 'lucide-react';
 import Avatar from '../../ui/Avatar';
 import StatusBadge from '../../ui/StatusBadge';
 import MatchRing from './MatchRing';
@@ -125,6 +125,26 @@ function InterviewQuestions({ interview }) {
   );
 }
 
+function Messages({ messages }) {
+  if (!messages?.length) return null;
+  return (
+    <Section title="Messages sent">
+      <ul className="space-y-2">
+        {messages.map(m => (
+          <li key={m.id} className="p-3 rounded-lg" style={{ background: 'rgba(24,30,46,0.4)', border: '1px solid rgba(35,42,62,0.8)' }}>
+            <div className="flex items-center gap-2 text-sm">
+              <span className="font-medium text-brand-text-primary truncate flex-1">{m.subject}</span>
+              {m.email_sent && <span className="text-[10px] font-mono text-emerald-300">emailed</span>}
+              <span className="text-[10px] font-mono text-brand-text-disabled">{timeAgo(m.created_at)}</span>
+            </div>
+            <p className="text-xs text-brand-text-muted mt-1 line-clamp-2 whitespace-pre-line">{m.body}</p>
+          </li>
+        ))}
+      </ul>
+    </Section>
+  );
+}
+
 function Timeline({ events }) {
   const steps = buildTimeline(events);
   return (
@@ -145,7 +165,7 @@ function Timeline({ events }) {
   );
 }
 
-export default function CandidateDetail({ candidate, busy, onAdvance, onReject, onViewResume, onSchedule }) {
+export default function CandidateDetail({ candidate, busy, onAdvance, onReject, onViewResume, onSchedule, onMessage }) {
   const next = nextStageAction(candidate.stage);
   const canSchedule = candidate.interview?.status === 'available';
   const profile = candidate.resume_profile;
@@ -178,6 +198,11 @@ export default function CandidateDetail({ candidate, busy, onAdvance, onReject, 
             <Check size={13} strokeWidth={2.5} /> {next.label} <ArrowRight size={13} />
           </button>
         )}
+        <button onClick={() => onMessage(candidate)}
+          className="h-9 px-3 text-sm rounded-xl inline-flex items-center gap-1.5 transition-colors text-brand-text-muted hover:text-brand-accent"
+          style={{ border: '1px solid rgba(35,42,62,0.8)', background: 'rgba(16,20,32,0.6)' }}>
+          <MessageSquare size={13} /> Message
+        </button>
         {canSchedule && (
           <button onClick={() => onSchedule(candidate)}
             className="h-9 px-3 text-sm rounded-xl inline-flex items-center gap-1.5 transition-colors text-brand-text-muted hover:text-brand-accent"
@@ -228,6 +253,7 @@ export default function CandidateDetail({ candidate, busy, onAdvance, onReject, 
           <Section title="Interview questions">
             <InterviewQuestions interview={candidate.interview} />
           </Section>
+          <Messages messages={candidate.messages} />
         </div>
 
         <div className="space-y-6">
