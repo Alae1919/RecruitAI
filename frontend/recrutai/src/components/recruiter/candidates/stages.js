@@ -50,3 +50,37 @@ export function visibleCandidates(candidates, { stage = 'all', sort = 'match', q
   const byRecent = (a, b) => Date.parse(b.applied_at || 0) - Date.parse(a.applied_at || 0);
   return [...list].sort(sort === 'recent' ? byRecent : byMatch);
 }
+
+const TIMELINE_STEPS = [
+  { key: 'applied',     label: 'Applied' },
+  { key: 'ai_screened', label: 'AI-screened' },
+  { key: 'interview',   label: 'Interview invited' },
+  { key: 'evaluated',   label: 'AI evaluation' },
+  { key: 'offer',       label: 'Offer made' },
+  { key: 'hired',       label: 'Hired' },
+];
+
+/**
+ * Merge the events the backend recorded with the steps still ahead.
+ * Each step is 'done', 'current' (latest reached) or 'upcoming'.
+ * A rejected candidate keeps only the steps they reached, followed by "Rejected".
+ */
+export function buildTimeline(events = []) {
+  const reached = new Map(events.map(e => [e.key, e]));
+  const rejected = reached.get('rejected');
+
+  let steps = TIMELINE_STEPS.map(s => ({ ...s, at: reached.get(s.key)?.at ?? null, reached: reached.has(s.key) }));
+  if (rejected) {
+    steps = steps.filter(s => s.reached);
+    steps.push({ key: 'rejected', label: 'Rejected', at: rejected.at, reached: true });
+  }
+
+  let lastReached = -1;
+  steps.forEach((s, i) => { if (s.reached) lastReached = i; });
+  return steps.map((s, i) => ({
+    key: s.key,
+    label: s.label,
+    at: s.at,
+    state: !s.reached ? 'upcoming' : i === lastReached ? 'current' : 'done',
+  }));
+}

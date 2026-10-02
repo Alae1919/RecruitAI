@@ -1,4 +1,4 @@
-import { STAGES, nextStageAction, canReject, countByStage, visibleCandidates } from '../stages';
+import { STAGES, nextStageAction, canReject, countByStage, visibleCandidates, buildTimeline } from '../stages';
 
 const mk = (id, stage, match_score, applied_at, name = `Cand ${id}`) =>
   ({ id, stage, match_score, applied_at, candidate_name: name });
@@ -67,5 +67,40 @@ describe('visibleCandidates', () => {
     const copy = [...LIST];
     visibleCandidates(LIST, { sort: 'recent' });
     expect(LIST).toEqual(copy);
+  });
+});
+
+describe('buildTimeline', () => {
+  const ev = (key, at = '2026-10-01T10:00:00Z') => ({ key, label: key, at });
+
+  it('marks the latest reached step as current and the rest ahead as upcoming', () => {
+    const t = buildTimeline([ev('applied'), ev('ai_screened'), ev('interview')]);
+    expect(t.map(s => [s.key, s.state])).toEqual([
+      ['applied', 'done'],
+      ['ai_screened', 'done'],
+      ['interview', 'current'],
+      ['evaluated', 'upcoming'],
+      ['offer', 'upcoming'],
+      ['hired', 'upcoming'],
+    ]);
+  });
+
+  it('keeps timestamps for reached steps only', () => {
+    const t = buildTimeline([ev('applied', '2026-10-01T10:00:00Z')]);
+    expect(t[0].at).toBe('2026-10-01T10:00:00Z');
+    expect(t[1].at).toBeNull();
+  });
+
+  it('shows just the reached steps then Rejected for rejected candidates', () => {
+    const t = buildTimeline([ev('applied'), ev('ai_screened'), ev('rejected')]);
+    expect(t.map(s => [s.key, s.state])).toEqual([
+      ['applied', 'done'],
+      ['ai_screened', 'done'],
+      ['rejected', 'current'],
+    ]);
+  });
+
+  it('starts at Applied even with no events', () => {
+    expect(buildTimeline()[0]).toMatchObject({ key: 'applied', state: 'upcoming' });
   });
 });
