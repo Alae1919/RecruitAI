@@ -1,23 +1,25 @@
-# Backend API Documentation
+# RecrutAI — Backend API Reference
 
-**Stack:** Django 4.2 · Django REST Framework 3.15 · SimpleJWT · Celery · PostgreSQL  
-**Base URL:** `http://localhost:8000`  
-**Auth:** Bearer JWT — include `Authorization: Bearer <access_token>` on every protected request.
+**Stack:** Django 4.2 · Django REST Framework 3.15 · SimpleJWT · Celery + Redis · PostgreSQL 16
+**Base URL:** `http://localhost:8000/api/`
+**Auth:** `Authorization: Bearer <access_token>` on every endpoint except registration and login.
 
 ---
 
-## Table of Contents
+## Contents
 
 1. [Architecture](#architecture)
-2. [Data Models](#data-models)
-3. [Authentication](#authentication)
-4. [Users](#users)
-5. [Job Offers](#job-offers)
-6. [Applications](#applications)
-7. [Interviews](#interviews)
-8. [Background Tasks](#background-tasks)
-9. [Configuration Reference](#configuration-reference)
-10. [Running Locally](#running-locally)
+2. [Data model](#data-model)
+3. [Recruitment pipeline](#recruitment-pipeline)
+4. [Auth & users](#auth--users)
+5. [Job offers](#job-offers)
+6. [Applications & resumes](#applications--resumes)
+7. [Question sets](#question-sets)
+8. [Interviews & evaluation](#interviews--evaluation)
+9. [Background tasks](#background-tasks)
+10. [Errors, pagination, rate limits](#errors-pagination-rate-limits)
+11. [Configuration](#configuration)
+12. [Demo data](#demo-data)
 
 ---
 
@@ -25,767 +27,236 @@
 
 ```
 backend/
-├── recruitment_platform/   # Django project config (settings, urls, celery)
-├── users/                  # Auth, roles, profiles
-├── job_offers/             # Job offer CRUD
-├── applications/           # Candidate applications
-│   ├── services/           # Business logic: create, accept, reject
-│   ├── tasks.py            # Celery: CV extraction, acceptance email
-│   └── adapters/           # (future) external I/O adapters
-├── interviews/             # Interview lifecycle
-│   ├── tasks.py            # Celery: question generation, answer evaluation
-│   └── adapters/
-│       └── llm_client.py   # DeepSeek/OpenAI adapter (LLMClientProtocol)
-└── core/                   # CVAnalysis model
+├── recruitment_platform/   settings, urls, celery
+├── users/                  User (email login), Role/UserRole, JobSeeker, Recruiter, JWT, /me
+├── job_offers/             JobOffer CRUD, filters, stats, AI job-description drafting
+├── applications/           Application, Resume/ResumeData, pipeline (accept/advance/reject)
+├── interviews/             QuestionSet/Question, Interview, Answer, evaluations, LLM adapter
+└── core/                   CVAnalysis, seed_demo management command
 ```
 
-### Request lifecycle
+Each app follows **view → service → model**. Views validate and serialize. Services in `<app>/services/` hold business rules inside `transaction.atomic`. Selectors in `<app>/selectors.py` build read querysets. Slow work runs in Celery tasks dispatched with `transaction.on_commit`. LLM calls go through `interviews/adapters/llm_client.py` (DeepSeek, OpenAI-compatible).
 
-```
-HTTP Request
-    → View (permission check, deserialize)
-        → Service (business logic, @transaction.atomic)
-            → Model (ORM)
-            → transaction.on_commit → Celery task
-                → Adapter (LLM / SMTP / ffmpeg)
-    ← Response (serialize)
-```
-
-### Role system
-
-Two roles: **RECRUITER** and **JOBSEEKER**.  
-Each `User` has one or more `UserRole` join-table records. The role is embedded in the JWT `role` claim at login so permission checks avoid a DB hit on every request.
+**Roles.** A user is `RECRUITER` or `JOBSEEKER` through a `UserRole` row. The role is embedded in the JWT `role` claim at login, so permission checks don't hit the database.
 
 ---
 
-## Data Models
+## Data model
 
 ```
-User (email-based AbstractUser)
-├── JobSeeker (1:1)  — experience, skills, resume file
-└── Recruiter (1:1)  — company_name, company_phone, position
-
-Role ←── UserRole ──→ User
-
-JobOffer (Recruiter FK)
-    └── Application (JobSeeker FK + JobOffer FK)
-            ├── status: pending | accepted | rejected
-            ├── extracted_text (async, set by Celery)
-            ├── Interview (1:1)
-            │       ├── status: available | scheduled | completed | canceled
-            │       ├── Question[] (AI-generated)
-            │       ├── Answer[]   (video upload → transcript → score)
-            │       └── InterviewResult (aggregate score)
-            ├── CVAnalysis (eligibility_score, analysis_details)
-            └── Feedback (Recruiter rating)
+User ─┬─ Recruiter ── JobOffer ─┬─ QuestionSet (versioned) ── Question (BASE)
+      │                        └─ Application ─┬─ CVAnalysis
+      └─ JobSeeker ─ Resume ─ ResumeData       ├─ Interview ─┬─ Question (PROBE, per candidate)
+                       ▲                       │             ├─ Answer ── AnswerEvaluation
+                       └──── Application.resume│             └─ InterviewEvaluation
+                                               └─ Feedback (model only, no endpoint)
 ```
+
+| Model | Key fields |
+|---|---|
+| `JobOffer` | `title`, `description` (may be empty for drafts), `requirements`, `skills` (must-have), `nice_skills`, `experience_min`/`experience_max`, `department`, `employment_type` (`full_time`/`part_time`/`contract`/`internship`), `salary_range`, `location`, `status` (`draft`/`open`/`paused`/`closed`), `screening_config` |
+| `Application` | `status` (`pending`/`accepted`/`offer`/`hired`/`rejected`), `resume`, `applied_at`; derived `stage` |
+| `Resume` / `ResumeData` | file, `label`, `is_default`, `parsing_status`; parsed `skills`, `experience[{role,company,years}]`, `education`, `languages`, `summary` |
+| `CVAnalysis` | `eligibility_score` (0–10), `analysis_details{strengths,gaps,recommendation}` |
+| `QuestionSet` | `version`, `status` (`draft`/`ready`/`locked`), `question_type`, `target_count` |
+| `Interview` | `question_set` (locked set used), `status` (`available`/`completed`/…), `interview_date` |
+| `AnswerEvaluation` | immutable: `final_score` (0–10), `explanation`, `model_used`, `prompt_version` |
+| `InterviewEvaluation` | `total_score` (0–10), `decision` (`accepted`/`rejected`/`undecided`), `decision_source` (`rule`/`recruiter`), `reasoning`. Only the decision fields can change after creation. |
 
 ---
 
-## Authentication
+## Recruitment pipeline
 
-All endpoints except registration and login require `Authorization: Bearer <access_token>`.
+The recruiter UI shows each application in one **stage**, derived by `Application.stage`:
 
-### POST `/api/users/login/`
+| Stage | Rule |
+|---|---|
+| `applied` | `pending`, and no CV score ≥ `AUTO_SHORTLIST_SCORE` (default 7.5/10), or the offer turned auto-shortlist off |
+| `screening` | `pending` with CV score ≥ `AUTO_SHORTLIST_SCORE` and `screening_config.auto_shortlist` not `false` |
+| `interview` | `accepted` (an Interview exists) |
+| `offer` | `offer` |
+| `hired` | `hired` |
+| `rejected` | `rejected` (outside the pipeline) |
 
-Rate-limited: **5 requests / minute**.
+`POST applications/advance/` moves an application one step: `pending → accepted` (creates the interview), `accepted → offer`, `offer → hired`.
 
-**Request**
+**Interview lifecycle.**
+1. Accepting a candidate locks the offer's newest **READY** question set, creates the `Interview`, and queues probe-question generation and the invitation email.
+2. The candidate answers each question by video.
+3. Each upload is transcribed and scored.
+4. The interview becomes `completed` once **every** question (base + probe) has an answer.
+5. The `InterviewEvaluation` (average score vs. `EVALUATION_PASS_THRESHOLD`, default 6.0) is created once every question's answer has been scored.
+6. A recruiter can override the decision.
+
+---
+
+## Auth & users
+
+| Method | Path | Auth | Description |
+|---|---|---|---|
+| POST | `users/register/jobseeker/` | public | Register a job seeker (multipart: `email`, `password`, `full_name`, `phone`, `address`, `experience`, `skills`, `resume`) |
+| POST | `users/register/recruiter/` | public | Register a recruiter (`email`, `password`, `full_name`, `phone`, `address`, `company_name`, optional `company_phone`, `position`, `company_website`, `industry`) |
+| POST | `users/login/` | public · 5/min | `{email, password, role: "RECRUITER"\|"JOBSEEKER"}` → `{access, refresh}`. The access token carries the `role` claim. |
+| POST | `users/token/refresh/` | public | `{refresh}` → new pair (refresh tokens rotate; the old one is blacklisted) |
+| POST | `users/logout/` | JWT | `{refresh}` → blacklists it |
+| GET | `users/me/` | JWT | `{email, role, …}` |
+| GET / PATCH | `users/me/profile/` | JWT | `{role, profile}`. The profile shape depends on the role. |
+| GET / PUT | `users/profile/recruiter/`, `users/profile/jobseeker/` | JWT | Older per-role profile endpoints, kept for compatibility (the frontend uses `users/me/profile/`) |
+
+---
+
+## Job offers
+
+| Method | Path | Auth | Description |
+|---|---|---|---|
+| GET | `job_offers/list` | recruiter | Own offers, **with stats** (below). Filters: `status`, `title`, `location`, `experience_min`, `employment_type`, `search`. `ordering`: `created_at`, `title`, `experience_min`, `applicants_count`, `shortlisted_count`, `avg_match` (prefix `-` for descending) |
+| GET | `job_offers/listALL` | any JWT | Public board: **open** offers only (a `status` filter cannot reveal drafts). Same filters, no stats. |
+| POST | `job_offers/create` | recruiter | Create. `description` is required unless `status` is `draft`. `experience_max` must be ≥ `experience_min`. |
+| PUT / PATCH | `job_offers/<id>/edit/` | owner | Update, including `status` (publishing a draft also requires a description) |
+| DELETE | `job_offers/<id>/delete/` | owner | Delete |
+| GET | `job_offers/<id>/Candidates/` | owner | Applicants as **candidate payloads** (see below) |
+| POST | `job_offers/generate-description/` | recruiter · LLM | `{title, skills[], experience_level}` → `{description, model_used, prompt_version}` |
+
+**Offer object** (recruiter list):
+
 ```json
 {
-  "email": "user@example.com",
-  "password": "secret123"
+  "id": 3, "title": "Senior Frontend Engineer", "status": "open",
+  "description": "…", "requirements": "React, TypeScript, …",
+  "skills": ["React", "TypeScript"], "nice_skills": ["Storybook"],
+  "experience_min": 5, "experience_max": 10,
+  "department": "Engineering", "employment_type": "full_time",
+  "location": "Remote · EMEA", "salary_range": "€75k–€95k",
+  "screening_config": {"cv": true, "video": true, "questions": 3, "auto_shortlist": true},
+  "recruiter_name": "Acme", "question_sets_count": 2,
+  "applicants_count": 6, "shortlisted_count": 3, "avg_match": 75.0,
+  "created_at": "…", "updated_at": "…"
 }
 ```
 
-**Response 200**
+- `shortlisted_count`: applications that are not rejected and are either past screening (accepted, offer or hired) or have a CV score ≥ `AUTO_SHORTLIST_SCORE` (when auto-shortlist is on).
+- `avg_match`: the mean CV score on a 0–100 scale, or `null` when no CV has been analysed.
+
+---
+
+## Applications & resumes
+
+| Method | Path | Auth | Description |
+|---|---|---|---|
+| POST | `applications/jobapplications/` | job seeker | `{job_offer_id, resume_id?}` (the default resume if omitted). Rejected if the offer is not `open`. Queues CV analysis. |
+| GET | `applications/retreiveApplications` | job seeker | Own applications (`id, job_offer_title, status, stage, applied_at, updated_at, candidate_name, resume_url, eligibility_score`). AI analysis is **not** exposed to candidates. |
+| GET | `applications/retreiveInterviews/` | job seeker | Own interviews |
+| POST | `applications/accept/` | owner · LLM | `{application_id}` → accepts, locks the READY question set, creates the interview |
+| POST | `applications/advance/` | owner · LLM | `{application_id}` → one pipeline step forward (see [pipeline](#recruitment-pipeline)) |
+| POST | `applications/reject/` | owner | `{application_id}` |
+| GET | `applications/pipeline/` | recruiter | Sidebar counts: `{offers, open_offers, candidates, stages: {applied, screening, interview, offer, hired, rejected}}` |
+| GET / POST | `applications/resumes/` | job seeker | List, or upload (multipart `original_file`, `label?`, `make_default?`). PDF/DOC/DOCX, ≤ 3 MB. Parsing runs asynchronously. |
+| GET / PATCH / DELETE | `applications/resumes/<id>/` | owner | Read, rename / set default (`{label?, is_default?}`), delete |
+
+**Candidate payload** (recruiter only, from `job_offers/<id>/Candidates/`): the application fields above plus:
+
 ```json
 {
-  "access":  "<JWT access token — valid 60 min>",
-  "refresh": "<JWT refresh token — valid 1 day>"
-}
-```
-The access token payload includes a `role` claim (`RECRUITER` or `JOBSEEKER`).
-
-**Errors**
-| Status | Meaning |
-|--------|---------|
-| 400 | Invalid credentials |
-| 429 | Rate limit exceeded |
-
----
-
-### POST `/api/users/token/refresh/`
-
-**Request**
-```json
-{ "refresh": "<refresh_token>" }
-```
-
-**Response 200**
-```json
-{ "access": "<new_access_token>", "refresh": "<new_refresh_token>" }
-```
-Refresh tokens rotate on every use. The old token is blacklisted immediately.
-
----
-
-### POST `/api/users/logout/`
-
-Blacklists the refresh token.
-
-**Request**
-```json
-{ "refresh": "<refresh_token>" }
-```
-
-**Response 200** — `{}`
-
----
-
-## Users
-
-### POST `/api/users/register/jobseeker/`
-
-Public — no auth required.
-
-**Request** (`multipart/form-data`)
-
-| Field | Type | Required | Notes |
-|-------|------|----------|-------|
-| `email` | string | ✓ | Must be unique per role |
-| `password` | string | ✓ | ≥ 8 characters |
-| `full_name` | string | ✓ | Split into first/last name |
-| `phone` | string | ✓ | |
-| `address` | string | ✓ | |
-| `experience` | string | ✓ | |
-| `skills` | string | ✓ | |
-| `resume` | file | ✓ | `.pdf`, `.doc`, `.docx` · max 3 MB |
-
-**Response 201**
-```json
-{ "message": "User registered successfully!" }
-```
-
-**Errors**
-| Status | Meaning |
-|--------|---------|
-| 400 | Validation error (email taken, bad password, invalid resume) |
-
----
-
-### POST `/api/users/register/recruiter/`
-
-Public — no auth required.
-
-**Request** (`multipart/form-data`)
-
-| Field | Type | Required |
-|-------|------|----------|
-| `email` | string | ✓ |
-| `password` | string | ✓ |
-| `full_name` | string | ✓ |
-| `phone` | string | ✓ |
-| `address` | string | ✓ |
-| `company_name` | string | ✓ |
-| `company_phone` | string | |
-| `position` | string | |
-| `company_website` | string | |
-| `industry` | string | |
-
-**Response 201**
-```json
-{ "message": "Recruiter registered successfully" }
-```
-
----
-
-### GET `/api/users/me/`
-
-Returns the authenticated user's email and role (from JWT claim; falls back to DB).
-
-**Response 200**
-```json
-{
-  "email": "user@example.com",
-  "role": "JOBSEEKER"
-}
-```
-
----
-
-### GET/PUT/PATCH `/api/users/profile/jobseeker/` · `/api/users/update/jobseeker/`
-
-Retrieve or update the authenticated job seeker's profile.
-
-**GET response 200**
-```json
-{
-  "email": "alice@example.com",
-  "full_name": "Alice Dupont",
-  "phone": "+33600000000",
-  "experience": "3 years backend development",
-  "skills": "Python, Django, PostgreSQL",
-  "resume": "/media/resumes/alice_cv.pdf"
-}
-```
-
----
-
-### GET/PUT/PATCH `/api/users/profile/recruiter/` · `/api/users/update/recruiter/`
-
-Retrieve or update the authenticated recruiter's profile.
-
-**GET response 200**
-```json
-{
-  "email": "bob@acme.com",
-  "full_name": "Bob Martin",
-  "company_name": "Acme Corp",
-  "company_phone": "+33700000000",
-  "position": "HR Manager",
-  "company_website": "https://acme.com",
-  "industry": "Technology"
-}
-```
-
----
-
-## Job Offers
-
-### POST `/api/job_offers/create`
-
-**Role required:** RECRUITER
-
-**Request** (`application/json`)
-```json
-{
-  "title": "Backend Developer",
-  "description": "We are looking for a Python developer...",
-  "requirements": "3+ years Django experience",
-  "salary_range": "40 000 – 55 000 €",
-  "location": "Paris, France"
-}
-```
-
-**Response 201**
-```json
-{
-  "message": "Job offer created successfully",
-  "job_offer": {
-    "id": 7,
-    "title": "Backend Developer",
-    "description": "We are looking for a Python developer...",
-    "requirements": "3+ years Django experience",
-    "salary_range": "40 000 – 55 000 €",
-    "location": "Paris, France"
-  }
-}
-```
-
----
-
-### GET `/api/job_offers/list`
-
-**Role required:** RECRUITER — returns only the authenticated recruiter's offers.
-
-**Response 200**
-```json
-[
-  {
-    "id": 7,
-    "title": "Backend Developer",
-    "description": "...",
-    "requirements": "...",
-    "salary_range": "40 000 – 55 000 €",
-    "location": "Paris, France"
-  }
-]
-```
-
----
-
-### GET `/api/job_offers/listALL`
-
-**Auth required** (any role) — returns all job offers in the system (paginated, page size 20).
-
-**Response 200** — same schema as above, wrapped in DRF pagination envelope:
-```json
-{
-  "count": 42,
-  "next": "http://localhost:8000/api/job_offers/listALL?page=2",
-  "previous": null,
-  "results": [ ... ]
-}
-```
-
----
-
-### GET `/api/job_offers/<pk>/Candidates/`
-
-**Role required:** RECRUITER — lists all applications for a specific job offer.
-
-**Response 200**
-```json
-[
-  {
-    "id": 3,
-    "job_offer_title": "Backend Developer",
-    "candidate_name": "Alice Dupont",
-    "status": "pending",
-    "applied_at": "2025-03-15T10:23:00Z",
-    "updated_at": "2025-03-15T10:23:00Z",
-    "resume_url": "http://localhost:8000/media/resumes/alice_cv.pdf",
-    "extracted_text": null
-  }
-]
-```
-`extracted_text` is `null` until the background CV extraction task completes.
-
----
-
-### PATCH `/api/job_offers/<pk>/edit/`
-
-**Role required:** RECRUITER (must own the offer).
-
-**Request** — any subset of the job offer fields.
-
-**Response 200** — updated job offer object.
-
----
-
-### DELETE `/api/job_offers/<pk>/delete/`
-
-**Role required:** RECRUITER (must own the offer).
-
-**Response 204** — no content.
-
----
-
-## Applications
-
-### POST `/api/applications/jobapplications/`
-
-**Role required:** JOBSEEKER
-
-Submit an application for a job offer. CV text extraction runs asynchronously — the response is returned immediately.
-
-**Request** (`application/json`)
-```json
-{ "job_offer_id": 7 }
-```
-
-**Response 201**
-```json
-{
-  "id": 3,
-  "job_offer_title": "Backend Developer",
-  "candidate_name": "Alice Dupont",
-  "status": "pending",
-  "applied_at": "2025-03-15T10:23:00Z",
-  "updated_at": "2025-03-15T10:23:00Z",
-  "resume_url": "http://localhost:8000/media/resumes/alice_cv.pdf",
-  "extracted_text": null
-}
-```
-
-**Errors**
-| Status | Meaning |
-|--------|---------|
-| 400 | Already applied to this offer |
-| 404 | Job offer not found / job seeker profile not found |
-
-> **Note:** `extracted_text` is populated asynchronously by the `extract_cv_text` Celery task. Poll the applications list or wait for the interview to be accepted.
-
----
-
-### GET `/api/applications/retreiveApplications`
-
-**Role required:** JOBSEEKER — returns all applications submitted by the authenticated job seeker.
-
-**Response 200** — array of application objects (same schema as above).
-
----
-
-### GET `/api/applications/retreiveInterviews/`
-
-**Role required:** JOBSEEKER — returns all interviews linked to the authenticated job seeker's applications.
-
-**Response 200**
-```json
-[
-  {
-    "id": 1,
-    "offer_name": "Backend Developer",
-    "interview_date": "2025-03-16T09:00:00Z",
-    "interview_link": null,
-    "status": "available",
-    "status_display": "Available",
-    "result": null
-  }
-]
-```
-
----
-
-### POST `/api/applications/accept/`
-
-**Role required:** RECRUITER (must own the job offer)  
-**Rate limit:** 20 requests / hour (LLM scope)
-
-Accepts an application. Atomically:
-1. Creates or retrieves the `Interview` record.
-2. Sets `application.status = "accepted"`.
-3. On commit: dispatches `generateQuestions` Celery task (LLM question generation).
-4. On commit: dispatches `send_acceptance_email` Celery task (SMTP notification).
-
-**Request** (`application/json`)
-```json
-{ "application_id": 3 }
-```
-
-**Response 200**
-```json
-{
-  "application": {
-    "id": 3,
-    "status": "accepted",
-    ...
-  },
+  "candidate_email": "amira@…", "candidate_phone": "+31…", "candidate_address": "Amsterdam, NL",
+  "headline": "Staff Frontend Engineer · Stripe",
+  "match_score": 94,
+  "analysis": {"strengths": ["…"], "gaps": ["…"], "recommendation": "…", "analyzed_at": "…"},
+  "resume_profile": {"skills": [], "experience": [], "education": [], "languages": [], "summary": "…"},
   "interview": {
-    "id": 1,
-    "interview_date": "2025-03-16T09:00:00Z",
-    "interview_link": null,
-    "status": "available"
-  }
+    "id": 1, "status": "available", "interview_date": "…",
+    "questions": [{"id": 10, "text": "…", "source": "base"}, {"id": 14, "text": "…", "source": "probe"}],
+    "evaluation": {"total_score": 7.9, "decision": "accepted"}
+  },
+  "timeline": [{"key": "applied", "label": "Applied", "at": "…"}, {"key": "ai_screened", "…": "…"}]
 }
 ```
 
-**Errors**
-| Status | Meaning |
-|--------|---------|
-| 400 | Missing `application_id` |
-| 403 | Recruiter does not own the job offer |
-| 404 | Application not found |
+`analysis`, `resume_profile`, `interview` and `match_score` are `null` when not available yet.
 
 ---
 
-### POST `/api/applications/reject/`
+## Question sets
 
-**Role required:** RECRUITER (must own the job offer)
+The recruiter manages versioned question sets per offer: `draft → ready → locked`. Accepting a candidate locks the newest `ready` set. A locked set can't be edited or deleted.
 
-**Request**
-```json
-{ "application_id": 3 }
-```
-
-**Response 200** — updated application object with `status: "rejected"`.
-
----
-
-## Interviews
-
-### GET `/api/interviews/listinterviews/`
-
-**Role required:** JOBSEEKER — returns the authenticated job seeker's interviews.
-
-**Response 200**
-```json
-[
-  {
-    "id": 1,
-    "offer_name": "Backend Developer",
-    "interview_date": "2025-03-16T09:00:00Z",
-    "interview_link": null,
-    "status": "available",
-    "status_display": "Available",
-    "result": {
-      "score": 7.4,
-      "processed_at": "2025-03-16T11:00:00Z"
-    }
-  }
-]
-```
+| Method | Path | Auth | Description |
+|---|---|---|---|
+| GET / POST | `interviews/job-offers/<offer_id>/question-sets/` | owner · LLM | List, or generate a new version (`{question_type, target_count, recruiter_instructions?}`) → `202` while generating |
+| GET / PATCH / DELETE | `interviews/question-sets/<id>/` | owner | Read; update `status` (`ready`, `locked`) or settings; delete if not locked |
+| POST | `interviews/question-sets/<id>/regenerate/` | owner · LLM | Regenerate questions → `202` |
+| POST | `interviews/question-sets/<id>/questions/` | owner | Add a question `{question_text, order?}` |
+| PATCH / DELETE | `interviews/questions/<id>/` | owner | Edit / delete a question |
 
 ---
 
-### GET `/api/interviews/listrecruiterinterviews/`
+## Interviews & evaluation
 
-**Role required:** RECRUITER — returns all interviews for the recruiter's job offers.
-
-**Response 200**
-```json
-[
-  {
-    "id": 1,
-    "candidate_name": "Alice Dupont",
-    "offer_title": "Backend Developer",
-    "interview_date": "2025-03-16T09:00:00Z",
-    "status": "available",
-    "status_display": "Available",
-    "interview_link": null,
-    "result": null
-  }
-]
-```
+| Method | Path | Auth | Description |
+|---|---|---|---|
+| GET | `interviews/listinterviews/` | job seeker | Own interviews, each with `evaluation` |
+| GET | `interviews/listrecruiterinterviews/` | recruiter | Interviews on own offers, each with `evaluation` |
+| GET | `interviews/<id>/questions/` | the candidate | Base + probe questions for the interview |
+| POST | `interviews/uploadVideo/` | the candidate · LLM | multipart `interviewId`, `questionId`, `video` (mp4/webm/mov, ≤ 100 MB). The question must belong to the interview. Queues transcription + scoring. |
+| POST | `interviews/answers/` | candidate or owning recruiter | `{interview_id}` → `{answers: [{question_id, question_text, video_url, transcript, score}]}` |
+| GET | `interviews/<id>/evaluation/` | candidate or owning recruiter | Full evaluation with per-answer breakdown. Returns `202` until it exists. |
+| PATCH | `interviews/<id>/evaluation/decision/` | owning recruiter | `{decision, reasoning}` → override (`decision_source` becomes `recruiter`) |
 
 ---
 
-### POST `/api/interviews/questions/`
+## Background tasks
 
-**Auth required**  
-**Rate limit:** 20 requests / hour (LLM scope)
+Celery workers use Redis as the broker. Tasks are idempotent and retry with backoff.
 
-Returns all AI-generated questions for an interview.
-
-**Request**
-```json
-{ "interview_id": 1 }
-```
-
-**Response 200**
-```json
-[
-  { "id": 10, "interview": 1, "question_text": "Explain the difference between SQL and NoSQL databases.", "created_at": "..." },
-  { "id": 11, "interview": 1, "question_text": "What is REST and how does it differ from GraphQL?", "created_at": "..." }
-]
-```
-
-**Errors**
-| Status | Meaning |
-|--------|---------|
-| 400 | Missing `interview_id` |
-| 404 | Interview not found |
-
-> Questions are generated asynchronously after `POST /api/applications/accept/`. If this endpoint returns an empty array, the generation task may still be running.
+| Task | Trigger | Does |
+|---|---|---|
+| `parse_resume_task` | resume upload | Extract PDF text (PyPDF2) → LLM parse into `ResumeData` |
+| `analyze_cv_task` | application created | LLM scores the CV against the offer → `CVAnalysis` |
+| `generate_question_set_task` | question-set create / regenerate | LLM base questions for the offer |
+| `generate_probe_questions_task` | candidate accepted | LLM CV-specific probe questions for that interview |
+| `send_acceptance_email` | candidate accepted | Invitation email (SMTP) |
+| `evaluate_answer` | video upload | ffmpeg → Whisper transcript → LLM score → `AnswerEvaluation`; finalizes the interview when every question is scored |
 
 ---
 
-### POST `/api/interviews/uploadVideo/`
+## Errors, pagination, rate limits
 
-**Auth required**  
-**Rate limit:** 20 requests / hour (LLM scope)
-
-Uploads a video answer for a specific question. Triggers asynchronous evaluation.
-
-**Request** (`multipart/form-data`)
-
-| Field | Type | Required | Notes |
-|-------|------|----------|-------|
-| `interviewId` | string | ✓ | ID of the interview |
-| `questionId` | string | ✓ | ID of the question being answered |
-| `video` | file | ✓ | `.mp4`, `.webm`, or `.mov` · max 100 MB |
-
-**Response 200**
-```json
-{
-  "success": true,
-  "message": "Video uploaded successfully. Evaluation started.",
-  "answer_id": 5
-}
-```
-
-**Errors**
-| Status | Meaning |
-|--------|---------|
-| 400 | Missing interview/question ID, no video, invalid format, file too large |
-| 404 | Interview or question not found |
-| 500 | Failed to save video |
-
-> After this call the `evaluate_answer` Celery task runs: it extracts audio with ffmpeg, transcribes with Whisper, scores with the LLM, and writes the aggregate `InterviewResult` once all answers are evaluated.
+- **Errors:** `{"error": "message"}`, DRF's `{"detail": "…"}`, or field errors `{"field": ["…"]}`.
+- **Pagination:** offer lists are paginated: `{count, next, previous, results}`, 20 per page, `?page=`.
+- **Rate limits:**
+  - `login`: 5/minute
+  - `llm`: 20/hour per user. It applies to accept, advance, question generation, JD drafting and video upload.
 
 ---
 
-### POST `/api/interviews/answers/`
+## Configuration
 
-**Auth required**
+All settings come from environment variables (`.env` at the project root for Docker).
 
-Returns all submitted answers for an interview (transcripts and video URLs).
-
-**Request**
-```json
-{ "interview_id": 1 }
-```
-
-**Response 200**
-```json
-{
-  "interview_id": 1,
-  "answers": [
-    {
-      "question_id": 10,
-      "question_text": "Explain the difference between SQL and NoSQL databases.",
-      "video_url": "/media/interview_videos/answer_10.mp4",
-      "transcript": "SQL databases are relational and use structured schemas..."
-    }
-  ]
-}
-```
+| Variable | Default | Purpose |
+|---|---|---|
+| `DJANGO_SECRET_KEY` | — (required) | Django signing key |
+| `DJANGO_DEBUG` | `False` | Debug mode |
+| `DJANGO_ALLOWED_HOSTS` | `localhost,127.0.0.1` | Allowed hosts |
+| `POSTGRES_DB` / `_USER` / `_PASSWORD` / `_HOST` / `_PORT` | `recrutai_db` / `recrutai_user` / `recrutai_pass` / `localhost` / `5432` | Database |
+| `CELERY_BROKER_URL` / `CELERY_RESULT_BACKEND` | `redis://localhost:6379/0` | Celery |
+| `CORS_ALLOWED_ORIGINS` | `http://localhost:3000,…` | Frontend origins |
+| `DEEPSEEK_API_KEY` | — | LLM calls (DeepSeek, OpenAI-compatible) |
+| `EMAIL_HOST_USER` / `EMAIL_HOST_PASSWORD` | — | SMTP (Gmail) |
+| `AUTO_SHORTLIST_SCORE` | `7.5` | CV score (0–10) that moves a candidate to Screening |
+| `EVALUATION_PASS_THRESHOLD` | `6.0` | Interview average needed for an `accepted` AI decision |
+| `PROBE_QUESTION_COUNT` | `2` | CV-specific questions per interview |
+| `LLM_TIMEOUT` | `60` | Seconds per LLM call |
 
 ---
 
-## Background Tasks
-
-All tasks are processed by Celery workers using Redis as the broker. Tasks are idempotent and configured with `max_retries=3` and exponential backoff.
-
-### `extract_cv_text(application_id)`
-
-**Trigger:** `POST /api/applications/jobapplications/` (on commit)  
-**App:** `applications`
-
-Reads the job seeker's uploaded resume PDF and writes extracted plain text to `Application.extracted_text`. Skips if `extracted_text` is already set (idempotent).
-
----
-
-### `send_acceptance_email(application_id)`
-
-**Trigger:** `POST /api/applications/accept/` (on commit)  
-**App:** `applications`
-
-Sends an acceptance email via Gmail SMTP to the job seeker with the interview date and link.
-
----
-
-### `generateQuestions(extracted_text, description, interview_id)`
-
-**Trigger:** `POST /api/applications/accept/` (on commit)  
-**App:** `interviews`
-
-Calls the DeepSeek LLM to generate 2 technical interview questions in French based on the CV text and job description. Skips if questions already exist for the interview (idempotent). Uses `bulk_create` for efficiency.
-
----
-
-### `evaluate_answer(answer_id)`
-
-**Trigger:** `POST /api/interviews/uploadVideo/`  
-**App:** `interviews`
-
-Pipeline per answer:
-1. Extract audio from video (`ffmpeg`)
-2. Transcribe audio (Whisper `small` model)
-3. Score transcript against the question (DeepSeek LLM, returns 0–10)
-4. Write score to `Answer.score`
-5. When all answers for an interview are scored, compute the average and write `InterviewResult`
-
-Skips if `Answer.score` is already set (idempotent).
-
----
-
-## Configuration Reference
-
-All configuration is read from environment variables (`.env` file at the project root).
-
-| Variable | Required | Default | Description |
-|----------|----------|---------|-------------|
-| `DJANGO_SECRET_KEY` | ✓ | — | Django secret key |
-| `DJANGO_DEBUG` | | `False` | Set to `True` for development |
-| `DJANGO_ALLOWED_HOSTS` | | `localhost,127.0.0.1` | Comma-separated allowed hosts |
-| `POSTGRES_DB` | ✓ | `recrutai_db` | PostgreSQL database name |
-| `POSTGRES_USER` | ✓ | `recrutai_user` | PostgreSQL user |
-| `POSTGRES_PASSWORD` | ✓ | `recrutai_pass` | PostgreSQL password |
-| `POSTGRES_HOST` | | `localhost` | PostgreSQL host |
-| `POSTGRES_PORT` | | `5432` | PostgreSQL port |
-| `CELERY_BROKER_URL` | | `redis://localhost:6379/0` | Redis broker URL |
-| `CELERY_RESULT_BACKEND` | | `redis://localhost:6379/0` | Redis result backend URL |
-| `DEEPSEEK_API_KEY` | ✓ | — | DeepSeek / OpenAI-compatible API key |
-| `SPACY_MODEL_PATH` | | `""` | Path to spaCy model (optional) |
-| `EMAIL_HOST_USER` | ✓ | `""` | Gmail address for SMTP |
-| `EMAIL_HOST_PASSWORD` | ✓ | `""` | Gmail app password |
-| `CORS_ALLOWED_ORIGINS` | | `http://localhost:3000,...` | Comma-separated allowed CORS origins |
-
----
-
-## Running Locally
-
-### Prerequisites
-
-- Python 3.11+
-- PostgreSQL 14+
-- Redis 7+
-- ffmpeg (in `$PATH`)
-
-### Setup
+## Demo data
 
 ```bash
-# 1. Create and activate virtual environment
-python -m venv .venv
-source .venv/bin/activate   # Windows: .venv\Scripts\activate
-
-# 2. Install dependencies
-pip install -r requirements.txt
-
-# 3. Configure environment
-cp .env.example .env
-# Edit .env — set DJANGO_SECRET_KEY, POSTGRES_*, DEEPSEEK_API_KEY, EMAIL_*
-
-# 4. Apply migrations
-cd backend
-python manage.py migrate
-
-# 5. Create superuser (optional)
-python manage.py createsuperuser
-
-# 6. Start Django dev server
-python manage.py runserver
+docker compose exec backend python manage.py seed_demo           # create
+docker compose exec backend python manage.py seed_demo --reset   # recreate
+docker compose exec backend python manage.py seed_demo --remove  # delete demo data only
 ```
 
-### Running Celery
+The command creates the recruiter `sara@recrutai.demo` (password `DemoPass2026!`). That recruiter has 6 offers, one in each status, and 10 candidates covering every pipeline stage, each with a resume PDF, parsed CV, AI analysis and, where relevant, an interview with answers and evaluations. Candidates log in as `<firstname>@recrutai.demo` with the same password. No LLM or Celery call is made.
 
-Open a separate terminal for each:
-
-```bash
-# Worker — processes all tasks
-celery -A recruitment_platform worker -l info
-
-# Optional: Flower dashboard (pip install flower)
-celery -A recruitment_platform flower
-```
-
-### Docker (recommended)
-
-```bash
-docker-compose up --build
-```
-
-Starts PostgreSQL, Redis, Django, and the Celery worker together.
-
----
-
-## Rate Limits
-
-| Scope | Limit | Applied to |
-|-------|-------|-----------|
-| `login` | 5 / minute | `POST /api/users/login/` |
-| `llm` | 20 / hour | `POST /api/applications/accept/`, `POST /api/interviews/questions/`, `POST /api/interviews/uploadVideo/` |
-
----
-
-## Error Format
-
-All errors follow DRF's standard envelope:
-
-```json
-{ "error": "Human-readable message." }
-```
-
-or for field-level validation errors:
-
-```json
-{
-  "email": ["This field is required."],
-  "password": ["Password must be at least 8 characters long."]
-}
-```
-
----
-
-## Interview Status Flow
-
-```
-pending (Application)
-    → accepted → Interview created (available)
-                    → video uploaded (completed)
-                        → evaluate_answer task runs
-                            → InterviewResult written
-    → rejected
-```
+Note that clicking **Invite to interview** in the demo still triggers the real background tasks (LLM probe questions and the invitation email).
