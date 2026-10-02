@@ -1,6 +1,5 @@
 import React from 'react';
 import Spinner from './Spinner';
-import { BorderRotate } from './animated-gradient-border';
 
 const variants = {
   primary:   null, // handled via inline style
@@ -8,6 +7,11 @@ const variants = {
   danger:    'bg-red-500 hover:bg-red-600 text-white font-semibold active:scale-[.98]',
   ghost:     'text-brand-text-muted hover:bg-brand-elevated hover:text-brand-text-primary active:scale-[.98]',
   link:      'text-brand-accent hover:text-brand-accent-bright underline-offset-2 hover:underline p-0 h-auto',
+};
+
+const primaryStyle = {
+  background: 'linear-gradient(135deg, #F59E0B 0%, #FCD34D 100%)',
+  boxShadow: '0 0 16px rgba(245,158,11,0.25)',
 };
 
 const secondaryStyle = {
@@ -39,21 +43,21 @@ export default function Button({
   const isSecondary = variant === 'secondary';
 
   const inlineStyle = isPrimary
-    ? { background: 'linear-gradient(135deg, rgba(245,158,11,0.85) 0%, rgba(252,211,77,0.85) 100%)', ...extraStyle }
+    ? { ...primaryStyle, ...extraStyle }
     : isSecondary
       ? { ...secondaryStyle, ...extraStyle }
       : extraStyle;
 
-  const baseButton = (
+  return (
     <button
       type={type}
       disabled={isDisabled}
       className={`
         inline-flex items-center justify-center font-semibold transition-all duration-150
         focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-accent focus-visible:ring-offset-2
-        disabled:opacity-50 disabled:cursor-not-allowed disabled:active:scale-100 w-full h-full
-        ${isPrimary ? 'text-gray-900' : (variants[variant] || '')}
-        ${className}
+        disabled:opacity-50 disabled:cursor-not-allowed disabled:active:scale-100
+        ${isPrimary ? 'text-gray-900 hover:brightness-110 active:scale-[.98]' : (variants[variant] || '')}
+        ${sizes[size]} ${className}
       `}
       style={inlineStyle}
       {...props}
@@ -62,39 +66,4 @@ export default function Button({
       {children}
     </button>
   );
-
-  // If the button is primary, wrap it in the glowing animated border!
-  if (isPrimary && !disabled) {
-    const sizeClasses = sizes[size] || '';
-    // Classes for the wrapper: size, border-radius, etc., but NO padding
-    const wrapperClasses = sizeClasses.split(' ').filter(c => !c.startsWith('px-') && !c.startsWith('py-') && !c.startsWith('p-') && !c.startsWith('gap-') && !c.startsWith('text-')).join(' ');
-    // Classes for the inner button: padding, gap, text size
-    const innerClasses = sizeClasses.split(' ').filter(c => c.startsWith('px-') || c.startsWith('py-') || c.startsWith('p-') || c.startsWith('gap-') || c.startsWith('text-')).join(' ');
-    
-    return (
-      <BorderRotate 
-        animationSpeed={3}
-        borderWidth={2}
-        borderRadius={size === 'sm' ? 8 : 12}
-        gradientColors={{
-          primary: '#F59E0B',
-          secondary: '#7C3AED',
-          accent: '#FCD34D'
-        }}
-        backgroundColor="transparent"
-        className={`p-0 ${wrapperClasses} shadow-glow`}
-        style={{ width: 'max-content', height: 'max-content', display: 'inline-flex' }}
-      >
-        {React.cloneElement(baseButton, {
-          className: `${baseButton.props.className} w-full h-full ${innerClasses}`,
-          style: { ...baseButton.props.style, minWidth: 'max-content', borderRadius: 'inherit', background: 'linear-gradient(135deg, rgba(245,158,11,0.85) 0%, rgba(252,211,77,0.85) 100%)' }
-        })}
-      </BorderRotate>
-    );
-  }
-
-  // Otherwise return standard button structure
-  return React.cloneElement(baseButton, {
-    className: `${baseButton.props.className} ${sizes[size]}`
-  });
 }

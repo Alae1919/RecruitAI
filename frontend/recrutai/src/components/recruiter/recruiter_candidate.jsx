@@ -7,7 +7,7 @@ import { apiClient, fetchJobOffers, fetchCandidatesForJobOffer, advanceCandidate
 import { useToast } from '../../hooks/useToast';
 import { Modal } from '../ui/index';
 import pdfjsWorker from 'pdfjs-dist/build/pdf.worker.min.js';
-import SearchComponent from '../ui/animated-glowing-search-bar';
+import SearchInput from '../ui/SearchInput';
 import { Sparkles, List, Columns2, Briefcase, Bell, ArrowLeft } from 'lucide-react';
 import StatusBadge from '../ui/StatusBadge';
 import MatchRing from './candidates/MatchRing';
@@ -358,9 +358,7 @@ export default function JobOffersWithCandidates() {
             <div className="p-3 space-y-2" style={{ borderBottom: '1px solid rgba(35,42,62,0.6)' }}>
               <StageTabs counts={counts} value={stage} onChange={setStage} />
               <div className="flex items-center gap-2">
-                <div className="flex-1 flex justify-center">
-                  <SearchComponent value={q} onChange={e => setQ(e.target.value)} placeholder="Search candidates…" />
-                </div>
+                <SearchInput className="flex-1" value={q} onChange={e => setQ(e.target.value)} placeholder="Search candidates…" />
                 <select aria-label="Sort candidates" value={sort} onChange={e => setSort(e.target.value)}
                   className="h-9 px-2 rounded-lg text-xs text-brand-text-muted outline-none cursor-pointer"
                   style={{ background: 'rgba(24,30,46,0.8)', border: '1px solid rgba(35,42,62,0.8)' }}>

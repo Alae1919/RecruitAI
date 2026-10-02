@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { useToast } from '../../hooks/useToast';
 import Button from '../ui/Button';
-import SearchComponent from '../ui/animated-glowing-search-bar';
+import SearchInput from '../ui/SearchInput';
 import Pagination from '../ui/Pagination';
 import JobOffersFilters from '../jobOffers/JobOffersFilters';
 import ResumePickerModal from './resumes/ResumePickerModal';
@@ -125,7 +125,8 @@ export default function JobSeekerApplications() {
 
         {/* Search + filters */}
         <div className="flex items-center justify-between gap-3 mb-8 flex-wrap">
-          <SearchComponent
+          <SearchInput
+            className="flex-1 max-w-sm"
             value={search}
             onChange={e => { setParam('search', e.target.value); setParam('page', ''); }}
             placeholder="Search by title, location, description…"

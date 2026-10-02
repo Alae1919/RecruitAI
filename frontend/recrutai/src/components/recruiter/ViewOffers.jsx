@@ -1,8 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useToast } from '../../hooks/useToast';
-import { Button, Input, Select, Modal, ConfirmModal } from '../ui/index';
-import SearchComponent from '../ui/animated-glowing-search-bar';
+import { Button, Input, Select, Modal, ConfirmModal, SearchInput } from '../ui/index';
 import { Plus, Trash2, Pencil, Bell, Briefcase, MessageSquare, Sparkles } from 'lucide-react';
 import { useJobOffers, useEditOffer, useDeleteOffer, useGenerateJobDescription } from '../../shared/hooks/useJobOffers';
 import { StatusBadge, KpiCard } from '../ui/index';
@@ -52,14 +51,6 @@ const HEADERS = [
   { label: 'Posted', cls: 'hidden md:table-cell' },
   { label: '' },
 ];
-
-function SearchInput({ value, onChange, placeholder }) {
-  return (
-    <div className="flex-1 flex justify-start">
-      <SearchComponent value={value} onChange={onChange} placeholder={placeholder} />
-    </div>
-  );
-}
 
 function SkeletonRow() {
   return (
@@ -250,6 +241,7 @@ export default function ViewOffers() {
           <div className="p-4 flex items-center gap-2 flex-wrap"
             style={{ borderBottom: '1px solid rgba(35,42,62,0.6)' }}>
             <SearchInput
+              className="flex-1 max-w-sm"
               value={search}
               onChange={e => { setParam('search', e.target.value); setParam('page', ''); }}
               placeholder="Search offers…"

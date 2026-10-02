@@ -106,47 +106,21 @@ function LeftPanel({ step, role }) {
 
 /* ── Role Card ──────────────────────────────────────────────────────── */
 function RoleCard({ id, Icon, title, description, onClick }) {
-  const tilt3d = (e, enter) => {
-    if (enter) {
-      const r = e.currentTarget.getBoundingClientRect();
-      const dx = (e.clientX - r.left) / r.width - 0.5;
-      const dy = (e.clientY - r.top) / r.height - 0.5;
-      e.currentTarget.style.transform = `perspective(800px) rotateX(${dy * -6}deg) rotateY(${dx * 8}deg) translateY(-4px)`;
-      e.currentTarget.style.borderColor = 'rgba(245,158,11,0.45)';
-      e.currentTarget.style.boxShadow = '0 24px 60px rgba(0,0,0,0.6), 0 0 30px rgba(245,158,11,0.12)';
-    } else {
-      e.currentTarget.style.transform = 'perspective(800px) rotateX(0) rotateY(0) translateY(0)';
-      e.currentTarget.style.borderColor = 'rgba(35,42,62,0.7)';
-      e.currentTarget.style.boxShadow = '0 4px 20px rgba(0,0,0,0.4)';
-    }
-  };
-
   return (
     <button type="button" onClick={onClick}
-      className="group text-left w-full cursor-pointer overflow-hidden"
+      className="group text-left w-full cursor-pointer rounded-2xl px-6 py-5 transition-colors duration-200 hover:border-brand-accent/40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-accent/50"
       style={{
-        background: 'linear-gradient(145deg, rgba(24,30,46,0.95) 0%, rgba(9,12,20,0.98) 100%)',
-        border: '1px solid rgba(35,42,62,0.7)',
-        borderRadius: '16px',
-        padding: '20px 24px',
-        boxShadow: '0 4px 20px rgba(0,0,0,0.4)',
-        transition: 'transform 0.25s ease, box-shadow 0.25s ease, border-color 0.25s ease',
-      }}
-      onMouseMove={e => tilt3d(e, true)}
-      onMouseLeave={e => tilt3d(e, false)}>
-
-      {/* Top accent line on hover */}
-      <div className="absolute top-0 left-0 right-0 h-px opacity-0 group-hover:opacity-100 transition-opacity duration-400 pointer-events-none"
-        style={{ background: 'linear-gradient(90deg, transparent, rgba(245,158,11,0.6), transparent)' }} />
+        background: '#101420',
+        border: '1px solid rgba(35,42,62,0.8)',
+      }}>
 
       <div className="flex items-center gap-5">
         {/* Icon box */}
-        <div className="w-14 h-14 rounded-2xl shrink-0 grid place-items-center transition-all duration-300 group-hover:scale-105"
+        <div className="w-14 h-14 rounded-2xl shrink-0 grid place-items-center"
           style={{
-            background: 'linear-gradient(135deg, rgba(245,158,11,0.2) 0%, rgba(245,158,11,0.06) 100%)',
+            background: 'rgba(245,158,11,0.1)',
             border: '1px solid rgba(245,158,11,0.25)',
             color: '#F59E0B',
-            boxShadow: '0 0 20px rgba(245,158,11,0.08)',
           }}>
           <Icon />
         </div>
