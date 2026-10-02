@@ -471,3 +471,95 @@ class TestQuestionSetAPI(APITestCase):
         )
         qs.refresh_from_db()
         self.assertEqual(qs.job_offer_id, self.job_offer.id)
+
+
+# ---------------------------------------------------------------------------
+# Video upload / answers access control
+# ---------------------------------------------------------------------------
+
+import shutil
+import tempfile
+
+from django.core.files.uploadedfile import SimpleUploadedFile
+from django.test import override_settings
+
+_MEDIA = tempfile.mkdtemp(prefix='recrutai-test-media-')
+
+
+def _video(name='answer.webm'):
+    return SimpleUploadedFile(name, b'\x1a\x45\xdf\xa3fake-webm-bytes', content_type='video/webm')
+
+
+@override_settings(MEDIA_ROOT=_MEDIA)
+class TestInterviewMediaAccess(APITestCase):
+    @classmethod
+    def tearDownClass(cls):
+        super().tearDownClass()
+        shutil.rmtree(_MEDIA, ignore_errors=True)
+
+    def setUp(self):
+        self.recruiter = _make_recruiter('owner@rec.com')
+        self.offer = _make_job_offer(self.recruiter)
+        self.qs = _make_question_set(self.offer, qs_status=QuestionSet.Status.LOCKED)
+        self.base_q = _make_question(question_set=self.qs, text='Base?')
+
+        self.candidate = _make_job_seeker('cand@js.com')
+        self.interview = _make_interview(_make_application(self.candidate, self.offer), self.qs)
+        self.probe_q = _make_question(interview=self.interview, text='Probe?')
+
+        # someone else's interview, on another offer
+        other_rec = _make_recruiter('other@rec.com')
+        other_offer = _make_job_offer(other_rec, title='Other')
+        other_qs = _make_question_set(other_offer, qs_status=QuestionSet.Status.LOCKED)
+        self.foreign_q = _make_question(question_set=other_qs, text='Foreign?')
+        self.other_recruiter = other_rec
+        self.other_candidate = _make_job_seeker('other@js.com')
+
+    def _upload(self, question):
+        return self.client.post('/api/interviews/uploadVideo/', {
+            'interviewId': self.interview.id, 'questionId': question.id, 'video': _video(),
+        }, format='multipart')
+
+    @patch('interviews.tasks.evaluate_answer.delay')
+    def test_candidate_can_upload_base_and_probe_answers(self, _):
+        self.client.force_authenticate(user=self.candidate.user)
+        self.assertEqual(self._upload(self.base_q).status_code, 200)
+        self.assertEqual(self._upload(self.probe_q).status_code, 200)
+        self.assertEqual(Answer.objects.filter(interview=self.interview).count(), 2)
+
+    @patch('interviews.tasks.evaluate_answer.delay')
+    def test_other_candidate_cannot_upload(self, delay):
+        self.client.force_authenticate(user=self.other_candidate.user)
+        self.assertEqual(self._upload(self.base_q).status_code, 403)
+        self.assertFalse(Answer.objects.exists())
+        delay.assert_not_called()
+
+    @patch('interviews.tasks.evaluate_answer.delay')
+    def test_recruiter_cannot_upload_on_candidate_behalf(self, _):
+        self.client.force_authenticate(user=self.recruiter.user)
+        self.assertEqual(self._upload(self.base_q).status_code, 403)
+
+    @patch('interviews.tasks.evaluate_answer.delay')
+    def test_question_from_another_interview_is_rejected(self, delay):
+        self.client.force_authenticate(user=self.candidate.user)
+        res = self._upload(self.foreign_q)
+        self.assertEqual(res.status_code, 400)
+        self.assertFalse(Answer.objects.exists())
+        delay.assert_not_called()
+
+    def _answers(self):
+        return self.client.post('/api/interviews/answers/', {'interview_id': self.interview.id}, format='json')
+
+    def test_candidate_and_owning_recruiter_can_read_answers(self):
+        _make_answer(self.interview, self.base_q)
+        for user in (self.candidate.user, self.recruiter.user):
+            self.client.force_authenticate(user=user)
+            res = self._answers()
+            self.assertEqual(res.status_code, 200)
+            self.assertEqual(len(res.json()['answers']), 1)
+
+    def test_strangers_cannot_read_answers(self):
+        _make_answer(self.interview, self.base_q)
+        for user in (self.other_candidate.user, self.other_recruiter.user):
+            self.client.force_authenticate(user=user)
+            self.assertEqual(self._answers().status_code, 403)

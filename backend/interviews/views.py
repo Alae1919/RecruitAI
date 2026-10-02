@@ -274,6 +274,21 @@ class InterviewEvaluationDecisionView(APIView):
 # Video upload (existing, updated to use new Answer model)
 # ---------------------------------------------------------------------------
 
+def _is_interview_candidate(user, interview) -> bool:
+    return interview.application.job_seeker.user_id == user.id
+
+
+def _is_interview_recruiter(user, interview) -> bool:
+    return hasattr(user, 'recruiter') and interview.application.job_offer.recruiter_id == user.recruiter.id
+
+
+def _question_belongs_to(question, interview) -> bool:
+    """Base questions come from the interview's question set, probes are attached to the interview."""
+    if question.interview_id is not None:
+        return question.interview_id == interview.id
+    return question.question_set_id is not None and question.question_set_id == interview.question_set_id
+
+
 @api_view(['POST'])
 @throttle_classes([_LLMScopedThrottle])
 def upload_video(request):
@@ -284,9 +299,12 @@ def upload_video(request):
             return JsonResponse({'error': 'Interview ID is required.'}, status=400)
 
         try:
-            interview = Interview.objects.get(id=interview_id)
+            interview = Interview.objects.select_related('application__job_seeker').get(id=interview_id)
         except Interview.DoesNotExist:
             return JsonResponse({'error': 'Interview not found.'}, status=404)
+
+        if not _is_interview_candidate(request.user, interview):
+            return JsonResponse({'error': 'Not authorized.'}, status=403)
 
         video_file = request.FILES.get('video')
         if not video_file:
@@ -309,6 +327,9 @@ def upload_video(request):
             question = Question.objects.get(id=question_id)
         except Question.DoesNotExist:
             return JsonResponse({'error': 'Question not found.'}, status=404)
+
+        if not _question_belongs_to(question, interview):
+            return JsonResponse({'error': 'Question does not belong to this interview.'}, status=400)
 
         answer, created = Answer.objects.get_or_create(
             interview=interview,
@@ -348,7 +369,12 @@ def get_interview_answers(request):
         if not interview_id:
             return JsonResponse({'error': 'Interview ID is required.'}, status=400)
 
-        interview = Interview.objects.get(id=interview_id)
+        interview = Interview.objects.select_related(
+            'application__job_seeker', 'application__job_offer'
+        ).get(id=interview_id)
+        if not (_is_interview_candidate(request.user, interview) or _is_interview_recruiter(request.user, interview)):
+            return JsonResponse({'error': 'Not authorized.'}, status=403)
+
         answers = Answer.objects.filter(interview=interview).select_related('question', 'evaluation')
 
         answer_data = [
