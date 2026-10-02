@@ -14,13 +14,21 @@ class JobOfferSerializer(serializers.ModelSerializer):
     class Meta:
         model = JobOffer
         fields = [
-            'id', 'title', 'description', 'requirements', 'skills',
-            'experience_min', 'location', 'salary_range', 'status',
+            'id', 'title', 'description', 'requirements', 'skills', 'nice_skills',
+            'experience_min', 'experience_max', 'department', 'employment_type',
+            'screening_config', 'location', 'salary_range', 'status',
             'recruiter_name', 'question_sets_count',
             'applicants_count', 'shortlisted_count', 'avg_match',
             'created_at', 'updated_at',
         ]
         read_only_fields = ['id', 'created_at', 'updated_at']
+
+    def validate(self, attrs):
+        low = attrs.get('experience_min', getattr(self.instance, 'experience_min', 0))
+        high = attrs.get('experience_max', getattr(self.instance, 'experience_max', None))
+        if high is not None and low is not None and high < low:
+            raise serializers.ValidationError({'experience_max': 'Must be greater than or equal to the minimum.'})
+        return attrs
 
     def get_recruiter_name(self, obj):
         return obj.recruiter.company_name if hasattr(obj, 'recruiter') else None

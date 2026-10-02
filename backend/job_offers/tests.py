@@ -307,3 +307,57 @@ class TestCandidatesEndpoint(APITestCase):
         self.assertEqual(res.status_code, 200)
         self.assertNotIn('analysis', res.data[0])
         self.assertNotIn('candidate_email', res.data[0])
+
+
+# ---------------------------------------------------------------------------
+# Wizard fields persisted on create
+# ---------------------------------------------------------------------------
+
+class TestCreateOfferWizardFields(APITestCase):
+    def setUp(self):
+        self.recruiter = _make_recruiter()
+        self.client.force_authenticate(user=self.recruiter.user)
+        self.payload = {
+            'title': 'Senior Frontend Engineer',
+            'description': 'Own the design system.',
+            'location': 'Remote',
+            'skills': ['React', 'TypeScript'],
+            'nice_skills': ['Storybook'],
+            'experience_min': 5,
+            'experience_max': 10,
+            'department': 'Engineering',
+            'employment_type': 'contract',
+            'screening_config': {'cv': True, 'video': True, 'questions': 5, 'auto_shortlist': True},
+            'status': 'draft',
+        }
+
+    def test_all_wizard_fields_are_saved(self):
+        res = self.client.post('/api/job_offers/create', self.payload, format='json')
+        self.assertEqual(res.status_code, 201)
+        offer = JobOffer.objects.get(id=res.data['job_offer']['id'])
+        self.assertEqual(offer.skills, ['React', 'TypeScript'])
+        self.assertEqual(offer.nice_skills, ['Storybook'])
+        self.assertEqual((offer.experience_min, offer.experience_max), (5, 10))
+        self.assertEqual(offer.department, 'Engineering')
+        self.assertEqual(offer.employment_type, JobOffer.EmploymentType.CONTRACT)
+        self.assertEqual(offer.screening_config['questions'], 5)
+        self.assertEqual(offer.status, JobOffer.Status.DRAFT)
+
+    def test_max_experience_below_min_is_rejected(self):
+        self.payload['experience_max'] = 2
+        res = self.client.post('/api/job_offers/create', self.payload, format='json')
+        self.assertEqual(res.status_code, 400)
+        self.assertIn('experience_max', res.data)
+
+    def test_invalid_employment_type_is_rejected(self):
+        self.payload['employment_type'] = 'freelance'
+        res = self.client.post('/api/job_offers/create', self.payload, format='json')
+        self.assertEqual(res.status_code, 400)
+
+    def test_defaults_when_omitted(self):
+        res = self.client.post('/api/job_offers/create', {'title': 'T', 'description': 'D'}, format='json')
+        self.assertEqual(res.status_code, 201)
+        offer = JobOffer.objects.get(id=res.data['job_offer']['id'])
+        self.assertEqual(offer.employment_type, JobOffer.EmploymentType.FULL_TIME)
+        self.assertEqual(offer.status, JobOffer.Status.OPEN)
+        self.assertIsNone(offer.experience_max)
