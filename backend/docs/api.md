@@ -150,6 +150,7 @@ The recruiter UI shows each application in one **stage**, derived by `Applicatio
 | POST | `applications/advance/` | owner · LLM | `{application_id}` → one pipeline step forward (see [pipeline](#recruitment-pipeline)) |
 | POST | `applications/reject/` | owner | `{application_id}` |
 | GET | `applications/pipeline/` | recruiter | Sidebar counts: `{offers, open_offers, candidates, stages: {applied, screening, interview, offer, hired, rejected}}` |
+| GET | `applications/search/?q=` | recruiter | Quick lookup of applicants to your own offers by name or email (every word must match, ≥ 2 characters, max 8): `[{id, candidate_name, candidate_email, offer_id, offer_title, stage, match_score}]`. Used by the ⌘K palette. |
 | GET / POST | `applications/<id>/messages/` | owner · LLM | History of messages sent to an applicant, or send one (`{subject, body}`). The message is stored and emailed in the background (`email_sent` stays `false` for `@recrutai.demo` accounts). |
 | GET / POST | `applications/resumes/` | job seeker | List, or upload (multipart `original_file`, `label?`, `make_default?`). PDF/DOC/DOCX, ≤ 3 MB. Parsing runs asynchronously. |
 | GET / PATCH / DELETE | `applications/resumes/<id>/` | owner | Read, rename / set default (`{label?, is_default?}`), delete |

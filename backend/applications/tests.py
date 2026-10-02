@@ -490,3 +490,66 @@ class TestApplicationMessages(APITestCase):
         self.client.force_authenticate(user=self.candidate.user)
         own = self.client.get('/api/applications/retreiveApplications')
         self.assertNotIn('messages', own.data[0])
+
+
+# ---------------------------------------------------------------------------
+# Candidate search (command palette)
+# ---------------------------------------------------------------------------
+
+class TestCandidateSearch(APITestCase):
+    def setUp(self):
+        self.recruiter = _make_recruiter()
+        self.offer = _make_job_offer(self.recruiter)
+        self.other_offer = _make_job_offer(_make_recruiter('rival@test.com'))
+
+        def candidate(email, first, last, offer, score=None):
+            seeker = _make_job_seeker(email)
+            seeker.user.first_name, seeker.user.last_name = first, last
+            seeker.user.save()
+            app = Application.objects.create(job_seeker=seeker, job_offer=offer)
+            if score is not None:
+                CVAnalysis.objects.create(application=app, eligibility_score=score)
+            return app
+
+        self.amira = candidate('amira@x.com', 'Amira', 'El-Khalil', self.offer, score=9.1)
+        self.tomas = candidate('tomas@y.com', 'Tomás', 'Ribeiro', self.offer)
+        self.stranger = candidate('amira.other@z.com', 'Amira', 'Rival', self.other_offer)
+        self.client.force_authenticate(user=self.recruiter.user)
+
+    def _search(self, q):
+        return self.client.get('/api/applications/search/', {'q': q})
+
+    def test_matches_name_or_email_case_insensitively(self):
+        self.assertEqual([r['id'] for r in self._search('amira').data], [self.amira.id])
+        self.assertEqual([r['id'] for r in self._search('RIBEIRO').data], [self.tomas.id])
+        self.assertEqual([r['id'] for r in self._search('tomas@y').data], [self.tomas.id])
+
+    def test_every_word_must_match(self):
+        self.assertEqual([r['id'] for r in self._search('amira el-kha').data], [self.amira.id])
+        self.assertEqual(self._search('amira ribeiro').data, [])
+
+    def test_never_returns_other_recruiters_applicants(self):
+        ids = [r['id'] for r in self._search('amira').data]
+        self.assertNotIn(self.stranger.id, ids)
+
+    def test_result_shape(self):
+        row = self._search('amira').data[0]
+        self.assertEqual(row, {
+            'id': self.amira.id, 'candidate_name': 'Amira El-Khalil', 'candidate_email': 'amira@x.com',
+            'offer_id': self.offer.id, 'offer_title': self.offer.title, 'stage': 'screening', 'match_score': 91,
+        })
+        self.assertIsNone(self._search('tomas').data[0]['match_score'])
+
+    def test_short_or_empty_queries_return_nothing(self):
+        self.assertEqual(self._search('a').data, [])
+        self.assertEqual(self._search('').data, [])
+
+    def test_results_are_limited(self):
+        for i in range(12):
+            seeker = _make_job_seeker(f'bulk{i}@x.com')
+            Application.objects.create(job_seeker=seeker, job_offer=self.offer)
+        self.assertEqual(len(self._search('bulk').data), 8)
+
+    def test_job_seekers_are_denied(self):
+        self.client.force_authenticate(user=self.amira.job_seeker.user)
+        self.assertEqual(self._search('amira').status_code, 403)

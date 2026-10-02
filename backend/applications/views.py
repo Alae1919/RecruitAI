@@ -28,7 +28,9 @@ from .services.advance_application import advance_application
 from .services.reject_application import reject_application
 from .services.send_message import send_message
 from .services.upload_resume import upload_resume, set_default_resume
-from .selectors import list_jobseeker_applications, list_jobseeker_resumes, recruiter_pipeline_summary
+from .selectors import (
+    list_jobseeker_applications, list_jobseeker_resumes, recruiter_pipeline_summary, search_recruiter_candidates,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -218,6 +220,29 @@ class AdvanceApplicationView(APIView):
             return Response({'error': ' '.join(str(m) for m in e.detail)}, status=status.HTTP_400_BAD_REQUEST)
 
         return Response(ApplicationSerializer(application, context={'request': request}).data)
+
+
+class RecruiterCandidateSearchView(APIView):
+    """GET ?q=: quick lookup of applicants by name or email for the command palette."""
+    permission_classes = [IsAuthenticated, IsRecruiter]
+
+    def get(self, request):
+        query = (request.query_params.get('q') or '').strip()
+        if len(query) < 2:
+            return Response([])
+        results = search_recruiter_candidates(request.user.recruiter, query)
+        return Response([
+            {
+                'id': a.id,
+                'candidate_name': a.job_seeker.user.get_full_name() or a.job_seeker.user.email,
+                'candidate_email': a.job_seeker.user.email,
+                'offer_id': a.job_offer_id,
+                'offer_title': a.job_offer.title,
+                'stage': a.stage,
+                'match_score': round(a.cv_analysis.eligibility_score * 10) if hasattr(a, 'cv_analysis') else None,
+            }
+            for a in results
+        ])
 
 
 class RecruiterPipelineSummaryView(APIView):

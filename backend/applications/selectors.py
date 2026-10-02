@@ -33,6 +33,23 @@ def list_applications_for_offer(job_offer_id: int, recruiter: Recruiter):
     )
 
 
+def search_recruiter_candidates(recruiter: Recruiter, query: str, limit: int = 8):
+    """Applicants to this recruiter's offers whose name or email matches every word of `query`."""
+    from django.db.models import Q
+
+    terms = [t for t in (query or '').split() if t]
+    if not terms:
+        return Application.objects.none()
+    queryset = Application.objects.filter(job_offer__recruiter=recruiter)
+    for term in terms:
+        queryset = queryset.filter(
+            Q(job_seeker__user__first_name__icontains=term)
+            | Q(job_seeker__user__last_name__icontains=term)
+            | Q(job_seeker__user__email__icontains=term)
+        )
+    return queryset.select_related('job_seeker__user', 'job_offer', 'cv_analysis').order_by('-applied_at')[:limit]
+
+
 def recruiter_pipeline_summary(recruiter: Recruiter) -> dict:
     """Counts for the recruiter sidebar: offers, candidates and candidates per stage."""
     from job_offers.models import JobOffer
