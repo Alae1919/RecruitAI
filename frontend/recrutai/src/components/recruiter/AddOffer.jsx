@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { createJobOffer } from '../../services/api';
+import { buildOfferPayload, validateOffer } from './add-offer/payload';
 import { useToast } from '../../hooks/useToast';
 import { Bell } from 'lucide-react';
 import { Stepper } from './add-offer/shared';
@@ -16,7 +17,7 @@ const EMPTY = {
   title: '', department: 'Engineering', location: '', type: 'Full-time',
   salary_range: '', description: '', requirements: '',
   mustSkills: [], niceSkills: [], yearsMin: 3, yearsMax: 8,
-  screening: { cv: true, cover: false, video: true, questions: 3 },
+  screening: { cv: true, cover: false, video: true, questions: 3, auto_shortlist: true },
 };
 
 export default function AddOffer() {
@@ -26,20 +27,18 @@ export default function AddOffer() {
   const { toast } = useToast();
   const navigate = useNavigate();
 
-  const handlePublish = async () => {
+  const save = async (status) => {
+    const problem = validateOffer(data, status);
+    if (problem) { toast.error(problem); return; }
     setPublishing(true);
     try {
-      await createJobOffer({
-        title: data.title,
-        description: data.description,
-        requirements: [...data.mustSkills, ...data.niceSkills].join(', ') || data.requirements,
-        salary_range: data.salary_range,
-        location: data.location,
-      });
-      toast.success('Offer published!');
-      navigate('/recruiter-dashboard/view-offers');
-    } catch {
-      toast.error('Failed to publish offer. Please try again.');
+      await createJobOffer(buildOfferPayload(data, status));
+      toast.success(status === 'draft' ? 'Draft saved.' : 'Offer published!');
+      navigate(`/recruiter-dashboard/view-offers${status === 'draft' ? '?status=draft' : ''}`);
+    } catch (err) {
+      toast.error(err.fields
+        ? Object.values(err.fields).flat().join(' ')
+        : status === 'draft' ? 'Failed to save draft.' : 'Failed to publish offer. Please try again.');
     } finally {
       setPublishing(false);
     }
@@ -60,6 +59,13 @@ export default function AddOffer() {
             onMouseLeave={e => e.currentTarget.style.background = 'transparent'}>
             <Bell size={15} />
           </button>
+          <button onClick={() => save('draft')} disabled={publishing}
+            className="h-8 px-3 text-xs rounded-lg text-brand-text-primary transition-all disabled:opacity-50"
+            style={{ border: '1px solid rgba(35,42,62,0.8)' }}
+            onMouseEnter={e => { e.currentTarget.style.background = 'rgba(35,42,62,0.5)'; }}
+            onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; }}>
+            Save draft
+          </button>
           <button onClick={() => navigate('/recruiter-dashboard/view-offers')}
             className="h-8 px-3 text-xs rounded-lg text-brand-text-muted transition-all"
             style={{ border: '1px solid rgba(35,42,62,0.7)' }}
@@ -76,7 +82,7 @@ export default function AddOffer() {
         {step === 1 && <StepDetails data={data} setData={setData} onBack={() => setStep(0)} onNext={() => setStep(2)} />}
         {step === 2 && <StepRequirements data={data} setData={setData} onBack={() => setStep(1)} onNext={() => setStep(3)} />}
         {step === 3 && <StepScreening data={data} setData={setData} onBack={() => setStep(2)} onNext={() => setStep(4)} />}
-        {step === 4 && <StepPreview data={data} onBack={() => setStep(3)} onPublish={handlePublish} publishing={publishing} />}
+        {step === 4 && <StepPreview data={data} onBack={() => setStep(3)} onPublish={() => save('open')} onSaveDraft={() => save('draft')} publishing={publishing} />}
       </div>
     </div>
   );

@@ -6,7 +6,7 @@ const BackIcon   = ({ size = 14 }) => <ArrowLeft size={size} />;
 const MapPinIcon = ({ size = 13 }) => <MapPin size={size} />;
 const DollarIcon = ({ size = 13 }) => <DollarSign size={size} />;
 
-export default function StepPreview({ data, onBack, onPublish, publishing }) {
+export default function StepPreview({ data, onBack, onPublish, onSaveDraft, publishing }) {
   return (
     <div className="space-y-6 animate-fadeIn">
       <div>
@@ -67,8 +67,8 @@ export default function StepPreview({ data, onBack, onPublish, publishing }) {
           <BackIcon /> Back
         </button>
         <div className="flex gap-2">
-          <button type="button"
-            className="h-9 px-4 text-sm rounded-xl text-brand-text-primary transition-all"
+          <button type="button" onClick={onSaveDraft} disabled={publishing}
+            className="h-9 px-4 text-sm rounded-xl text-brand-text-primary transition-all disabled:opacity-50"
             style={{ border: '1px solid rgba(35,42,62,0.8)' }}
             onMouseEnter={e => e.currentTarget.style.background = 'rgba(35,42,62,0.5)'}
             onMouseLeave={e => e.currentTarget.style.background = 'transparent'}>

@@ -71,9 +71,9 @@ export default function StepScreening({ data, setData, onBack, onNext }) {
           </div>
           <div className="flex-1">
             <div className="text-sm font-semibold text-brand-text-primary">AI auto-shortlist</div>
-            <div className="text-xs text-brand-text-muted mt-0.5">Auto-move candidates with match ≥ 75 into Screening stage.</div>
+            <div className="text-xs text-brand-text-muted mt-0.5">Auto-move candidates with match ≥ 75 into the Screening stage.</div>
           </div>
-          <Toggle checked={true} onChange={() => {}} />
+          <Toggle label="AI auto-shortlist" checked={data.screening.auto_shortlist !== false} onChange={v => setScreening('auto_shortlist', v)} />
         </div>
       </div>
       <StepFooter onBack={onBack} onNext={onNext} />

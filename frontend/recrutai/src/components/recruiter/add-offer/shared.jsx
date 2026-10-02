@@ -46,9 +46,9 @@ export function Field({ label, required, hint, error, icon: Icon, as = 'input', 
   );
 }
 
-export function Toggle({ checked, onChange }) {
+export function Toggle({ checked, onChange, label }) {
   return (
-    <button type="button" onClick={() => onChange(!checked)}
+    <button type="button" role="switch" aria-checked={checked} aria-label={label} onClick={() => onChange(!checked)}
       className="relative h-5 w-9 rounded-full transition-all shrink-0"
       style={{
         background: checked ? '#F59E0B' : 'rgba(35,42,62,0.8)',
