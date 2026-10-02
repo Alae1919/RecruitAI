@@ -205,7 +205,7 @@ The recruiter manages versioned question sets per offer: `draft → ready → lo
 
 ## Background tasks
 
-Celery workers use Redis as the broker. Tasks are idempotent and retry with backoff.
+Celery workers use Redis as the broker. Tasks are idempotent and retry with backoff. An LLM call that returns an empty, truncated or malformed reply raises and is retried: no placeholder score, empty CV profile or empty question list is ever stored. A resume whose parsing keeps failing is marked `FAILED`.
 
 | Task | Trigger | Does |
 |---|---|---|
@@ -213,7 +213,7 @@ Celery workers use Redis as the broker. Tasks are idempotent and retry with back
 | `analyze_cv_task` | application created | LLM scores the CV against the offer → `CVAnalysis` |
 | `generate_question_set_task` | question-set create / regenerate | LLM base questions for the offer |
 | `generate_probe_questions_task` | candidate accepted | LLM CV-specific probe questions for that interview |
-| `send_acceptance_email` | candidate accepted | Invitation email (SMTP) |
+| `send_acceptance_email` | candidate accepted | Invitation email (SMTP). Addresses on `@recrutai.demo` (seed data) are never emailed; without SMTP credentials emails print to the worker log. |
 | `evaluate_answer` | video upload | ffmpeg → Whisper transcript → LLM score → `AnswerEvaluation`; finalizes the interview when every question is scored |
 
 ---
@@ -241,6 +241,7 @@ All settings come from environment variables (`.env` at the project root for Doc
 | `CELERY_BROKER_URL` / `CELERY_RESULT_BACKEND` | `redis://localhost:6379/0` | Celery |
 | `CORS_ALLOWED_ORIGINS` | `http://localhost:3000,…` | Frontend origins |
 | `DEEPSEEK_API_KEY` | — | LLM calls (DeepSeek, OpenAI-compatible) |
+| `DEEPSEEK_MODEL` | `deepseek-chat` | Model for every LLM task. `deepseek-reasoner` also works (the adapter adds token headroom for its hidden reasoning). |
 | `EMAIL_HOST_USER` / `EMAIL_HOST_PASSWORD` | — | SMTP (Gmail) |
 | `AUTO_SHORTLIST_SCORE` | `7.5` | CV score (0–10) that moves a candidate to Screening |
 | `EVALUATION_PASS_THRESHOLD` | `6.0` | Interview average needed for an `accepted` AI decision |

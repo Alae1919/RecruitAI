@@ -15,6 +15,6 @@ def generate_job_description(*, title: str, skills: list, experience_level: str)
     logger.info(f'Generated job description for "{title}" ({len(result)} chars)')
     return {
         'description': result,
-        'model_used': 'deepseek-reasoner',
+        'model_used': get_llm().model,
         'prompt_version': PROMPT_VERSION,
     }

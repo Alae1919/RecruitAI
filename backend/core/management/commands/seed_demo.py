@@ -13,6 +13,7 @@ All demo accounts use the @recrutai.demo domain and the password below.
 """
 from datetime import timedelta
 
+from django.conf import settings
 from django.core.files.base import ContentFile
 from django.core.management.base import BaseCommand
 from django.db import transaction
@@ -26,7 +27,7 @@ from interviews.models import (
 from job_offers.models import JobOffer
 from users.models import JobSeeker, Recruiter, Role, User, UserRole
 
-DEMO_DOMAIN = '@recrutai.demo'
+DEMO_DOMAIN = settings.DEMO_EMAIL_DOMAIN
 DEMO_PASSWORD = 'DemoPass2026!'
 RECRUITER_EMAIL = f'sara{DEMO_DOMAIN}'
 

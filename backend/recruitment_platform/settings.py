@@ -107,6 +107,9 @@ RECRUITMENT = {
     'EVALUATION_PASS_THRESHOLD': float(os.environ.get('EVALUATION_PASS_THRESHOLD', '6.0')),
     'AUTO_SHORTLIST_SCORE': float(os.environ.get('AUTO_SHORTLIST_SCORE', '7.5')),
     'PROBE_QUESTION_COUNT': int(os.environ.get('PROBE_QUESTION_COUNT', '2')),
+    # deepseek-chat answers these short tasks directly. deepseek-reasoner also works,
+    # but its hidden reasoning is billed against max_tokens (see llm_client.REASONER_HEADROOM).
+    'LLM_MODEL': os.environ.get('DEEPSEEK_MODEL', 'deepseek-chat'),
     'LLM_TIMEOUT': int(os.environ.get('LLM_TIMEOUT', '60')),
 }
 
@@ -170,9 +173,15 @@ CELERY_RESULT_SERIALIZER = 'json'
 CELERY_TIMEZONE = 'UTC'
 CELERY_BROKER_CONNECTION_RETRY_ON_STARTUP = True
 
-EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
 EMAIL_HOST = 'smtp.gmail.com'
 EMAIL_PORT = 587
 EMAIL_USE_TLS = True
 EMAIL_HOST_USER = os.environ.get('EMAIL_HOST_USER', '')
 EMAIL_HOST_PASSWORD = os.environ.get('EMAIL_HOST_PASSWORD', '')
+# Without SMTP credentials, print emails to the worker log instead of failing to send.
+EMAIL_BACKEND = (
+    'django.core.mail.backends.smtp.EmailBackend' if EMAIL_HOST_USER
+    else 'django.core.mail.backends.console.EmailBackend'
+)
+# Addresses on this domain belong to `manage.py seed_demo` accounts and are never emailed.
+DEMO_EMAIL_DOMAIN = '@recrutai.demo'

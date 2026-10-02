@@ -51,8 +51,9 @@ def parse_resume(resume_id: int) -> None:
     try:
         parsed = get_llm().parse_resume_data(raw_text=raw_text)
     except Exception as e:
+        # do not store an empty profile and call it READY; the task retries, then marks FAILED
         logger.error(f'LLM resume parsing failed for resume {resume_id}: {e}')
-        parsed = {'skills': [], 'experience': [], 'education': [], 'languages': [], 'summary': ''}
+        raise
 
     ResumeData.objects.update_or_create(
         resume=resume,

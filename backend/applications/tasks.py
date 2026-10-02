@@ -7,6 +7,15 @@ from django.conf import settings
 logger = logging.getLogger(__name__)
 
 
+def send_candidate_email(subject: str, body: str, to_email: str) -> bool:
+    """Send one email to a candidate. Demo accounts (seed_demo) are skipped and only logged."""
+    if to_email.lower().endswith(settings.DEMO_EMAIL_DOMAIN):
+        logger.info(f'Skipping email to demo account {to_email}: {subject!r}')
+        return False
+    send_mail(subject, body, settings.EMAIL_HOST_USER, [to_email], fail_silently=False)
+    return True
+
+
 @shared_task(bind=True, max_retries=3, autoretry_for=(Exception,), retry_backoff=True)
 def send_acceptance_email(self, application_id: int):
     from .models import Application
@@ -34,8 +43,8 @@ def send_acceptance_email(self, application_id: int):
         f'Date: {interview_date}\n'
         f'Lien: {interview_link}\n'
     )
-    send_mail(subject, body, settings.EMAIL_HOST_USER, [candidate_email], fail_silently=False)
-    logger.info(f'Acceptance email sent to {candidate_email}')
+    if send_candidate_email(subject, body, candidate_email):
+        logger.info(f'Acceptance email sent to {candidate_email}')
 
 
 @shared_task(bind=True, max_retries=3, autoretry_for=(Exception,), retry_backoff=True)
@@ -53,7 +62,12 @@ def parse_resume_task(self, resume_id: int):
         logger.info(f'Resume {resume_id} already parsed; skipping.')
         return
 
-    parse_resume(resume_id)
+    try:
+        parse_resume(resume_id)
+    except Exception:
+        if self.request.retries >= self.max_retries:
+            Resume.objects.filter(id=resume_id).update(parsing_status=Resume.ParsingStatus.FAILED)
+        raise
 
 
 @shared_task(bind=True, max_retries=3, autoretry_for=(Exception,), retry_backoff=True)

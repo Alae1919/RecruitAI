@@ -28,15 +28,17 @@ def analyze_cv(application_id: int) -> CVAnalysis | None:
         return None
 
     job_offer = application.job_offer
+    llm = get_llm()
     try:
-        result = get_llm().analyze_cv(
+        result = llm.analyze_cv(
             raw_text=raw_text,
             job_description=job_offer.description,
             requirements=job_offer.requirements or '',
         )
     except Exception as e:
+        # propagate: analyze_cv_task retries, and no placeholder score is ever stored
         logger.error(f'CV analysis LLM call failed for application {application_id}: {e}')
-        return None
+        raise
 
     cv_analysis = CVAnalysis.objects.create(
         application=application,
@@ -46,7 +48,7 @@ def analyze_cv(application_id: int) -> CVAnalysis | None:
             'gaps': result['gaps'],
             'recommendation': result['recommendation'],
         },
-        model_used='deepseek-reasoner',
+        model_used=llm.model,
         prompt_version=PROMPT_VERSION,
     )
     logger.info(f'CVAnalysis created for application {application_id}: score={result["eligibility_score"]}')

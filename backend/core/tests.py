@@ -76,6 +76,7 @@ class TestAnalyzeCVService(TestCase):
     @patch('core.services.analyze_cv.get_llm')
     def test_creates_cv_analysis_with_correct_score(self, mock_get_llm):
         mock_get_llm.return_value.analyze_cv.return_value = _MOCK_LLM_RESULT
+        mock_get_llm.return_value.model = 'deepseek-chat'
         from core.services.analyze_cv import analyze_cv
         result = analyze_cv(self.application.id)
         self.assertIsNotNone(result)
@@ -85,6 +86,7 @@ class TestAnalyzeCVService(TestCase):
     @patch('core.services.analyze_cv.get_llm')
     def test_stores_strengths_gaps_and_recommendation(self, mock_get_llm):
         mock_get_llm.return_value.analyze_cv.return_value = _MOCK_LLM_RESULT
+        mock_get_llm.return_value.model = 'deepseek-chat'
         from core.services.analyze_cv import analyze_cv
         result = analyze_cv(self.application.id)
         self.assertIn('strengths', result.analysis_details)
@@ -94,6 +96,7 @@ class TestAnalyzeCVService(TestCase):
     @patch('core.services.analyze_cv.get_llm')
     def test_idempotent_does_not_call_llm_twice(self, mock_get_llm):
         mock_get_llm.return_value.analyze_cv.return_value = _MOCK_LLM_RESULT
+        mock_get_llm.return_value.model = 'deepseek-chat'
         from core.services.analyze_cv import analyze_cv
         r1 = analyze_cv(self.application.id)
         r2 = analyze_cv(self.application.id)

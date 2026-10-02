@@ -109,7 +109,7 @@ def generate_question_set_task(self, question_set_id: int):
     ])
 
     qs.status = QuestionSet.Status.READY
-    qs.model_used = 'deepseek-reasoner'
+    qs.model_used = get_llm().model
     qs.prompt_version = PROMPT_VERSION
     qs.save(update_fields=['status', 'model_used', 'prompt_version', 'updated_at'])
     logger.info(f'QuestionSet {question_set_id} ready with {len(questions)} questions.')
@@ -234,7 +234,7 @@ def evaluate_answer(self, answer_id: int):
             answer=answer,
             score=result['score'],
             explanation=result['explanation'],
-            model_used='deepseek-reasoner',
+            model_used=get_llm().model,
             prompt_version=PROMPT_VERSION,
         )
     except Exception as e:

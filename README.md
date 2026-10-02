@@ -306,6 +306,7 @@ All configuration is driven by environment variables. Never commit `.env` or `.e
 | `EMAIL_HOST_USER` | No | — | Gmail sender address |
 | `EMAIL_HOST_PASSWORD` | No | — | Gmail App Password |
 | `DEEPSEEK_API_KEY` | No | — | DeepSeek API key (CV analysis, questions, scoring, JD drafting) |
+| `DEEPSEEK_MODEL` | No | `deepseek-chat` | LLM used for every task (`deepseek-reasoner` also supported) |
 | `AUTO_SHORTLIST_SCORE` | No | `7.5` | CV score (0–10) that moves a candidate to Screening |
 | `EVALUATION_PASS_THRESHOLD` | No | `6.0` | Interview average needed for an "accepted" AI decision |
 | `PROBE_QUESTION_COUNT` | No | `2` | CV-specific questions per interview |
@@ -421,7 +422,6 @@ docker compose -f docker-compose.prod.yml up --build -d
 ## Known Limitations
 
 - **Whisper model (~244 MB)** downloads on first use; later runs use the cache.
-- **Probe questions can come back empty.** `deepseek-reasoner` counts its reasoning tokens against the small `max_tokens` used for probe questions. The interview then runs with base questions only.
 - **JWT in `localStorage`** is vulnerable to XSS. Moving the refresh token to an `HttpOnly` cookie is the recommended next step.
 - **No per-user LLM cost cap.** There is rate limiting (`llm`: 20/hour per user), but no daily budget.
 - **Polling, not push.** Async task completion uses 2–5 s polling rather than WebSockets.
