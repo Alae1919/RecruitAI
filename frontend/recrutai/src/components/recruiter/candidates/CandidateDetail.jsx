@@ -3,13 +3,15 @@ import { Sparkles, Check, X, Download } from 'lucide-react';
 import Avatar from '../../ui/Avatar';
 import StatusBadge from '../../ui/StatusBadge';
 import MatchBar from './MatchBar';
+import { nextStageAction, canReject } from './stages';
 
 const SparklesIcon = ({ size = 13 }) => <Sparkles size={size} />;
 const CheckIcon    = ({ size = 13 }) => <Check size={size} strokeWidth={2.5} />;
 const XIcon        = ({ size = 13 }) => <X size={size} strokeWidth={2.5} />;
 const DownloadIcon = ({ size = 13 }) => <Download size={size} />;
 
-export default function CandidateDetail({ candidate, onAccept, onReject, onViewResume }) {
+export default function CandidateDetail({ candidate, busy, onAdvance, onReject, onViewResume }) {
+  const next = nextStageAction(candidate.stage);
   return (
     <div className="p-8 max-w-[720px] animate-fadeIn">
       <div className="flex items-start gap-5">
@@ -17,7 +19,7 @@ export default function CandidateDetail({ candidate, onAccept, onReject, onViewR
         <div className="flex-1">
           <div className="flex items-center gap-2 flex-wrap mb-1">
             <h2 className="text-2xl font-bold tracking-tight text-brand-text-primary">{candidate.candidate_name}</h2>
-            <StatusBadge status={candidate.status} />
+            <StatusBadge status={candidate.stage} />
           </div>
           {candidate.candidate_email && (
             <div className="text-sm text-brand-text-muted font-mono">{candidate.candidate_email}</div>
@@ -26,20 +28,20 @@ export default function CandidateDetail({ candidate, onAccept, onReject, onViewR
       </div>
 
       <div className="flex gap-2 mt-6 flex-wrap">
-        {candidate.status === 'pending' && (
+        {(next || canReject(candidate.stage)) && (
           <>
-            <button onClick={() => onAccept(candidate.id)}
+            {next && <button onClick={() => onAdvance(candidate)} disabled={busy}
               className="h-9 px-4 text-sm rounded-xl font-semibold inline-flex items-center gap-1.5 transition-all active:scale-[.97]"
               style={{ background: 'linear-gradient(135deg, #10B981 0%, #34D399 100%)', color: '#fff', boxShadow: '0 0 16px rgba(16,185,129,0.25)' }}>
-              <CheckIcon /> Accept
-            </button>
-            <button onClick={() => onReject(candidate.id)}
+              <CheckIcon /> {next.label}
+            </button>}
+            {canReject(candidate.stage) && <button onClick={() => onReject(candidate)} disabled={busy}
               className="h-9 px-4 text-sm rounded-xl inline-flex items-center gap-1.5 transition-colors font-medium text-red-300"
               style={{ background: 'rgba(239,68,68,0.1)', border: '1px solid rgba(239,68,68,0.25)' }}
               onMouseEnter={e => e.currentTarget.style.background = 'rgba(239,68,68,0.18)'}
               onMouseLeave={e => e.currentTarget.style.background = 'rgba(239,68,68,0.1)'}>
               <XIcon /> Reject
-            </button>
+            </button>}
           </>
         )}
         {candidate.resume_url && (
@@ -67,10 +69,10 @@ export default function CandidateDetail({ candidate, onAccept, onReject, onViewR
             Candidate profile has been automatically parsed and scored against the job requirements.
             Review the resume and application details below.
           </p>
-          {candidate.cv_analysis_score != null && (
+          {candidate.match_score != null && (
             <div className="mt-3 flex items-center gap-3">
               <div className="text-xs text-brand-text-muted">Match score</div>
-              <MatchBar score={candidate.cv_analysis_score} />
+              <MatchBar score={candidate.match_score} />
             </div>
           )}
         </div>
@@ -82,7 +84,7 @@ export default function CandidateDetail({ candidate, onAccept, onReject, onViewR
           {[
             { l: 'Applied', v: candidate.applied_at ? new Date(candidate.applied_at).toLocaleDateString() : '—' },
             { l: 'Status',  v: candidate.status || 'pending' },
-            { l: 'CV Score', v: candidate.cv_analysis_score != null ? `${candidate.cv_analysis_score}/100` : 'Not scored' },
+            { l: 'CV Score', v: candidate.match_score != null ? `${candidate.match_score}/100` : 'Not scored' },
           ].map(({ l, v }) => (
             <div key={l} className="rounded-xl p-4" style={{ background: 'rgba(16,20,32,0.6)', border: '1px solid rgba(35,42,62,0.7)' }}>
               <div className="text-brand-text-disabled text-[10px] font-mono uppercase tracking-widest mb-1">{l}</div>

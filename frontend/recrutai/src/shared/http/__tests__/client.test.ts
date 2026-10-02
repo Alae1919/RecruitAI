@@ -1,4 +1,4 @@
-import { ApiError } from '../client';
+import { resolveErrorMessage, ApiError } from '../client';
 
 describe('ApiError', () => {
   test('is an instance of Error', () => {
@@ -52,4 +52,18 @@ describe('ApiError', () => {
       expect(err.status).toBe(status);
     }
   );
+});
+
+describe('resolveErrorMessage', () => {
+  test('prefers DRF detail, then message, then the views\' error key', () => {
+    expect(resolveErrorMessage({ detail: 'd', message: 'm', error: 'e' })).toBe('d');
+    expect(resolveErrorMessage({ message: 'm', error: 'e' })).toBe('m');
+    expect(resolveErrorMessage({ error: 'No READY QuestionSet for this job offer.' }))
+      .toBe('No READY QuestionSet for this job offer.');
+  });
+
+  test('falls back to the transport message, then a generic one', () => {
+    expect(resolveErrorMessage(undefined, 'Network Error')).toBe('Network Error');
+    expect(resolveErrorMessage({})).toBe('Unknown error');
+  });
 });

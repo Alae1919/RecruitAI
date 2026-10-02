@@ -105,7 +105,13 @@ interface ErrorResponseData {
   code?: string;
   detail?: string;
   message?: string;
+  error?: string;
   errors?: Record<string, string[]>;
+}
+
+/** Backend errors arrive as DRF `detail`, our own `message`, or the views' `{ error }`. */
+export function resolveErrorMessage(data: ErrorResponseData | undefined, fallback?: string): string {
+  return data?.detail ?? data?.message ?? data?.error ?? fallback ?? 'Unknown error';
 }
 
 export function resolveMediaUrl(relativePath: string): string {
@@ -125,7 +131,7 @@ export async function request<T = unknown>(config: AxiosRequestConfig): Promise<
     throw new ApiError({
       status: r?.status ?? 0,
       code: r?.data?.code ?? 'UNKNOWN',
-      message: r?.data?.detail ?? r?.data?.message ?? axiosErr.message ?? 'Unknown error',
+      message: resolveErrorMessage(r?.data, axiosErr.message),
       fields: r?.data?.errors ?? null,
     });
   }

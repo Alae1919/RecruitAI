@@ -30,6 +30,7 @@ export {
   getJobSeekerApplications,
   applyForJob,
   acceptCandidate,
+  advanceCandidate,
   rejectCandidate,
 } from "../shared/api/applications";
 

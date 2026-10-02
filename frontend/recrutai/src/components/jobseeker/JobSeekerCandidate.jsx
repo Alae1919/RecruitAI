@@ -28,7 +28,7 @@ export default function JobSeekerCandidate() {
   const counts = {
     total:    applications.length,
     pending:  applications.filter(a => a.status?.toLowerCase() === 'pending').length,
-    accepted: applications.filter(a => a.status?.toLowerCase() === 'accepted').length,
+    accepted: applications.filter(a => ['accepted', 'offer', 'hired'].includes(a.status?.toLowerCase())).length,
   };
 
   const kpis = [

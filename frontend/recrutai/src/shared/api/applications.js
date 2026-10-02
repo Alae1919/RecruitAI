@@ -17,6 +17,13 @@ export const acceptCandidate = (applicationId) =>
     data: { application_id: applicationId },
   });
 
+export const advanceCandidate = (applicationId) =>
+  request({
+    method: "POST",
+    url: "/applications/advance/",
+    data: { application_id: applicationId },
+  });
+
 export const rejectCandidate = (applicationId) =>
   request({
     method: "POST",
