@@ -37,8 +37,8 @@ function SkeletonField() {
 
 const PERSONAL_FIELDS = [
   { name: 'full_name', label: 'Full Name', type: 'text' },
-  { name: 'phone',     label: 'Personal Phone', type: 'text' },
-  { name: 'adress',   label: 'Address', type: 'text', span: true },
+  { name: 'personal_phone',     label: 'Personal Phone', type: 'text' },
+  { name: 'address',   label: 'Address', type: 'text', span: true },
 ];
 
 const COMPANY_FIELDS = [
@@ -50,7 +50,8 @@ const COMPANY_FIELDS = [
 ];
 
 export default function RecruiterProfile() {
-  const { data: profile, loading, error, refetch } = useApi(getRecruiterProfile, []);
+  const { data: apiResponse, loading, error, refetch } = useApi(getRecruiterProfile, []);
+  const profile = apiResponse?.profile || null;
   const { toast } = useToast();
   const [isEditing, setIsEditing] = useState(false);
   const [draft, setDraft]         = useState(null);

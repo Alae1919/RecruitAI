@@ -48,7 +48,7 @@ export default function JobSeekerProfile() {
   const [saving, setSaving]       = useState(false);
 
   const profile = raw
-    ? { email: raw.email, fullName: raw.full_name, phone: raw.phone, address: raw.address, experience: raw.experience, skills: raw.skills }
+    ? { email: raw.profile?.email, fullName: raw.profile?.full_name, phone: raw.profile?.phone, address: raw.profile?.address, experience: raw.profile?.experience, skills: raw.profile?.skills }
     : null;
 
   const handleEdit = () => { setDraft({ ...profile }); setIsEditing(true); };
