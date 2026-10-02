@@ -94,6 +94,22 @@ class Application(models.Model):
         return 'screening' if score >= threshold else 'applied'
 
 
+class CandidateMessage(models.Model):
+    """A message from a recruiter to an applicant, delivered by email and kept as history."""
+    application = models.ForeignKey(Application, on_delete=models.CASCADE, related_name='messages')
+    sender = models.ForeignKey(Recruiter, on_delete=models.CASCADE, related_name='sent_messages')
+    subject = models.CharField(max_length=200)
+    body = models.TextField(max_length=5000)
+    email_sent = models.BooleanField(default=False)  # False for demo accounts and until delivered
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['-created_at']
+
+    def __str__(self):
+        return f"Message {self.id} to application {self.application_id}"
+
+
 class Feedback(models.Model):
     interview = models.ForeignKey('interviews.Interview', on_delete=models.CASCADE)
     recruiter = models.ForeignKey(Recruiter, on_delete=models.CASCADE)

@@ -28,6 +28,7 @@ def list_applications_for_offer(job_offer_id: int, recruiter: Recruiter):
             'job_seeker__user', 'resume__parsed', 'job_offer', 'cv_analysis',
             'interview__evaluation',
         )
+        .prefetch_related('messages__sender__user')
         .order_by('-applied_at')
     )
 

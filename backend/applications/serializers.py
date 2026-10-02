@@ -1,7 +1,7 @@
 from django.core.exceptions import ObjectDoesNotExist
 from rest_framework import serializers
 
-from applications.models import Application, Feedback, Resume, ResumeData
+from applications.models import Application, CandidateMessage, Feedback, Resume, ResumeData
 
 
 class ResumeDataSerializer(serializers.ModelSerializer):
@@ -83,11 +83,12 @@ class CandidateSerializer(ApplicationSerializer):
     resume_profile = serializers.SerializerMethodField()
     interview = serializers.SerializerMethodField()
     timeline = serializers.SerializerMethodField()
+    messages = serializers.SerializerMethodField()
 
     class Meta(ApplicationSerializer.Meta):
         fields = ApplicationSerializer.Meta.fields + [
             'candidate_email', 'candidate_phone', 'candidate_address', 'headline',
-            'match_score', 'analysis', 'resume_profile', 'interview', 'timeline',
+            'match_score', 'analysis', 'resume_profile', 'interview', 'timeline', 'messages',
         ]
 
     @staticmethod
@@ -172,6 +173,10 @@ class CandidateSerializer(ApplicationSerializer):
             } if evaluation else None,
         }
 
+    def get_messages(self, obj):
+        # .all() so a prefetch_related('messages') on the queryset is used
+        return CandidateMessageSerializer(list(obj.messages.all())[:20], many=True).data
+
     def get_timeline(self, obj):
         events = [{'key': 'applied', 'label': 'Applied', 'at': obj.applied_at}]
         analysis = self._cv_analysis(obj)
@@ -193,6 +198,23 @@ class CandidateSerializer(ApplicationSerializer):
             key, label = closing[obj.status]
             events.append({'key': key, 'label': label, 'at': obj.updated_at})
         return events
+
+
+class CandidateMessageSerializer(serializers.ModelSerializer):
+    sender_name = serializers.SerializerMethodField()
+
+    class Meta:
+        model = CandidateMessage
+        fields = ['id', 'subject', 'body', 'email_sent', 'created_at', 'sender_name']
+        read_only_fields = fields
+
+    def get_sender_name(self, obj):
+        return obj.sender.user.get_full_name() or obj.sender.user.email
+
+
+class CandidateMessageCreateSerializer(serializers.Serializer):
+    subject = serializers.CharField(max_length=200)
+    body = serializers.CharField(max_length=5000)
 
 
 class ApplicationCreateSerializer(serializers.Serializer):

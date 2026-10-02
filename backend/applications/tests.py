@@ -401,3 +401,92 @@ class TestPipelineSummaryEndpoint(APITestCase):
         seeker = _make_job_seeker('seeker@t.com')
         self.client.force_authenticate(user=seeker.user)
         self.assertEqual(self.client.get('/api/applications/pipeline/').status_code, 403)
+
+
+# ---------------------------------------------------------------------------
+# Messaging candidates
+# ---------------------------------------------------------------------------
+
+from django.core import mail
+
+from applications.models import CandidateMessage
+from applications.tasks import send_candidate_message_email
+
+
+class TestApplicationMessages(APITestCase):
+    def setUp(self):
+        self.recruiter = _make_recruiter()
+        self.offer = _make_job_offer(self.recruiter)
+        self.candidate = _make_job_seeker('msg@real-person.com')
+        self.app = Application.objects.create(job_seeker=self.candidate, job_offer=self.offer)
+        self.url = f'/api/applications/{self.app.id}/messages/'
+
+    def _post(self, user, **data):
+        self.client.force_authenticate(user=user)
+        return self.client.post(self.url, {'subject': 'Next steps', 'body': 'Are you available Monday?', **data}, format='json')
+
+    @patch('applications.tasks.send_candidate_message_email.delay')
+    def test_recruiter_sends_a_message_which_is_stored_and_dispatched(self, delay):
+        with self.captureOnCommitCallbacks(execute=True):
+            res = self._post(self.recruiter.user)
+        self.assertEqual(res.status_code, 201, res.content)
+        message = CandidateMessage.objects.get()
+        self.assertEqual((message.subject, message.application_id, message.sender_id),
+                         ('Next steps', self.app.id, self.recruiter.id))
+        self.assertFalse(message.email_sent)
+        delay.assert_called_once_with(message.id)
+
+    def test_subject_and_body_are_required(self):
+        self.assertEqual(self._post(self.recruiter.user, subject='').status_code, 400)
+        self.assertEqual(self._post(self.recruiter.user, body='   ').status_code, 400)
+        self.assertFalse(CandidateMessage.objects.exists())
+
+    def test_other_recruiters_and_candidates_cannot_message_or_read(self):
+        other = _make_recruiter('someone-else@test.com')
+        self.assertEqual(self._post(other.user).status_code, 403)
+        self.assertEqual(self._post(self.candidate.user).status_code, 403)
+        self.client.force_authenticate(user=other.user)
+        self.assertEqual(self.client.get(self.url).status_code, 403)
+        self.assertFalse(CandidateMessage.objects.exists())
+
+    def test_unknown_application_is_404(self):
+        self.client.force_authenticate(user=self.recruiter.user)
+        res = self.client.post('/api/applications/999999/messages/', {'subject': 's', 'body': 'b'}, format='json')
+        self.assertEqual(res.status_code, 404)
+
+    def test_history_lists_newest_first(self):
+        for subject in ('first', 'second'):
+            CandidateMessage.objects.create(application=self.app, sender=self.recruiter, subject=subject, body='x')
+        self.client.force_authenticate(user=self.recruiter.user)
+        res = self.client.get(self.url)
+        self.assertEqual([m['subject'] for m in res.data], ['second', 'first'])
+        self.assertIn('sender_name', res.data[0])
+
+    def test_email_task_delivers_and_marks_the_message(self):
+        message = CandidateMessage.objects.create(
+            application=self.app, sender=self.recruiter, subject='Hello', body='Body text')
+        send_candidate_message_email(message.id)
+        message.refresh_from_db()
+        self.assertTrue(message.email_sent)
+        self.assertEqual([m.to for m in mail.outbox], [['msg@real-person.com']])
+        self.assertEqual(mail.outbox[0].subject, 'Hello')
+        self.assertIn('Body text', mail.outbox[0].body)
+        self.assertIn(self.offer.title, mail.outbox[0].body)
+
+    def test_email_task_never_emails_demo_accounts(self):
+        demo_app = Application.objects.create(
+            job_seeker=_make_job_seeker('amira@recrutai.demo'), job_offer=self.offer)
+        message = CandidateMessage.objects.create(application=demo_app, sender=self.recruiter, subject='Hi', body='b')
+        send_candidate_message_email(message.id)
+        message.refresh_from_db()
+        self.assertFalse(message.email_sent)
+        self.assertEqual(len(mail.outbox), 0)
+
+    def test_candidate_payload_carries_the_history_for_recruiters_only(self):
+        CandidateMessage.objects.create(application=self.app, sender=self.recruiter, subject='Hi', body='b')
+        self.client.force_authenticate(user=self.recruiter.user)
+        res = self.client.get(f'/api/job_offers/{self.offer.id}/Candidates/')
+        self.assertEqual([m['subject'] for m in res.data[0]['messages']], ['Hi'])
+        self.client.force_authenticate(user=self.candidate.user)
+        own = self.client.get('/api/applications/retreiveApplications')
+        self.assertNotIn('messages', own.data[0])

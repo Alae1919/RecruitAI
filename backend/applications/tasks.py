@@ -40,6 +40,30 @@ def send_interview_scheduled_email(self, interview_id: int):
 
 
 @shared_task(bind=True, max_retries=3, autoretry_for=(Exception,), retry_backoff=True)
+def send_candidate_message_email(self, message_id: int):
+    from .models import CandidateMessage
+
+    try:
+        message = CandidateMessage.objects.select_related(
+            'application__job_seeker__user', 'application__job_offer', 'sender__user'
+        ).get(id=message_id)
+    except CandidateMessage.DoesNotExist:
+        logger.error(f'CandidateMessage {message_id} not found.')
+        return
+
+    sender = message.sender
+    signature = f"{sender.user.get_full_name() or sender.user.email}, {sender.company_name}"
+    body = (
+        f"{message.body}\n\n--\n{signature}\n"
+        f"Concernant votre candidature : {message.application.job_offer.title}"
+    )
+    delivered = send_candidate_email(message.subject, body, message.application.job_seeker.user.email)
+    if delivered != message.email_sent:
+        message.email_sent = delivered
+        message.save(update_fields=['email_sent'])
+
+
+@shared_task(bind=True, max_retries=3, autoretry_for=(Exception,), retry_backoff=True)
 def send_acceptance_email(self, application_id: int):
     from .models import Application
 

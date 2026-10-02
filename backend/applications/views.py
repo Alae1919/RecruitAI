@@ -12,6 +12,8 @@ from interviews.models import Interview
 from .serializers import (
     ApplicationSerializer,
     ApplicationCreateSerializer,
+    CandidateMessageCreateSerializer,
+    CandidateMessageSerializer,
     ResumeSerializer,
     ResumeUploadSerializer,
 )
@@ -24,6 +26,7 @@ from .services.create_application import create_application
 from .services.accept_application import accept_application
 from .services.advance_application import advance_application
 from .services.reject_application import reject_application
+from .services.send_message import send_message
 from .services.upload_resume import upload_resume, set_default_resume
 from .selectors import list_jobseeker_applications, list_jobseeker_resumes, recruiter_pipeline_summary
 
@@ -222,3 +225,41 @@ class RecruiterPipelineSummaryView(APIView):
 
     def get(self, request):
         return Response(recruiter_pipeline_summary(request.user.recruiter))
+
+
+class ApplicationMessagesView(APIView):
+    """GET: message history for an applicant. POST: email the applicant (recruiter of the offer only)."""
+    permission_classes = [IsAuthenticated, IsRecruiter]
+    throttle_scope = 'llm'
+
+    def _application(self, request, application_id):
+        application = Application.objects.select_related('job_offer').get(id=application_id)
+        if application.job_offer.recruiter_id != request.user.recruiter.id:
+            raise PermissionDenied('Not the owner of this job offer.')
+        return application
+
+    def get(self, request, application_id):
+        try:
+            application = self._application(request, application_id)
+        except Application.DoesNotExist:
+            return Response({'error': 'Application not found.'}, status=status.HTTP_404_NOT_FOUND)
+        except PermissionDenied as e:
+            return Response({'error': str(e)}, status=status.HTTP_403_FORBIDDEN)
+        messages = application.messages.select_related('sender__user')
+        return Response(CandidateMessageSerializer(messages, many=True).data)
+
+    def post(self, request, application_id):
+        serializer = CandidateMessageCreateSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        try:
+            message = send_message(
+                application_id=application_id, recruiter=request.user.recruiter,
+                subject=serializer.validated_data['subject'], body=serializer.validated_data['body'],
+            )
+        except Application.DoesNotExist:
+            return Response({'error': 'Application not found.'}, status=status.HTTP_404_NOT_FOUND)
+        except PermissionDenied as e:
+            return Response({'error': str(e)}, status=status.HTTP_403_FORBIDDEN)
+        except ValidationError as e:
+            return Response({'error': ' '.join(str(m) for m in e.detail)}, status=status.HTTP_400_BAD_REQUEST)
+        return Response(CandidateMessageSerializer(message).data, status=status.HTTP_201_CREATED)

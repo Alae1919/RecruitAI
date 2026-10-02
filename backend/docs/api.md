@@ -150,6 +150,7 @@ The recruiter UI shows each application in one **stage**, derived by `Applicatio
 | POST | `applications/advance/` | owner · LLM | `{application_id}` → one pipeline step forward (see [pipeline](#recruitment-pipeline)) |
 | POST | `applications/reject/` | owner | `{application_id}` |
 | GET | `applications/pipeline/` | recruiter | Sidebar counts: `{offers, open_offers, candidates, stages: {applied, screening, interview, offer, hired, rejected}}` |
+| GET / POST | `applications/<id>/messages/` | owner · LLM | History of messages sent to an applicant, or send one (`{subject, body}`). The message is stored and emailed in the background (`email_sent` stays `false` for `@recrutai.demo` accounts). |
 | GET / POST | `applications/resumes/` | job seeker | List, or upload (multipart `original_file`, `label?`, `make_default?`). PDF/DOC/DOCX, ≤ 3 MB. Parsing runs asynchronously. |
 | GET / PATCH / DELETE | `applications/resumes/<id>/` | owner | Read, rename / set default (`{label?, is_default?}`), delete |
 
@@ -167,7 +168,8 @@ The recruiter UI shows each application in one **stage**, derived by `Applicatio
     "questions": [{"id": 10, "text": "…", "source": "base"}, {"id": 14, "text": "…", "source": "probe"}],
     "evaluation": {"total_score": 7.9, "decision": "accepted"}
   },
-  "timeline": [{"key": "applied", "label": "Applied", "at": "…"}, {"key": "ai_screened", "…": "…"}]
+  "timeline": [{"key": "applied", "label": "Applied", "at": "…"}, {"key": "ai_screened", "…": "…"}],
+  "messages": [{"id": 3, "subject": "Next steps", "body": "…", "email_sent": true, "created_at": "…", "sender_name": "Sara Ben Ali"}]
 }
 ```
 
@@ -214,6 +216,7 @@ Celery workers use Redis as the broker. Tasks are idempotent and retry with back
 | `analyze_cv_task` | application created | LLM scores the CV against the offer → `CVAnalysis` |
 | `generate_question_set_task` | question-set create / regenerate | LLM base questions for the offer |
 | `generate_probe_questions_task` | candidate accepted | LLM CV-specific probe questions for that interview |
+| `send_candidate_message_email` | message sent to a candidate | Emails the message with the recruiter's signature and marks it `email_sent` |
 | `send_interview_scheduled_email` | interview scheduled | Tells the candidate the due date and link |
 | `send_acceptance_email` | candidate accepted | Invitation email (SMTP). Addresses on `@recrutai.demo` (seed data) are never emailed; without SMTP credentials emails print to the worker log. |
 | `evaluate_answer` | video upload | ffmpeg → Whisper transcript (language taken from the question, because auto-detection mislabelled clear English as French) → LLM score → `AnswerEvaluation`; finalizes the interview when every question is scored |

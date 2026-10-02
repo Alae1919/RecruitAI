@@ -8,6 +8,7 @@ from .views import (
     RejectApplicationView,
     AdvanceApplicationView,
     RecruiterPipelineSummaryView,
+    ApplicationMessagesView,
     ResumeListCreateView,
     ResumeDetailView,
 )
@@ -20,6 +21,7 @@ urlpatterns = [
     path('reject/', RejectApplicationView.as_view(), name='reject-application'),
     path('advance/', AdvanceApplicationView.as_view(), name='advance-application'),
     path('pipeline/', RecruiterPipelineSummaryView.as_view(), name='pipeline-summary'),
+    path('<int:application_id>/messages/', ApplicationMessagesView.as_view(), name='application-messages'),
     # Multi-resume
     path('resumes/', ResumeListCreateView.as_view(), name='resume-list'),
     path('resumes/<int:pk>/', ResumeDetailView.as_view(), name='resume-detail'),
