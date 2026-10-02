@@ -3,14 +3,14 @@ import { Pencil, Trash2, Check, X } from 'lucide-react';
 
 export default function QuestionEditor({ question, onSave, onDelete, readOnly, isSaving, isDeleting }) {
   const [editing, setEditing] = useState(false);
-  const [text, setText]       = useState(question.text);
+  const [text, setText]       = useState(question.question_text);
 
   const handleSave = () => {
     if (text.trim() && text !== question.text) onSave(question.id, { text: text.trim() });
     setEditing(false);
   };
 
-  const handleCancel = () => { setText(question.text); setEditing(false); };
+  const handleCancel = () => { setText(question.question_text); setEditing(false); };
 
   return (
     <div className="flex gap-3 p-3 rounded-xl group transition-all"
@@ -29,7 +29,7 @@ export default function QuestionEditor({ question, onSave, onDelete, readOnly, i
             onKeyDown={e => { if (e.key === 'Escape') handleCancel(); if (e.key === 'Enter' && e.ctrlKey) handleSave(); }}
           />
         ) : (
-          <p className="text-sm text-brand-text-primary leading-relaxed">{question.text}</p>
+          <p className="text-sm text-brand-text-primary leading-relaxed">{question.question_text}</p>
         )}
         {question.question_type && (
           <span className="mt-1.5 inline-block text-[10px] px-1.5 py-0.5 rounded font-mono text-brand-text-disabled"
