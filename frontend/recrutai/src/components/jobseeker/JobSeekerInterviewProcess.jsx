@@ -1,6 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { fetchQuestions } from '../../services/api';
-import { Clipboard, Mic, ArrowRight, ArrowLeft, Check, X, Loader2 } from 'lucide-react';
+import { Clipboard, Mic, ArrowRight, ArrowLeft, Check, Loader2 } from 'lucide-react';
 import { useInterviewMachine } from '../../shared/hooks/useInterviewMachine';
 
 const ClipboardIcon  = ({ size = 22 }) => <Clipboard size={size} strokeWidth={1.5} />;

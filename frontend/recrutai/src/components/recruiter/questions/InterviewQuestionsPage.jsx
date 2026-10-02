@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { ArrowLeft, Plus, RefreshCw, Lock, Unlock, MessageSquare } from 'lucide-react';
-import { useQuestionSets, useCreateQuestionSet, usePatchQuestionSet, useDeleteQuestionSet, useRegenerateQuestionSet, useCreateQuestion, usePatchQuestion, useDeleteQuestion } from '../../../shared/hooks/useQuestionSets';
+import { useQuestionSets, useCreateQuestionSet, usePatchQuestionSet, useRegenerateQuestionSet, useCreateQuestion, usePatchQuestion, useDeleteQuestion } from '../../../shared/hooks/useQuestionSets';
 import { useToast } from '../../../hooks/useToast';
 import AsyncTaskBanner from '../../ui/AsyncTaskBanner';
 import GenerateQuestionSetForm from './GenerateQuestionSetForm';

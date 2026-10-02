@@ -1,7 +1,6 @@
 import React from 'react';
 import { getJobSeekerApplications } from '../../services/api';
 import { useApi } from '../../hooks/useApi';
-import Button from '../ui/Button';
 import StatusBadge from '../ui/StatusBadge';
 import { Bell, FileText } from 'lucide-react';
 

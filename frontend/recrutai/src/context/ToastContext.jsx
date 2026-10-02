@@ -7,16 +7,16 @@ let idCounter = 0;
 export function ToastProvider({ children }) {
   const [toasts, setToasts] = useState([]);
 
+  const dismiss = useCallback((id) => {
+    setToasts(prev => prev.filter(t => t.id !== id));
+  }, []);
+
   const add = useCallback((type, message, duration = 4000) => {
     const id = ++idCounter;
     setToasts(prev => [...prev, { id, type, message, duration }]);
     setTimeout(() => dismiss(id), duration);
     return id;
-  }, []);
-
-  const dismiss = useCallback((id) => {
-    setToasts(prev => prev.filter(t => t.id !== id));
-  }, []);
+  }, [dismiss]);
 
   const toast = {
     success: (msg, dur) => add('success', msg, dur),

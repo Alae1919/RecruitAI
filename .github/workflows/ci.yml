@@ -75,8 +75,8 @@ jobs:
         env:
           CI: "true"
       - name: Build
-        # CI=false: CRA would otherwise fail the build on existing lint warnings
+        # CI=true makes Create React App treat any lint warning as a build failure
         run: npm run build
         env:
-          CI: "false"
+          CI: "true"
           REACT_APP_BACKEND_URL: http://localhost:8000

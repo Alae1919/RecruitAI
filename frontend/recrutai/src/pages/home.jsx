@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState, useCallback } from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
 import { Link } from 'react-router-dom';
 import { Logo } from '../components/navigation/PublicHeader';
 import Avatar from '../components/ui/Avatar';

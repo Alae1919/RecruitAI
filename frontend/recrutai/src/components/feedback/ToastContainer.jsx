@@ -8,13 +8,6 @@ const icons = {
   info:    'ℹ',
 };
 
-const styles = {
-  success: 'border-emerald-500/30 bg-emerald-500/10 text-emerald-300',
-  error:   'border-red-500/30 bg-red-500/10 text-red-300',
-  warning: 'border-amber-500/30 bg-amber-500/10 text-amber-300',
-  info:    'border-blue-500/30 bg-blue-500/10 text-blue-300',
-};
-
 const iconStyles = {
   success: 'bg-emerald-500 text-white',
   error:   'bg-red-500 text-white',

@@ -1,7 +1,6 @@
 import React, { useState } from 'react';
 import { fetchJobSeekerInterviews } from '../../services/api';
 import { useApi } from '../../hooks/useApi';
-import Button from '../ui/Button';
 import { formatDue } from '../../shared/utils/datetime';
 import StatusBadge from '../ui/StatusBadge';
 import JobSeekerInterviewProcess from './JobSeekerInterviewProcess';
@@ -180,8 +179,15 @@ export default function JobSeekerEntretien() {
                               onClick={() => i.status !== 'available' && setSelectedInterview(i.id)}
                               className="h-7 px-3 text-xs rounded-lg inline-flex items-center gap-1.5 transition-all disabled:opacity-40 disabled:cursor-not-allowed text-brand-text-muted"
                               style={{ border: '1px solid rgba(35,42,62,0.7)', background: 'rgba(35,42,62,0.4)' }}
-                              onMouseEnter={e => !e.currentTarget.disabled && (e.currentTarget.style.borderColor = 'rgba(245,158,11,0.3)', e.currentTarget.style.color = '#F59E0B')}
-                              onMouseLeave={e => (e.currentTarget.style.borderColor = 'rgba(35,42,62,0.7)', e.currentTarget.style.color = '')}>
+                              onMouseEnter={e => {
+                                if (e.currentTarget.disabled) return;
+                                e.currentTarget.style.borderColor = 'rgba(245,158,11,0.3)';
+                                e.currentTarget.style.color = '#F59E0B';
+                              }}
+                              onMouseLeave={e => {
+                                e.currentTarget.style.borderColor = 'rgba(35,42,62,0.7)';
+                                e.currentTarget.style.color = '';
+                              }}>
                               <EyeIcon /> Answers
                             </button>
                           </td>
