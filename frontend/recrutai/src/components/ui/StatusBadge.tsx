@@ -3,7 +3,7 @@ import React from 'react';
 export type BadgeStatus =
   | 'open' | 'active' | 'closed' | 'paused' | 'draft'
   | 'pending' | 'accepted' | 'rejected' | 'offer' | 'hired'
-  | 'applied' | 'screening' | 'interview'
+  | 'applied' | 'screening' | 'interview' | 'undecided'
   | 'available' | 'completed' | 'evaluated' | 'processing';
 
 interface BadgePreset {
@@ -30,6 +30,7 @@ const PRESETS: Record<BadgeStatus, BadgePreset> = {
   applied:    { bg: 'rgba(35,42,62,0.6)',    color: '#9BA6C4', border: 'rgba(35,42,62,0.8)',    dot: '#59628A' },
   screening:  { bg: 'rgba(56,189,248,0.1)',  color: '#7DD3FC', border: 'rgba(56,189,248,0.25)', dot: '#38BDF8' },
   interview:  { bg: 'rgba(245,158,11,0.1)',  color: '#FCD34D', border: 'rgba(245,158,11,0.25)', dot: '#F59E0B' },
+  undecided:  { bg: 'rgba(35,42,62,0.6)',    color: '#9BA6C4', border: 'rgba(35,42,62,0.8)',    dot: '#59628A' },
   // interview statuses
   available:  { bg: 'rgba(59,130,246,0.1)',  color: '#93C5FD', border: 'rgba(59,130,246,0.25)', dot: '#60A5FA' },
   completed:  { bg: 'rgba(16,185,129,0.1)',  color: '#6EE7B7', border: 'rgba(16,185,129,0.25)', dot: '#34D399' },

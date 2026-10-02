@@ -79,6 +79,8 @@ function AiAssessment({ candidate }) {
   );
 }
 
+const DECISION_LABELS = { accepted: 'AI: accept', rejected: 'AI: reject', undecided: 'Pending review' };
+
 function InterviewQuestions({ interview }) {
   if (!interview) {
     return <p className="text-sm text-brand-text-muted">Questions are generated when the candidate is invited to interview.</p>;
@@ -88,7 +90,7 @@ function InterviewQuestions({ interview }) {
     <div className="space-y-3">
       {evaluation && (
         <div className="flex items-center gap-2 text-xs text-brand-text-muted">
-          <StatusBadge status={evaluation.decision} />
+          <StatusBadge status={evaluation.decision} label={DECISION_LABELS[evaluation.decision]} />
           <span className="font-mono">AI score {evaluation.total_score.toFixed(1)} / 10</span>
         </div>
       )}

@@ -6,6 +6,7 @@ import AsyncTaskBanner from '../ui/AsyncTaskBanner';
 const DECISION_CONFIG = {
   accepted: { color: '#10B981', bg: 'rgba(16,185,129,0.1)',  border: 'rgba(16,185,129,0.25)',  label: 'Accepted' },
   rejected: { color: '#F87171', bg: 'rgba(239,68,68,0.08)',  border: 'rgba(239,68,68,0.2)',    label: 'Rejected' },
+  undecided: { color: '#9BA6C4', bg: 'rgba(35,42,62,0.6)',    border: 'rgba(35,42,62,0.8)',     label: 'Pending review' },
 };
 
 const SOURCE_CONFIG = {
@@ -96,7 +97,7 @@ export default function EvaluationPanel({ interviewId, readOnly = false, footer 
     return <p className="text-sm text-brand-text-muted">No evaluation available yet.</p>;
   }
 
-  const decisionCfg = DECISION_CONFIG[evaluation.decision] ?? DECISION_CONFIG.rejected;
+  const decisionCfg = DECISION_CONFIG[evaluation.decision] ?? DECISION_CONFIG.undecided;
   const sourceCfg   = SOURCE_CONFIG[evaluation.decision_source] ?? SOURCE_CONFIG.rule;
 
   return (
