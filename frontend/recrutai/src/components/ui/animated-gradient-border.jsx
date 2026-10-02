@@ -12,7 +12,7 @@ const BorderRotate = ({
   animationMode = 'auto-rotate',
   animationSpeed = 5,
   gradientColors = defaultGradientColors,
-  backgroundColor = '#2d230f',
+  backgroundColor = 'transparent',
   borderWidth = 2,
   borderRadius = 20,
   style = {},
@@ -42,7 +42,22 @@ const BorderRotate = ({
     '--animation-duration': `${animationSpeed}s`,
     border: `${borderWidth}px solid transparent`,
     borderRadius: `${borderRadius}px`,
-    backgroundImage: `
+    backgroundImage: backgroundColor === 'transparent' ? `
+      linear-gradient(transparent, transparent),
+      conic-gradient(
+        from var(--gradient-angle, 0deg),
+        ${gradientColors.primary} 0%,
+        ${gradientColors.secondary} 37%,
+        ${gradientColors.accent} 30%,
+        ${gradientColors.secondary} 33%,
+        ${gradientColors.primary} 40%,
+        ${gradientColors.primary} 50%,
+        ${gradientColors.secondary} 77%,
+        ${gradientColors.accent} 80%,
+        ${gradientColors.secondary} 83%,
+        ${gradientColors.primary} 90%
+      )
+    ` : `
       linear-gradient(${backgroundColor}, ${backgroundColor}),
       conic-gradient(
         from var(--gradient-angle, 0deg),
@@ -58,8 +73,12 @@ const BorderRotate = ({
         ${gradientColors.primary} 90%
       )
     `,
-    backgroundClip: 'padding-box, border-box',
-    backgroundOrigin: 'padding-box, border-box',
+    backgroundClip: 'border-box',
+    backgroundOrigin: 'border-box',
+    display: 'inline-flex',
+    alignItems: 'stretch',
+    justifyContent: 'stretch',
+    padding: 0, // Reset padding
     ...style,
   };
  

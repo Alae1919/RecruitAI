@@ -65,6 +65,12 @@ export default function Button({
 
   // If the button is primary, wrap it in the glowing animated border!
   if (isPrimary && !disabled) {
+    const sizeClasses = sizes[size] || '';
+    // Classes for the wrapper: size, border-radius, etc., but NO padding
+    const wrapperClasses = sizeClasses.split(' ').filter(c => !c.startsWith('px-') && !c.startsWith('py-') && !c.startsWith('p-') && !c.startsWith('gap-') && !c.startsWith('text-')).join(' ');
+    // Classes for the inner button: padding, gap, text size
+    const innerClasses = sizeClasses.split(' ').filter(c => c.startsWith('px-') || c.startsWith('py-') || c.startsWith('p-') || c.startsWith('gap-') || c.startsWith('text-')).join(' ');
+    
     return (
       <BorderRotate 
         animationSpeed={3}
@@ -75,10 +81,14 @@ export default function Button({
           secondary: '#7C3AED',
           accent: '#FCD34D'
         }}
-        backgroundColor="#101420"
-        className={`p-0 ${sizes[size]} shadow-glow`}
+        backgroundColor="transparent"
+        className={`p-0 ${wrapperClasses} shadow-glow`}
+        style={{ width: 'max-content', height: 'max-content', display: 'inline-flex' }}
       >
-        {baseButton}
+        {React.cloneElement(baseButton, {
+          className: `${baseButton.props.className} w-full h-full ${innerClasses}`,
+          style: { ...baseButton.props.style, minWidth: 'max-content', borderRadius: 'inherit', background: 'linear-gradient(135deg, rgba(245,158,11,0.85) 0%, rgba(252,211,77,0.85) 100%)' }
+        })}
       </BorderRotate>
     );
   }
