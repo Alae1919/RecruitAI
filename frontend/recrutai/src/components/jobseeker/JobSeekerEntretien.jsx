@@ -47,7 +47,7 @@ export default function JobSeekerEntretien() {
         candidateName: i.candidate_name,
         offerName: i.offer_name,
         status: i.status,
-        score: i.result?.score ?? null,
+        score: i.evaluation?.total_score ?? null,
         video: i.interview_link ?? null,
       }))
     : [];
