@@ -1,18 +1,17 @@
 import logging
 
-from rest_framework import status, generics, viewsets
+from rest_framework import status, generics
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.exceptions import PermissionDenied, ValidationError
 from rest_framework.parsers import MultiPartParser, FormParser
 
-from .models import Application, Feedback, Resume
+from .models import Application, Resume
 from interviews.models import Interview
 from .serializers import (
     ApplicationSerializer,
     ApplicationCreateSerializer,
-    FeedbackSerializer,
     ResumeSerializer,
     ResumeUploadSerializer,
 )
@@ -107,12 +106,6 @@ class ListInterviewView(generics.ListAPIView):
         return Interview.objects.filter(
             application__job_seeker=self.request.user.jobseeker
         ).select_related('application__job_offer', 'application__job_seeker__user', 'evaluation')
-
-
-class FeedbackViewSet(viewsets.ModelViewSet):
-    queryset = Feedback.objects.all()
-    serializer_class = FeedbackSerializer
-    permission_classes = [IsAuthenticated]
 
 
 class JobApplicationCreateView(APIView):
