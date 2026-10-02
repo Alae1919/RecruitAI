@@ -1,3 +1,4 @@
+import { useQueryClient } from '@tanstack/react-query';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { Viewer, Worker } from '@react-pdf-viewer/core';
@@ -15,6 +16,7 @@ import CandidateDetail from './candidates/CandidateDetail';
 import Kanban from './candidates/Kanban';
 import { STAGES, STAGE_META, nextStageAction, countByStage, visibleCandidates } from './candidates/stages';
 import { timeAgo } from '../../shared/utils/time';
+import { PIPELINE_KEY } from '../../shared/hooks/usePipelineSummary';
 
 const SparklesIcon  = ({ size = 13 }) => <Sparkles size={size} />;
 const ListIcon      = ({ size = 12 }) => <List size={size} />;
@@ -147,6 +149,7 @@ export default function JobOffersWithCandidates() {
   const [q, setQ] = useState('');
   const [resumeUrl, setResumeUrl] = useState(null);
   const { toast } = useToast();
+  const queryClient = useQueryClient();
 
   const selectedOffer = useMemo(
     () => jobOffers.find(o => String(o.id) === offerId) ?? null,
@@ -202,6 +205,7 @@ export default function JobOffersWithCandidates() {
     try {
       await advanceCandidate(c.id);
       toast.success(action.done);
+      queryClient.invalidateQueries({ queryKey: PIPELINE_KEY });
       await loadCandidates(offerId, { silent: true });
     } catch (err) {
       toast.error(err.message || 'Could not move the candidate forward.');
@@ -215,6 +219,7 @@ export default function JobOffersWithCandidates() {
     try {
       await rejectCandidate(c.id);
       toast.success('Candidate rejected.');
+      queryClient.invalidateQueries({ queryKey: PIPELINE_KEY });
       await loadCandidates(offerId, { silent: true });
     } catch (err) {
       toast.error(err.message || 'Failed to reject candidate.');

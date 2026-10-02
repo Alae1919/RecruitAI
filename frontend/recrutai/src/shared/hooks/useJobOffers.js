@@ -1,4 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { PIPELINE_KEY } from './usePipelineSummary';
 import { listOffers, createOffer, editOffer, deleteOffer, listCandidates, generateJobDescription } from '../api/jobOffers';
 
 export const JOB_OFFERS_KEY = ['jobOffers'];
@@ -14,7 +15,10 @@ export function useCreateOffer() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: createOffer,
-    onSuccess: () => qc.invalidateQueries({ queryKey: JOB_OFFERS_KEY }),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: JOB_OFFERS_KEY });
+      qc.invalidateQueries({ queryKey: PIPELINE_KEY });
+    },
   });
 }
 
@@ -22,7 +26,10 @@ export function useEditOffer() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: ({ id, data }) => editOffer(id, data),
-    onSuccess: () => qc.invalidateQueries({ queryKey: JOB_OFFERS_KEY }),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: JOB_OFFERS_KEY });
+      qc.invalidateQueries({ queryKey: PIPELINE_KEY });
+    },
   });
 }
 
@@ -30,7 +37,10 @@ export function useDeleteOffer() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: deleteOffer,
-    onSuccess: () => qc.invalidateQueries({ queryKey: JOB_OFFERS_KEY }),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: JOB_OFFERS_KEY });
+      qc.invalidateQueries({ queryKey: PIPELINE_KEY });
+    },
   });
 }
 

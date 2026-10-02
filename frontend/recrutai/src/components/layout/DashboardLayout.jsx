@@ -8,7 +8,7 @@ import Avatar from '../ui/Avatar';
 const BriefcaseIcon = Briefcase;
 
 /* ── Sidebar ───────────────────────────────────────────────────────── */
-function Sidebar({ navItems, user, onLogout }) {
+function Sidebar({ navItems, user, onLogout, extra }) {
   const displayName = user?.first_name
     ? `${user.first_name} ${user.last_name || ''}`.trim()
     : user?.email || 'User';
@@ -35,7 +35,7 @@ function Sidebar({ navItems, user, onLogout }) {
       {/* Nav items */}
       <nav className="p-3 space-y-0.5 flex-1 overflow-y-auto slim-scroll relative">
         <div className="text-[10px] font-mono tracking-[0.18em] text-brand-text-disabled uppercase px-3 mb-2 mt-1">Navigation</div>
-        {navItems.map(({ label, to, icon: Icon, action }, i) => {
+        {navItems.map(({ label, to, icon: Icon, action, badge }, i) => {
           const NavIcon = Icon || defaultIcons[i] || BriefcaseIcon;
           return (
             <NavLink
@@ -68,6 +68,9 @@ function Sidebar({ navItems, user, onLogout }) {
                     <NavIcon size={15} />
                   </span>
                   <span className={`relative font-medium ${action ? 'text-brand-accent' : isActive ? 'text-brand-text-primary' : ''}`}>{label}</span>
+                  {badge != null && !action && (
+                    <span className="ml-auto relative text-[10px] font-mono text-brand-text-disabled">{badge}</span>
+                  )}
                   {action && (
                     <span className="ml-auto relative w-4 h-4 rounded-full text-brand-accent flex items-center justify-center"
                       style={{ background: 'rgba(245,158,11,0.2)' }}>
@@ -79,6 +82,7 @@ function Sidebar({ navItems, user, onLogout }) {
             </NavLink>
           );
         })}
+        {extra}
       </nav>
 
       {/* User footer */}
@@ -104,7 +108,7 @@ function Sidebar({ navItems, user, onLogout }) {
 }
 
 /* ── Dashboard Layout ──────────────────────────────────────────────── */
-export default function DashboardLayout({ navItems = [] }) {
+export default function DashboardLayout({ navItems = [], sidebarExtra = null }) {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
 
@@ -115,7 +119,7 @@ export default function DashboardLayout({ navItems = [] }) {
 
   return (
     <div className="flex min-h-screen" style={{ background: '#090C14' }}>
-      <Sidebar navItems={navItems} user={user} onLogout={handleLogout} />
+      <Sidebar navItems={navItems} user={user} onLogout={handleLogout} extra={sidebarExtra} />
       <div className="flex-1 min-w-0 flex flex-col">
         <Outlet />
       </div>
