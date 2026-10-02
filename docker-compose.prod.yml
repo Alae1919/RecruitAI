@@ -52,7 +52,10 @@ services:
       CELERY_BROKER_URL: redis://redis:6379/0
       CELERY_RESULT_BACKEND: redis://redis:6379/0
     volumes:
+      # uploads (resumes, answer videos) live in this volume; the worker must see the same files
+      - media_files:/app/media
       - ./backend/models:/app/models
+      - whisper_cache:/root/.cache/whisper
     depends_on:
       db:
         condition: service_healthy
@@ -76,4 +79,5 @@ services:
 volumes:
   postgres_data:
   media_files:
+  whisper_cache:
   static_files:
