@@ -70,6 +70,9 @@ services:
       dockerfile: Dockerfile
     environment:
       REACT_APP_BACKEND_URL: http://localhost:8000
+      # bind mounts on Windows/macOS don't forward file events; poll so edits hot-reload
+      WATCHPACK_POLLING: "true"
+      CHOKIDAR_USEPOLLING: "true"
     volumes:
       - ./frontend/recrutai/src:/app/src
       - ./frontend/recrutai/public:/app/public
