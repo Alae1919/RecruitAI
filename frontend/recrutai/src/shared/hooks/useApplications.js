@@ -9,8 +9,11 @@ export function useJobSeekerApplications() {
   return useQuery({ queryKey: APPLICATIONS_KEY, queryFn: getJobSeekerApplications });
 }
 
-export function useAllJobOffers() {
-  return useQuery({ queryKey: ALL_OFFERS_KEY, queryFn: listAllOffers });
+export function useAllJobOffers(params = {}) {
+  return useQuery({
+    queryKey: [...ALL_OFFERS_KEY, params],
+    queryFn: () => listAllOffers(params),
+  });
 }
 
 export function useApplyForJob() {

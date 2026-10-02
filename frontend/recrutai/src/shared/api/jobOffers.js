@@ -1,10 +1,14 @@
 import { request } from "../http/client";
 
-export const listOffers = () =>
-  request({ method: "GET", url: "/job_offers/list" }).then(d => d.results ?? d);
+export const listOffers = (params = {}) => {
+  const query = new URLSearchParams(Object.entries(params).filter(([, v]) => v !== '' && v !== undefined)).toString();
+  return request({ method: "GET", url: `/job_offers/list${query ? `?${query}` : ''}` });
+};
 
-export const listAllOffers = () =>
-  request({ method: "GET", url: "/job_offers/listALL" }).then(d => d.results ?? d);
+export const listAllOffers = (params = {}) => {
+  const query = new URLSearchParams(Object.entries(params).filter(([, v]) => v !== '' && v !== undefined)).toString();
+  return request({ method: "GET", url: `/job_offers/listALL${query ? `?${query}` : ''}` });
+};
 
 export const createOffer = (data) =>
   request({ method: "POST", url: "/job_offers/create", data });
