@@ -159,3 +159,64 @@ class TestOfferStatus(APITestCase):
         seeker = _make_job_seeker()
         with self.assertRaises(ValidationError):
             create_application(job_seeker=seeker, job_offer_id=self.draft.id)
+
+
+# ---------------------------------------------------------------------------
+# Recruiter table stats: applicants / shortlisted / avg match + ordering
+# ---------------------------------------------------------------------------
+
+from applications.models import Application
+from core.models import CVAnalysis
+
+
+def _apply(offer, email, *, score=None, status=Application.Status.PENDING):
+    seeker = _make_job_seeker(email)
+    app = Application.objects.create(job_seeker=seeker, job_offer=offer, status=status)
+    if score is not None:
+        CVAnalysis.objects.create(application=app, eligibility_score=score)
+    return app
+
+
+class TestOfferStats(APITestCase):
+    def setUp(self):
+        self.recruiter = _make_recruiter()
+        self.busy = _make_offer(self.recruiter, title='Busy')
+        self.quiet = _make_offer(self.recruiter, title='Quiet')
+        # busy: 4 applicants. strong CV, weak CV, accepted w/o analysis, rejected strong CV
+        _apply(self.busy, 'a@t.com', score=9.0)
+        _apply(self.busy, 'b@t.com', score=4.0)
+        _apply(self.busy, 'c@t.com', status=Application.Status.ACCEPTED)
+        _apply(self.busy, 'd@t.com', score=8.0, status=Application.Status.REJECTED)
+        _apply(self.quiet, 'e@t.com', score=6.0)
+        self.client.force_authenticate(user=self.recruiter.user)
+
+    def _by_title(self):
+        res = self.client.get('/api/job_offers/list')
+        return {o['title']: o for o in res.data['results']}
+
+    def test_counts(self):
+        busy = self._by_title()['Busy']
+        self.assertEqual(busy['applicants_count'], 4)
+        # strong CV (9.0) + accepted; rejected 8.0 and weak 4.0 are excluded
+        self.assertEqual(busy['shortlisted_count'], 2)
+
+    def test_avg_match_is_percentage_of_analysed_applications(self):
+        busy = self._by_title()['Busy']
+        self.assertEqual(busy['avg_match'], 70.0)  # mean(9, 4, 8) * 10 = 70
+
+    def test_avg_match_null_without_analyses(self):
+        empty = _make_offer(self.recruiter, title='Empty')
+        res = self.client.get('/api/job_offers/list', {'search': 'Empty'})
+        self.assertEqual(res.data['results'][0]['applicants_count'], 0)
+        self.assertIsNone(res.data['results'][0]['avg_match'])
+        self.assertEqual(empty.id, res.data['results'][0]['id'])
+
+    def test_order_by_most_applicants(self):
+        res = self.client.get('/api/job_offers/list', {'ordering': '-applicants_count'})
+        self.assertEqual([o['title'] for o in res.data['results']], ['Busy', 'Quiet'])
+
+    def test_public_list_does_not_expose_stats(self):
+        seeker = _make_job_seeker('viewer@t.com')
+        self.client.force_authenticate(user=seeker.user)
+        res = self.client.get('/api/job_offers/listALL')
+        self.assertNotIn('applicants_count', res.data['results'][0])

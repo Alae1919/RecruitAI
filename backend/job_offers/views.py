@@ -44,7 +44,10 @@ class ListJobOffersView(generics.ListAPIView):
     permission_classes = [permissions.IsAuthenticated, IsRecruiter]
     filter_backends = [DjangoFilterBackend, filters.OrderingFilter, filters.SearchFilter]
     filterset_class = JobOfferFilter
-    ordering_fields = ['created_at', 'title', 'experience_min']
+    ordering_fields = [
+        'created_at', 'title', 'experience_min',
+        'applicants_count', 'shortlisted_count', 'avg_match',
+    ]
     ordering = ['-created_at']
     search_fields = ['title', 'description', 'location']
 

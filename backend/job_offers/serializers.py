@@ -6,6 +6,10 @@ from job_offers.models import JobOffer
 class JobOfferSerializer(serializers.ModelSerializer):
     recruiter_name = serializers.SerializerMethodField(read_only=True)
     question_sets_count = serializers.SerializerMethodField(read_only=True)
+    # Present only on the recruiter list (see selectors.with_application_stats)
+    applicants_count = serializers.IntegerField(read_only=True)
+    shortlisted_count = serializers.IntegerField(read_only=True)
+    avg_match = serializers.FloatField(read_only=True)
 
     class Meta:
         model = JobOffer
@@ -13,6 +17,7 @@ class JobOfferSerializer(serializers.ModelSerializer):
             'id', 'title', 'description', 'requirements', 'skills',
             'experience_min', 'location', 'salary_range', 'status',
             'recruiter_name', 'question_sets_count',
+            'applicants_count', 'shortlisted_count', 'avg_match',
             'created_at', 'updated_at',
         ]
         read_only_fields = ['id', 'created_at', 'updated_at']
