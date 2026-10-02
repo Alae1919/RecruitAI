@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { fetchJobSeekerInterviews } from '../../services/api';
 import { useApi } from '../../hooks/useApi';
 import Button from '../ui/Button';
+import { formatDue } from '../../shared/utils/datetime';
 import StatusBadge from '../ui/StatusBadge';
 import JobSeekerInterviewProcess from './JobSeekerInterviewProcess';
 import JobSeekerInterviewAnswers from './JobSeekerInterviewAnswers';
@@ -47,6 +48,7 @@ export default function JobSeekerEntretien() {
         candidateName: i.candidate_name,
         offerName: i.offer_name,
         status: i.status,
+        due: i.interview_date,
         score: i.evaluation?.total_score ?? null,
         video: i.interview_link ?? null,
       }))
@@ -153,7 +155,12 @@ export default function JobSeekerEntretien() {
                           style={{ borderTop: '1px solid rgba(35,42,62,0.5)' }}
                           onMouseEnter={e => e.currentTarget.style.background = 'rgba(24,30,46,0.6)'}
                           onMouseLeave={e => e.currentTarget.style.background = 'transparent'}>
-                          <td className="px-6 py-4 font-semibold text-brand-text-primary">{i.offerName}</td>
+                          <td className="px-6 py-4 font-semibold text-brand-text-primary">
+                            {i.offerName}
+                            {i.status === 'available' && i.due && (
+                              <div className="text-[11px] font-normal font-mono text-brand-text-disabled mt-0.5">Due by {formatDue(i.due)}</div>
+                            )}
+                          </td>
                           <td className="px-6 py-4"><InterviewStatusBadge status={i.status} /></td>
                           <td className="px-6 py-4"><Score value={i.score} /></td>
                           <td className="px-6 py-4">
@@ -197,6 +204,9 @@ export default function JobSeekerEntretien() {
                       <div className="flex items-start justify-between gap-3 mb-4">
                         <div>
                           <div className="font-semibold text-sm text-brand-text-primary">{i.offerName}</div>
+                          {i.status === 'available' && i.due && (
+                            <div className="text-[11px] font-mono text-brand-text-disabled mt-0.5">Due by {formatDue(i.due)}</div>
+                          )}
                           {i.score != null && (
                             <div className="mt-1"><Score value={i.score} /></div>
                           )}

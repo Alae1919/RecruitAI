@@ -12,6 +12,9 @@ export const fetchJobSeekerInterviews = () =>
 export const fetchQuestions = (interviewId) =>
   request({ method: "GET", url: `/interviews/${interviewId}/questions/` });
 
+export const scheduleInterview = (interviewId, data) =>
+  request({ method: "PATCH", url: `/interviews/${interviewId}/schedule/`, data });
+
 export const sendVideo = (formData) =>
   request({
     method: "POST",

@@ -1,10 +1,11 @@
 import React from 'react';
-import { Brain, Check, X, Download, MapPin, Mail, Phone, ArrowRight } from 'lucide-react';
+import { Brain, Check, X, Download, MapPin, Mail, Phone, ArrowRight, CalendarClock } from 'lucide-react';
 import Avatar from '../../ui/Avatar';
 import StatusBadge from '../../ui/StatusBadge';
 import MatchRing from './MatchRing';
 import { STAGE_META, nextStageAction, canReject, buildTimeline } from './stages';
 import { timeAgo } from '../../../shared/utils/time';
+import { formatDue } from '../../../shared/utils/datetime';
 
 function Section({ title, children }) {
   return (
@@ -88,6 +89,11 @@ function InterviewQuestions({ interview }) {
   const { questions, evaluation } = interview;
   return (
     <div className="space-y-3">
+      {interview.status === 'available' && interview.interview_date && (
+        <div className="text-xs text-brand-text-muted flex items-center gap-1.5">
+          <CalendarClock size={12} /> Due by <span className="font-mono text-brand-text-primary">{formatDue(interview.interview_date)}</span>
+        </div>
+      )}
       {evaluation && (
         <div className="flex items-center gap-2 text-xs text-brand-text-muted">
           <StatusBadge status={evaluation.decision} label={DECISION_LABELS[evaluation.decision]} />
@@ -139,8 +145,9 @@ function Timeline({ events }) {
   );
 }
 
-export default function CandidateDetail({ candidate, busy, onAdvance, onReject, onViewResume }) {
+export default function CandidateDetail({ candidate, busy, onAdvance, onReject, onViewResume, onSchedule }) {
   const next = nextStageAction(candidate.stage);
+  const canSchedule = candidate.interview?.status === 'available';
   const profile = candidate.resume_profile;
   const experience = (profile?.experience ?? []).filter(e => e && typeof e === 'object');
 
@@ -169,6 +176,13 @@ export default function CandidateDetail({ candidate, busy, onAdvance, onReject, 
             className="h-9 px-4 text-sm rounded-xl font-semibold inline-flex items-center gap-1.5 transition-all active:scale-[.97] disabled:opacity-50"
             style={{ background: 'linear-gradient(135deg, #F59E0B 0%, #FCD34D 100%)', color: '#111827', boxShadow: '0 0 16px rgba(245,158,11,0.25)' }}>
             <Check size={13} strokeWidth={2.5} /> {next.label} <ArrowRight size={13} />
+          </button>
+        )}
+        {canSchedule && (
+          <button onClick={() => onSchedule(candidate)}
+            className="h-9 px-3 text-sm rounded-xl inline-flex items-center gap-1.5 transition-colors text-brand-text-muted hover:text-brand-accent"
+            style={{ border: '1px solid rgba(35,42,62,0.8)', background: 'rgba(16,20,32,0.6)' }}>
+            <CalendarClock size={13} /> Schedule interview
           </button>
         )}
         {candidate.resume_url && (

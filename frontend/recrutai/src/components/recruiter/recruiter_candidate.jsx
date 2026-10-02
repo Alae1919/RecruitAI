@@ -12,6 +12,8 @@ import { Sparkles, List, Columns2, Briefcase, Bell, ArrowLeft } from 'lucide-rea
 import StatusBadge from '../ui/StatusBadge';
 import MatchRing from './candidates/MatchRing';
 import CandidateDetail from './candidates/CandidateDetail';
+import ScheduleInterviewModal from './candidates/ScheduleInterviewModal';
+import { scheduleInterview } from '../../shared/api/interviews';
 import Kanban from './candidates/Kanban';
 import { STAGES, STAGE_META, nextStageAction, countByStage, visibleCandidates } from './candidates/stages';
 import { timeAgo } from '../../shared/utils/time';
@@ -147,6 +149,8 @@ export default function JobOffersWithCandidates() {
   const [sort, setSort] = useState('match');
   const [q, setQ] = useState('');
   const [resumeUrl, setResumeUrl] = useState(null);
+  const [scheduling, setScheduling] = useState(null);
+  const [scheduleBusy, setScheduleBusy] = useState(false);
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
@@ -225,6 +229,20 @@ export default function JobOffersWithCandidates() {
       toast.error(err.message || 'Failed to reject candidate.');
     } finally {
       setBusyId(null);
+    }
+  };
+
+  const handleSchedule = async (data) => {
+    setScheduleBusy(true);
+    try {
+      await scheduleInterview(scheduling.interview.id, data);
+      toast.success('Interview scheduled — the candidate has been notified.');
+      setScheduling(null);
+      await loadCandidates(offerId, { silent: true });
+    } catch (err) {
+      toast.error(err.message || 'Could not schedule the interview.');
+    } finally {
+      setScheduleBusy(false);
     }
   };
 
@@ -383,6 +401,7 @@ export default function JobOffersWithCandidates() {
                 onAdvance={handleAdvance}
                 onReject={handleReject}
                 onViewResume={setResumeUrl}
+                onSchedule={setScheduling}
               />
             ) : (
               <div className="h-full flex flex-col items-center justify-center gap-3 text-brand-text-disabled">
@@ -396,6 +415,15 @@ export default function JobOffersWithCandidates() {
           </div>
         </div>
       )}
+
+      <ScheduleInterviewModal
+        isOpen={!!scheduling}
+        onClose={() => setScheduling(null)}
+        candidateName={scheduling?.candidate_name}
+        interview={scheduling?.interview}
+        onSubmit={handleSchedule}
+        busy={scheduleBusy}
+      />
 
       <Modal isOpen={!!resumeUrl} onClose={() => setResumeUrl(null)} title="Candidate Resume" size="xl">
         {resumeUrl && <ResumeViewer resumeUrl={resumeUrl} />}
