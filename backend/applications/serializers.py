@@ -1,3 +1,4 @@
+from django.core.exceptions import ObjectDoesNotExist
 from rest_framework import serializers
 
 from applications.models import Application, Feedback, Resume, ResumeData
@@ -67,6 +68,130 @@ class ApplicationSerializer(serializers.ModelSerializer):
             return obj.cv_analysis.eligibility_score
         except Exception:
             return None
+
+
+class CandidateSerializer(ApplicationSerializer):
+    """Recruiter-only view of an applicant: contact info, AI analysis, parsed CV,
+    interview progress and a timeline. Never use this for the candidate's own lists."""
+
+    candidate_email = serializers.SerializerMethodField()
+    candidate_phone = serializers.SerializerMethodField()
+    candidate_address = serializers.SerializerMethodField()
+    headline = serializers.SerializerMethodField()
+    match_score = serializers.SerializerMethodField()
+    analysis = serializers.SerializerMethodField()
+    resume_profile = serializers.SerializerMethodField()
+    interview = serializers.SerializerMethodField()
+    timeline = serializers.SerializerMethodField()
+
+    class Meta(ApplicationSerializer.Meta):
+        fields = ApplicationSerializer.Meta.fields + [
+            'candidate_email', 'candidate_phone', 'candidate_address', 'headline',
+            'match_score', 'analysis', 'resume_profile', 'interview', 'timeline',
+        ]
+
+    @staticmethod
+    def _parsed(obj):
+        try:
+            return obj.resume.parsed if obj.resume_id else None
+        except ObjectDoesNotExist:
+            return None
+
+    @staticmethod
+    def _cv_analysis(obj):
+        try:
+            return obj.cv_analysis
+        except ObjectDoesNotExist:
+            return None
+
+    @staticmethod
+    def _interview(obj):
+        try:
+            return obj.interview
+        except ObjectDoesNotExist:
+            return None
+
+    def get_candidate_email(self, obj):
+        return obj.job_seeker.user.email
+
+    def get_candidate_phone(self, obj):
+        return obj.job_seeker.user.phone
+
+    def get_candidate_address(self, obj):
+        return obj.job_seeker.user.address
+
+    def get_headline(self, obj):
+        parsed = self._parsed(obj)
+        latest = parsed.experience[0] if parsed and parsed.experience else None
+        if not isinstance(latest, dict):
+            return None
+        return ' · '.join(str(latest[k]) for k in ('role', 'company') if latest.get(k)) or None
+
+    def get_match_score(self, obj):
+        analysis = self._cv_analysis(obj)
+        return round(analysis.eligibility_score * 10) if analysis else None
+
+    def get_analysis(self, obj):
+        analysis = self._cv_analysis(obj)
+        if not analysis:
+            return None
+        details = analysis.analysis_details or {}
+        return {
+            'strengths': details.get('strengths', []),
+            'gaps': details.get('gaps', []),
+            'recommendation': details.get('recommendation', ''),
+            'analyzed_at': analysis.created_at,
+        }
+
+    def get_resume_profile(self, obj):
+        parsed = self._parsed(obj)
+        return ResumeDataSerializer(parsed).data if parsed else None
+
+    def get_interview(self, obj):
+        from interviews.selectors import get_interview_questions
+
+        interview = self._interview(obj)
+        if not interview:
+            return None
+        try:
+            evaluation = interview.evaluation
+        except ObjectDoesNotExist:
+            evaluation = None
+        return {
+            'id': interview.id,
+            'status': interview.status,
+            'interview_date': interview.interview_date,
+            'questions': [
+                {'id': q.id, 'text': q.question_text, 'source': q.source}
+                for q in get_interview_questions(interview)
+            ],
+            'evaluation': {
+                'total_score': evaluation.total_score,
+                'decision': evaluation.decision,
+            } if evaluation else None,
+        }
+
+    def get_timeline(self, obj):
+        events = [{'key': 'applied', 'label': 'Applied', 'at': obj.applied_at}]
+        analysis = self._cv_analysis(obj)
+        if analysis:
+            events.append({'key': 'ai_screened', 'label': 'AI-screened', 'at': analysis.created_at})
+        interview = self._interview(obj)
+        if interview:
+            events.append({'key': 'interview', 'label': 'Interview invited', 'at': interview.created_at})
+            try:
+                events.append({'key': 'evaluated', 'label': 'AI evaluation', 'at': interview.evaluation.created_at})
+            except ObjectDoesNotExist:
+                pass
+        closing = {
+            Application.Status.OFFER: ('offer', 'Offer made'),
+            Application.Status.HIRED: ('hired', 'Hired'),
+            Application.Status.REJECTED: ('rejected', 'Rejected'),
+        }
+        if obj.status in closing:
+            key, label = closing[obj.status]
+            events.append({'key': key, 'label': label, 'at': obj.updated_at})
+        return events
 
 
 class ApplicationCreateSerializer(serializers.Serializer):

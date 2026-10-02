@@ -220,3 +220,90 @@ class TestOfferStats(APITestCase):
         self.client.force_authenticate(user=seeker.user)
         res = self.client.get('/api/job_offers/listALL')
         self.assertNotIn('applicants_count', res.data['results'][0])
+
+
+# ---------------------------------------------------------------------------
+# Recruiter candidate detail payload
+# ---------------------------------------------------------------------------
+
+from applications.models import Resume, ResumeData
+from interviews.models import Interview, Question, QuestionSet
+
+
+class TestCandidatesEndpoint(APITestCase):
+    def setUp(self):
+        self.recruiter = _make_recruiter()
+        self.offer = _make_offer(self.recruiter)
+        self.seeker = _make_job_seeker('cand@t.com')
+        self.seeker.user.phone = '+212600000000'
+        self.seeker.user.save()
+        resume = Resume.objects.create(
+            job_seeker=self.seeker, original_file='resumes/x.pdf', is_default=True,
+            parsing_status=Resume.ParsingStatus.READY,
+        )
+        ResumeData.objects.create(
+            resume=resume, raw_text='cv', skills=['python', 'django'],
+            experience=[{'role': 'Backend Dev', 'company': 'Acme', 'years': 3}],
+            summary='Solid backend engineer.',
+        )
+        self.app = Application.objects.create(
+            job_seeker=self.seeker, job_offer=self.offer, resume=resume,
+            status=Application.Status.ACCEPTED,
+        )
+        CVAnalysis.objects.create(
+            application=self.app, eligibility_score=8.4,
+            analysis_details={'strengths': ['python'], 'gaps': ['k8s'], 'recommendation': 'Interview.'},
+        )
+        qs = QuestionSet.objects.create(job_offer=self.offer, version=1, status=QuestionSet.Status.LOCKED)
+        interview = Interview.objects.create(application=self.app, question_set=qs)
+        Question.objects.create(question_set=qs, source=Question.Source.BASE, order=0, question_text='Base Q')
+        Question.objects.create(interview=interview, source=Question.Source.PROBE, order=0, question_text='Probe Q')
+        self.client.force_authenticate(user=self.recruiter.user)
+
+    def _candidate(self):
+        res = self.client.get(f'/api/job_offers/{self.offer.id}/Candidates/')
+        self.assertEqual(res.status_code, 200)
+        return res.data[0]
+
+    def test_contact_and_headline(self):
+        c = self._candidate()
+        self.assertEqual(c['candidate_email'], 'cand@t.com')
+        self.assertEqual(c['candidate_phone'], '+212600000000')
+        self.assertEqual(c['headline'], 'Backend Dev · Acme')
+
+    def test_match_score_and_stage(self):
+        c = self._candidate()
+        self.assertEqual(c['match_score'], 84)
+        self.assertEqual(c['stage'], 'interview')
+
+    def test_analysis_and_resume_profile(self):
+        c = self._candidate()
+        self.assertEqual(c['analysis']['strengths'], ['python'])
+        self.assertEqual(c['analysis']['recommendation'], 'Interview.')
+        self.assertEqual(c['resume_profile']['skills'], ['python', 'django'])
+
+    def test_interview_questions_include_base_and_probe(self):
+        c = self._candidate()
+        sources = {q['text']: q['source'] for q in c['interview']['questions']}
+        self.assertEqual(sources, {'Base Q': 'base', 'Probe Q': 'probe'})
+
+    def test_timeline_events_in_order(self):
+        keys = [e['key'] for e in self._candidate()['timeline']]
+        self.assertEqual(keys, ['applied', 'ai_screened', 'interview'])
+
+    def test_candidate_without_resume_or_analysis(self):
+        bare = Application.objects.create(job_seeker=_make_job_seeker('bare@t.com'), job_offer=self.offer)
+        res = self.client.get(f'/api/job_offers/{self.offer.id}/Candidates/')
+        row = next(r for r in res.data if r['id'] == bare.id)
+        self.assertIsNone(row['analysis'])
+        self.assertIsNone(row['resume_profile'])
+        self.assertIsNone(row['interview'])
+        self.assertIsNone(row['match_score'])
+        self.assertEqual(row['stage'], 'applied')
+
+    def test_jobseeker_own_list_does_not_expose_ai_analysis(self):
+        self.client.force_authenticate(user=self.seeker.user)
+        res = self.client.get('/api/applications/retreiveApplications')
+        self.assertEqual(res.status_code, 200)
+        self.assertNotIn('analysis', res.data[0])
+        self.assertNotIn('candidate_email', res.data[0])

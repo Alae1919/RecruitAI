@@ -11,8 +11,8 @@ from .models import JobOffer
 from .selectors import list_public_job_offers, list_recruiter_job_offers
 from .serializers import JobDescriptionGenerateSerializer, JobOfferSerializer
 from .services.generate_job_description import generate_job_description
-from applications.models import Application
-from applications.serializers import ApplicationSerializer
+from applications.selectors import list_applications_for_offer
+from applications.serializers import CandidateSerializer
 from users.models import Recruiter
 from users.permissions import IsRecruiter
 
@@ -113,10 +113,8 @@ class ListCandidatesOnJobOfferView(APIView):
                 {'error': 'Job offer not found or unauthorized access.'},
                 status=status.HTTP_404_NOT_FOUND,
             )
-        applications = Application.objects.filter(job_offer=job_offer).select_related(
-            'job_seeker__user', 'job_offer', 'resume', 'cv_analysis'
-        )
-        serializer = ApplicationSerializer(applications, many=True, context={'request': request})
+        applications = list_applications_for_offer(job_offer.id, recruiter)
+        serializer = CandidateSerializer(applications, many=True, context={'request': request})
         return Response(serializer.data)
 
 

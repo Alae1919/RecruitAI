@@ -24,6 +24,9 @@ def list_applications_for_offer(job_offer_id: int, recruiter: Recruiter):
             job_offer_id=job_offer_id,
             job_offer__recruiter=recruiter,
         )
-        .select_related('job_seeker__user', 'resume__parsed', 'job_offer', 'cv_analysis')
+        .select_related(
+            'job_seeker__user', 'resume__parsed', 'job_offer', 'cv_analysis',
+            'interview__evaluation',
+        )
         .order_by('-applied_at')
     )
