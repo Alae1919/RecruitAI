@@ -114,3 +114,78 @@ class TestAnalyzeCVService(TestCase):
         from core.services.analyze_cv import analyze_cv
         result = analyze_cv(self.application.id)
         self.assertIsNone(result)
+
+
+# ---------------------------------------------------------------------------
+# seed_demo management command
+# ---------------------------------------------------------------------------
+
+import io
+import shutil
+import tempfile
+
+from django.core.management import call_command
+from django.test import override_settings
+
+from interviews.models import Interview, InterviewEvaluation
+
+_SEED_MEDIA = tempfile.mkdtemp(prefix='recrutai-seed-media-')
+
+
+@override_settings(MEDIA_ROOT=_SEED_MEDIA)
+class TestSeedDemoCommand(TestCase):
+    @classmethod
+    def tearDownClass(cls):
+        super().tearDownClass()
+        shutil.rmtree(_SEED_MEDIA, ignore_errors=True)
+
+    def _seed(self, *args):
+        out = io.StringIO()
+        call_command('seed_demo', *args, stdout=out)
+        return out.getvalue()
+
+    def test_creates_offers_in_every_status_and_candidates_in_every_stage(self):
+        self._seed()
+        statuses = set(JobOffer.objects.values_list('status', flat=True))
+        self.assertTrue({'open', 'draft', 'paused'} <= statuses)
+        stages = {a.stage for a in Application.objects.select_related('job_offer', 'cv_analysis')}
+        self.assertEqual(stages, {'applied', 'screening', 'interview', 'offer', 'hired', 'rejected'})
+
+    def test_demo_accounts_can_log_in_with_their_role(self):
+        from core.management.commands.seed_demo import DEMO_PASSWORD, RECRUITER_EMAIL
+        self._seed()
+        res = self.client.post('/api/users/login/', {
+            'email': RECRUITER_EMAIL, 'password': DEMO_PASSWORD, 'role': 'RECRUITER',
+        }, content_type='application/json')
+        self.assertEqual(res.status_code, 200, res.content)
+        self.assertIn('access', res.json())
+
+    def test_answered_interviews_are_completed_and_evaluated(self):
+        self._seed()
+        completed = Interview.objects.filter(status=Interview.Status.COMPLETED)
+        self.assertTrue(completed.exists())
+        for interview in completed:
+            self.assertTrue(InterviewEvaluation.objects.filter(interview=interview).exists())
+
+    def test_every_open_offer_with_candidates_can_invite(self):
+        """A READY question set must exist so 'Invite to interview' works in the demo."""
+        from interviews.models import QuestionSet
+        self._seed()
+        for offer in JobOffer.objects.filter(application__isnull=False).distinct():
+            self.assertTrue(offer.question_sets.filter(status=QuestionSet.Status.READY).exists(), offer.title)
+
+    def test_second_run_is_a_no_op_and_reset_recreates(self):
+        self._seed()
+        users = User.objects.count()
+        self.assertIn('already exists', self._seed())
+        self.assertEqual(User.objects.count(), users)
+        self._seed('--reset')
+        self.assertEqual(User.objects.count(), users)
+
+    def test_remove_deletes_only_demo_accounts(self):
+        keep = _make_recruiter('real@company.com')
+        self._seed()
+        self._seed('--remove')
+        self.assertFalse(User.objects.filter(email__endswith='@recrutai.demo').exists())
+        self.assertFalse(JobOffer.objects.exclude(recruiter=keep).exists())
+        self.assertTrue(User.objects.filter(pk=keep.user_id).exists())
