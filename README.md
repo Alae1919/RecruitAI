@@ -25,28 +25,31 @@ An AI-powered recruitment platform built as a final-year internship project (PFE
 
 ### For Recruiters
 
-- **Job offer management** — create, edit, delete, and filter offers with location / title / experience / sort controls
-- **AI-assisted job description drafting** — generate a full description from title + skills + level in one click; regenerate anytime from the edit panel
-- **Interview question sets** — structured DRAFT → READY → LOCKED lifecycle per offer; recruiters generate, edit, add, delete, and version questions before locking them for candidates
-- **Applicant pipeline** — browse applicants with CV eligibility scores (spaCy NER + LLM), accept or reject with email notification
-- **Transparent evaluation** — per-answer scores, AI explanations, model name, and prompt version visible in a collapsible breakdown
-- **Decision override** — accept or reject a candidate with custom reasoning, overriding the AI decision while preserving the original scores
+- **Job offers table**: Role, Location, Applicants, Shortlist, Avg. match, Status and Posted columns. Filter by All / Open / Draft / Paused, sort by Recent / Most applicants / Best match, with live KPI cards.
+- **Offer lifecycle**: offers are `draft`, `open`, `paused` or `closed`. Only open offers are visible to and accept job seekers.
+- **Post-a-job wizard**: Describe, then Details, Requirements, Screening and Preview. AI drafts the description. Must-have and nice-to-have skills, experience range, department, employment type and screening options are all saved. "Save draft" works.
+- **Candidate pipeline**: Applied, Screening, Interview, Offer, Hired. Stage tabs with counts, a 5-column Kanban, and match-score rings. Strong CVs (≥ 7.5/10) are auto-shortlisted into Screening, which can be switched off per offer. One click moves a candidate forward (invite, then offer, then hired).
+- **Candidate detail**: contact info, AI assessment (recommendation, strengths, gaps), parsed CV (summary, experience, skills, languages), the interview questions with the CV-based ones flagged, the AI score, and a stage timeline.
+- **Interview question sets**: versioned DRAFT, READY, LOCKED lifecycle per offer. Generate, edit, add and delete questions before they are locked for candidates.
+- **Transparent evaluation**: per-answer scores, AI explanations, model name and prompt version, plus a recruiter decision override with reasoning.
+- **Sidebar**: offer and candidate counts and a live per-stage Pipeline block.
 
 ### For Job Seekers
 
-- **Multi-resume management** — upload multiple CVs (PDF/DOC/DOCX), set a default, rename, delete; parsing status (PENDING → READY/FAILED) updates in real time
-- **Resume picker at apply time** — choose which resume to attach per application; default pre-selected, inline upload available
-- **Offer browsing** — filter by location, title, and experience level; sort by date or title; paginated (20 per page); filters are URL-backed and survive reload
-- **Application tracking** — view status (pending / accepted / rejected) with timestamps
-- **In-browser video interviews** — answer questions one by one via webcam; answers transcribed by Whisper (speech-to-text)
-- **Interview debrief** — watch own recordings, read transcripts, and see the AI evaluation breakdown (score, explanation per question)
+- **Multi-resume management**: upload several CVs (PDF/DOC/DOCX), set a default, rename or delete them. Parsing status (PENDING, then READY or FAILED) updates live.
+- **Resume picker at apply time**, with the default pre-selected.
+- **Offer browsing**: filter by location, title and experience level, sort, paginate. Filters are kept in the URL.
+- **Application tracking** with status and timestamps.
+- **In-browser video interviews**: answer each question via webcam. Whisper transcribes the answers. The interview stays resumable until the last question is answered.
+- **Interview debrief**: watch your recordings, read transcripts, and see the AI score per question.
 
 ### Platform
 
-- Email/password authentication with JWT (access 60 min / refresh 24 h, auto-rotation + blacklist)
-- Role-based access control enforced server-side (`RECRUITER` / `JOBSEEKER`)
-- Asynchronous task processing via Celery + Redis (question generation, resume parsing, CV analysis, email)
-- Async task status propagated to the UI via polling with animated banners
+- Email/password authentication with JWT (access 60 min, refresh 24 h, rotation and blacklist).
+- Role-based access control enforced server-side (`RECRUITER` / `JOBSEEKER`), including object-level ownership checks.
+- Asynchronous processing via Celery and Redis: resume parsing, CV analysis, question generation, transcription, scoring, email.
+- `seed_demo` command for a fully populated demo without any LLM calls.
+- CI on GitHub Actions: backend tests against Postgres, frontend tests and production build.
 
 ---
 
@@ -56,17 +59,17 @@ An AI-powered recruitment platform built as a final-year internship project (PFE
 |---|---|
 | **Backend framework** | Django 4.2 + Django REST Framework 3.15 |
 | **Auth** | SimpleJWT (access 60 min / refresh 24 h, rotation + blacklist) |
-| **Database** | PostgreSQL 16 (SQLite for ad-hoc local testing only) |
+| **Database** | PostgreSQL 16 |
 | **Task queue** | Celery 5 + Redis 7 |
-| **NLP / CV analysis** | spaCy (custom NER model) |
-| **Interview questions** | DeepSeek API (OpenAI-compatible, `deepseek-reasoner` model) |
-| **Speech-to-text** | OpenAI Whisper (`small` model) + Vosk (offline fallback) |
+| **CV parsing & scoring, questions, answer scoring** | DeepSeek LLM API (OpenAI-compatible, `deepseek-reasoner`) |
+| **Speech-to-text** | OpenAI Whisper (`small` model) + ffmpeg |
 | **PDF extraction** | PyPDF2 |
 | **Email** | Gmail SMTP (configurable) |
 | **Frontend** | React 18 + React Router v6 + Axios + Tailwind CSS |
-| **Server state** | TanStack React Query v5 (queries, mutations, polling) |
+| **Server state** | TanStack React Query v5 |
 | **Container** | Docker + Docker Compose |
-| **Production server** | Gunicorn 4-worker + Nginx (static + SPA routing + API proxy) |
+| **Production server** | Gunicorn + Nginx (static + SPA routing + API proxy) |
+| **CI** | GitHub Actions |
 
 ---
 
@@ -102,10 +105,10 @@ An AI-powered recruitment platform built as a final-year internship project (PFE
 |---|---|
 | `recruitment_platform/` | Project config — `settings.py`, `urls.py`, `celery.py` |
 | `users/` | Custom `AbstractUser` (email auth), `JobSeeker`, `Recruiter`, `Resume`, `Role`, JWT login, `/me`, `/me/profile/` |
-| `job_offers/` | `JobOffer` CRUD, filter/sort/pagination, AI description generation, `QuestionSet` lifecycle |
-| `applications/` | `Application`, CV text extraction (PyPDF2), accept/reject flow, `Feedback` |
+| `job_offers/` | `JobOffer` CRUD + lifecycle status, filter/sort/pagination, applicant stats, AI description generation |
+| `applications/` | `Application`, `Resume`/`ResumeData`, pipeline stages, accept/advance/reject, pipeline summary |
 | `interviews/` | `Interview`, `Answer`, Whisper transcription, per-answer `AnswerEvaluation`, `InterviewEvaluation`, decision override |
-| `core/` | `CVAnalysis` — eligibility scoring pipeline |
+| `core/` | `CVAnalysis` (eligibility scoring), `seed_demo` command |
 
 ---
 
@@ -115,102 +118,40 @@ An AI-powered recruitment platform built as a final-year internship project (PFE
 User (email-based auth)
 ├── JobSeeker  1:1  (experience, skills)
 │   └── Resume  1:N  (file, label, is_default, parsing_status)
+│       └── ResumeData 1:1 (skills, experience, education, languages, summary)
 ├── Recruiter  1:1  (company_name, position, industry, …)
 └── UserRole   M:N  → Role (RECRUITER | JOBSEEKER)
 
-JobOffer
-├── QuestionSet  1:N  (version, status: DRAFT|READY|LOCKED, task_id)
-│   └── Question  1:N  (text, question_type, order)
+JobOffer  (status: draft | open | paused | closed, skills, nice_skills,
+           experience_min/max, department, employment_type, screening_config)
+├── QuestionSet  1:N  (version, status: draft | ready | locked)
+│   └── Question  1:N  (BASE questions)
 │
-└── Application  1:N  (JobSeeker + JobOffer)
-      ├── status: PENDING | ACCEPTED | REJECTED
-      ├── resume: FK → Resume
-      ├── CVAnalysis (eligibility_score, analysis_details)
-      ├── Feedback
-      └── Interview
-            ├── Answer[]  (video_url, transcript from Whisper)
-            └── InterviewEvaluation
-                  ├── total_score, decision, decision_source (rule|recruiter)
-                  ├── reasoning
-                  └── AnswerEvaluation[]
-                        (final_score, explanation, model_used,
-                         prompt_version, evaluated_at)
+└── Application  1:N  (JobSeeker + JobOffer + Resume)
+      ├── status: pending | accepted | offer | hired | rejected
+      ├── stage (derived): applied | screening | interview | offer | hired | rejected
+      ├── CVAnalysis (eligibility_score 0-10, strengths, gaps, recommendation)
+      └── Interview  (uses the locked QuestionSet)
+            ├── Question[]  (PROBE questions generated from this candidate's CV)
+            ├── Answer[]  (video, Whisper transcript)
+            │     └── AnswerEvaluation (final_score, explanation, model_used, prompt_version)
+            └── InterviewEvaluation (total_score, decision, decision_source: rule | recruiter, reasoning)
 ```
 
 ---
 
 ## API Reference
 
-All endpoints are prefixed with `/api/`.  
-Protected endpoints require `Authorization: Bearer <access_token>`.
+The full, current reference is in **[backend/docs/api.md](backend/docs/api.md)**. It covers endpoints, payloads, the pipeline rules, background tasks and configuration. All paths are under `/api/`. Protected endpoints need `Authorization: Bearer <access_token>`.
 
-### Auth & Users
-
-| Method | Path | Auth | Description |
-|---|---|---|---|
-| `POST` | `users/register/jobseeker/` | Public | Register a job seeker |
-| `POST` | `users/register/recruiter/` | Public | Register a recruiter |
-| `POST` | `users/login/` | Public | Login → `access` + `refresh` tokens |
-| `POST` | `users/token/refresh/` | Public | Refresh access token |
-| `GET` | `users/me/` | JWT | Authenticated user (email + role) |
-| `GET/PUT` | `users/profile/recruiter/` | JWT | Get / update recruiter profile |
-| `GET/PUT` | `users/profile/jobseeker/` | JWT | Get / update job seeker profile |
-
-### Resumes
-
-| Method | Path | Auth | Description |
-|---|---|---|---|
-| `GET` | `me/resumes/` | JWT (JobSeeker) | List own resumes |
-| `POST` | `me/resumes/` | JWT (JobSeeker) | Upload a resume (multipart) |
-| `PATCH` | `me/resumes/<id>/` | JWT (JobSeeker) | Rename or set as default |
-| `DELETE` | `me/resumes/<id>/` | JWT (JobSeeker) | Delete a resume |
-
-### Job Offers
-
-| Method | Path | Auth | Description |
-|---|---|---|---|
-| `GET` | `job_offers/list` | JWT (Recruiter) | Recruiter's own offers — supports `?title=&location=&experience_min=&ordering=&page=` |
-| `GET` | `job_offers/listALL` | JWT | All published offers — same filter/sort params |
-| `POST` | `job_offers/create` | JWT (Recruiter) | Create a job offer |
-| `PUT` | `job_offers/<id>/edit/` | JWT (Recruiter) | Edit a job offer |
-| `DELETE` | `job_offers/<id>/delete/` | JWT (Recruiter) | Delete a job offer |
-| `GET` | `job_offers/<id>/Candidates/` | JWT (Recruiter) | List applicants for an offer |
-| `POST` | `job_offers/generate-description/` | JWT (Recruiter) | AI-draft a job description from `{title, skills, experience_level}` |
-
-### Question Sets
-
-| Method | Path | Auth | Description |
-|---|---|---|---|
-| `GET` | `interviews/job-offers/<id>/question-sets/` | JWT (Recruiter) | List question sets for an offer |
-| `POST` | `interviews/job-offers/<id>/question-sets/` | JWT (Recruiter) | Create / generate a new set (async) |
-| `GET` | `interviews/question-sets/<id>/` | JWT | Get a question set with questions |
-| `PATCH` | `interviews/question-sets/<id>/` | JWT (Recruiter) | Update status (DRAFT→READY→LOCKED) |
-| `DELETE` | `interviews/question-sets/<id>/` | JWT (Recruiter) | Delete a draft set |
-| `POST` | `interviews/question-sets/<id>/regenerate/` | JWT (Recruiter) | Regenerate questions (async) |
-| `POST` | `interviews/question-sets/<id>/questions/` | JWT (Recruiter) | Add a question manually |
-| `PATCH` | `interviews/questions/<id>/` | JWT (Recruiter) | Edit a question |
-| `DELETE` | `interviews/questions/<id>/` | JWT (Recruiter) | Delete a question |
-
-### Applications
-
-| Method | Path | Auth | Description |
-|---|---|---|---|
-| `POST` | `applications/jobapplications/` | JWT (JobSeeker) | Apply (`job_offer_id` + `resume_id`) |
-| `GET` | `applications/retreiveApplications` | JWT (JobSeeker) | List own applications |
-| `POST` | `applications/accept/` | JWT (Recruiter) | Accept → email + interview created |
-| `POST` | `applications/reject/` | JWT (Recruiter) | Reject → email sent |
-
-### Interviews & Evaluation
-
-| Method | Path | Auth | Description |
-|---|---|---|---|
-| `GET` | `interviews/listinterviews/` | JWT (JobSeeker) | List own interviews |
-| `GET` | `interviews/listrecruiterinterviews/` | JWT (Recruiter) | List interviews for recruiter's offers |
-| `POST` | `interviews/questions/` | JWT | Fetch questions for an interview |
-| `POST` | `interviews/uploadVideo/` | JWT | Upload video answer → transcription + scoring |
-| `POST` | `interviews/answers/` | JWT | Retrieve transcribed answers |
-| `GET` | `interviews/<id>/evaluation/` | JWT | Full evaluation (202 while processing) |
-| `PATCH` | `interviews/<id>/evaluation/decision/` | JWT (Recruiter) | Override AI decision with reasoning |
+| Area | Main endpoints |
+|---|---|
+| Auth | `users/login/` (`{email, password, role}`), `users/token/refresh/`, `users/logout/`, `users/me/`, `users/me/profile/` |
+| Job offers | `job_offers/list` (recruiter, with stats), `job_offers/listALL` (open offers), `create`, `<id>/edit/`, `<id>/delete/`, `<id>/Candidates/`, `generate-description/` |
+| Applications | `applications/jobapplications/`, `retreiveApplications`, `accept/`, `advance/`, `reject/`, `pipeline/` |
+| Resumes | `applications/resumes/`, `applications/resumes/<id>/` |
+| Question sets | `interviews/job-offers/<id>/question-sets/`, `interviews/question-sets/<id>/`, `…/regenerate/`, `…/questions/`, `interviews/questions/<id>/` |
+| Interviews | `interviews/listinterviews/`, `listrecruiterinterviews/`, `interviews/<id>/questions/`, `uploadVideo/`, `answers/`, `interviews/<id>/evaluation/`, `…/evaluation/decision/` |
 
 ---
 
@@ -242,8 +183,7 @@ DJANGO_SECRET_KEY=your-50-char-random-secret      # required
 POSTGRES_PASSWORD=choose-a-db-password             # required
 EMAIL_HOST_USER=your@gmail.com                     # for notifications
 EMAIL_HOST_PASSWORD=your-gmail-app-password        # Gmail App Password
-DEEPSEEK_API_KEY=your-deepseek-api-key             # for questions + JD generation
-SPACY_MODEL_PATH=/app/models/ner_model             # path inside container
+DEEPSEEK_API_KEY=your-deepseek-api-key             # CV analysis, questions, scoring, JD drafting
 ```
 
 > **Generate a Django secret key:**
@@ -251,17 +191,9 @@ SPACY_MODEL_PATH=/app/models/ner_model             # path inside container
 > python -c "import secrets; print(secrets.token_urlsafe(50))"
 > ```
 
-### 3. Add ML models (optional for full interview features)
+### 3. Speech model
 
-Place your model files in `backend/models/` — Docker Compose mounts this directory into the container at `/app/models/`.
-
-```
-backend/models/
-├── ner_model/          # spaCy custom NER model
-└── vosk-model-fr-*/    # Vosk offline speech model (optional)
-```
-
-> Whisper downloads the `small` model (~244 MB) automatically on first use and caches it inside the container.
+Nothing to install. Whisper downloads the `small` model (~244 MB) automatically on first use and caches it inside the container.
 
 ### 4. Start the development stack
 
@@ -278,7 +210,15 @@ docker compose up --build
 
 The backend runs `migrate` automatically on startup.
 
-### 5. Create a superuser (optional)
+### 5. Load demo data (recommended)
+
+```bash
+docker compose exec backend python manage.py seed_demo
+```
+
+Sign in at http://localhost:3000 as **sara@recrutai.demo** / **DemoPass2026!** (recruiter). Every screen is populated: offers in each status and candidates in each pipeline stage. Candidates sign in as `<firstname>@recrutai.demo` with the same password. `--reset` recreates the data, and `--remove` deletes only the demo accounts. No LLM calls are made.
+
+### 6. Create a superuser (optional)
 
 ```bash
 docker compose exec backend python manage.py createsuperuser
@@ -365,8 +305,10 @@ All configuration is driven by environment variables. Never commit `.env` or `.e
 | `CORS_ALLOWED_ORIGINS` | No | `http://localhost:3000,...` | Comma-separated CORS origins |
 | `EMAIL_HOST_USER` | No | — | Gmail sender address |
 | `EMAIL_HOST_PASSWORD` | No | — | Gmail App Password |
-| `DEEPSEEK_API_KEY` | No | — | DeepSeek API key (questions + JD generation) |
-| `SPACY_MODEL_PATH` | No | — | Absolute path to spaCy NER model |
+| `DEEPSEEK_API_KEY` | No | — | DeepSeek API key (CV analysis, questions, scoring, JD drafting) |
+| `AUTO_SHORTLIST_SCORE` | No | `7.5` | CV score (0–10) that moves a candidate to Screening |
+| `EVALUATION_PASS_THRESHOLD` | No | `6.0` | Interview average needed for an "accepted" AI decision |
+| `PROBE_QUESTION_COUNT` | No | `2` | CV-specific questions per interview |
 
 ---
 
@@ -378,14 +320,13 @@ stage_pfe/
 ├── .env.prod.example             # Environment variable template (prod)
 ├── docker-compose.yml            # Development stack
 ├── docker-compose.prod.yml       # Production stack
+├── .github/workflows/ci.yml      # CI: backend + frontend tests, build
 │
 ├── backend/
 │   ├── Dockerfile                # Dev image
 │   ├── Dockerfile.prod           # Production image (gunicorn)
 │   ├── requirements.txt
-│   ├── models/                   # ML model files (git-ignored)
-│   │   ├── ner_model/            # spaCy custom NER model
-│   │   └── vosk-model-*/         # Vosk speech model
+│   ├── docs/api.md               # Backend API reference
 │   │
 │   └── recruitment_platform/     # Django project root
 │       ├── settings.py
@@ -397,7 +338,7 @@ stage_pfe/
 │   ├── job_offers/     # JobOffer CRUD + AI description generation
 │   ├── applications/   # Application lifecycle, CV extraction
 │   ├── interviews/     # QuestionSet/Question, Answer, Evaluation, override
-│   └── core/           # CVAnalysis eligibility scoring
+│   └── core/           # CVAnalysis + seed_demo management command
 │
 └── frontend/recrutai/
     ├── Dockerfile
@@ -479,12 +420,12 @@ docker compose -f docker-compose.prod.yml up --build -d
 
 ## Known Limitations
 
-- **Whisper model (~244 MB)** downloads on first container start; subsequent starts use the cache.
-- **spaCy NER model** must be manually placed in `backend/models/` — it is not downloaded automatically.
-- **No rate limiting** on login or LLM endpoints (planned).
-- **JWT in `localStorage`** is vulnerable to XSS; moving the refresh token to an `HttpOnly` cookie is the recommended next step.
-- **CV file extension check** in the serializer is bypassable via filename tricks; a MIME-type check on the server side is needed.
-- **Polling is HTTP-based** — async task completion (question generation, resume parsing) uses 2–5 s polling intervals rather than WebSocket push.
+- **Whisper model (~244 MB)** downloads on first use; later runs use the cache.
+- **Probe questions can come back empty.** `deepseek-reasoner` counts its reasoning tokens against the small `max_tokens` used for probe questions. The interview then runs with base questions only.
+- **JWT in `localStorage`** is vulnerable to XSS. Moving the refresh token to an `HttpOnly` cookie is the recommended next step.
+- **No per-user LLM cost cap.** There is rate limiting (`llm`: 20/hour per user), but no daily budget.
+- **Polling, not push.** Async task completion uses 2–5 s polling rather than WebSockets.
+- **Recruiter actions not implemented yet**: scheduling an interview date, messaging a candidate, and drag-and-drop between Kanban columns.
 
 ---
 
