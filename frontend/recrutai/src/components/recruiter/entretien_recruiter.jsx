@@ -84,8 +84,9 @@ export default function RecruiterInterviews() {
         id: i.id,
         candidateName: i.candidate_name,
         offerName: i.offer_title,
-        status: i.status,
-        score: i.result ?? null,
+        // evaluated = AI scored every answer; completed without one = still being scored
+        status: i.evaluation ? 'evaluated' : i.status === 'completed' ? 'processing' : i.status,
+        score: i.evaluation ? { score: Math.round(i.evaluation.total_score * 10) } : null,
         video: i.interview_link,
       }))
     : [];
