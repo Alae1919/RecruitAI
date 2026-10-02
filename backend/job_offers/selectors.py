@@ -3,7 +3,11 @@ from users.models import Recruiter
 
 
 def list_public_job_offers(filters: dict | None = None):
-    qs = JobOffer.objects.select_related('recruiter__user').order_by('-created_at')
+    qs = (
+        JobOffer.objects.filter(status=JobOffer.Status.OPEN)
+        .select_related('recruiter__user')
+        .order_by('-created_at')
+    )
     return qs
 
 

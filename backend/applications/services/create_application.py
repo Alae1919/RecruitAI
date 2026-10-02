@@ -10,6 +10,9 @@ def create_application(*, job_seeker: JobSeeker, job_offer_id: int, resume_id: i
 
     job_offer = JobOffer.objects.get(id=job_offer_id)
 
+    if job_offer.status != JobOffer.Status.OPEN:
+        raise ValidationError('This job offer is not accepting applications.')
+
     if Application.objects.filter(job_seeker=job_seeker, job_offer=job_offer).exists():
         raise ValueError('You have already applied for this job.')
 

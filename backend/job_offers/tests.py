@@ -95,3 +95,67 @@ class TestGenerateJobDescriptionService(TestCase):
         call_kwargs = mock_get_llm.return_value.generate_job_description.call_args[1]
         self.assertNotIn('', call_kwargs['skills'])
         self.assertNotIn('  ', call_kwargs['skills'])
+
+
+# ---------------------------------------------------------------------------
+# Offer lifecycle status
+# ---------------------------------------------------------------------------
+
+from rest_framework.test import APITestCase
+
+from applications.services.create_application import create_application
+from rest_framework.exceptions import ValidationError
+from users.models import JobSeeker
+
+
+def _make_job_seeker(email='js@test.com'):
+    user = User.objects.create_user(username=email, email=email, password='pass')
+    role, _ = Role.objects.get_or_create(role_name='JOBSEEKER')
+    UserRole.objects.create(user=user, role=role)
+    return JobSeeker.objects.create(user=user)
+
+
+class TestOfferStatus(APITestCase):
+    def setUp(self):
+        self.recruiter = _make_recruiter()
+        self.open = _make_offer(self.recruiter, title='Open role')
+        self.draft = _make_offer(self.recruiter, title='Draft role')
+        self.draft.status = JobOffer.Status.DRAFT
+        self.draft.save()
+        self.paused = _make_offer(self.recruiter, title='Paused role')
+        self.paused.status = JobOffer.Status.PAUSED
+        self.paused.save()
+
+    def test_new_offer_defaults_to_open(self):
+        self.assertEqual(self.open.status, JobOffer.Status.OPEN)
+
+    def test_recruiter_list_returns_all_statuses(self):
+        self.client.force_authenticate(user=self.recruiter.user)
+        res = self.client.get('/api/job_offers/list')
+        self.assertEqual(res.status_code, 200)
+        self.assertEqual(res.data['count'], 3)
+
+    def test_recruiter_list_filters_by_status(self):
+        self.client.force_authenticate(user=self.recruiter.user)
+        res = self.client.get('/api/job_offers/list', {'status': 'draft'})
+        self.assertEqual([o['title'] for o in res.data['results']], ['Draft role'])
+
+    def test_public_list_hides_non_open_offers_even_if_requested(self):
+        seeker = _make_job_seeker()
+        self.client.force_authenticate(user=seeker.user)
+        res = self.client.get('/api/job_offers/listALL', {'status': 'draft'})
+        self.assertEqual(res.data['count'], 0)
+        res = self.client.get('/api/job_offers/listALL')
+        self.assertEqual([o['title'] for o in res.data['results']], ['Open role'])
+
+    def test_recruiter_can_change_status(self):
+        self.client.force_authenticate(user=self.recruiter.user)
+        res = self.client.patch(f'/api/job_offers/{self.open.id}/edit/', {'status': 'paused'}, format='json')
+        self.assertEqual(res.status_code, 200)
+        self.open.refresh_from_db()
+        self.assertEqual(self.open.status, JobOffer.Status.PAUSED)
+
+    def test_cannot_apply_to_non_open_offer(self):
+        seeker = _make_job_seeker()
+        with self.assertRaises(ValidationError):
+            create_application(job_seeker=seeker, job_offer_id=self.draft.id)

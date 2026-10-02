@@ -11,7 +11,7 @@ class JobOfferSerializer(serializers.ModelSerializer):
         model = JobOffer
         fields = [
             'id', 'title', 'description', 'requirements', 'skills',
-            'experience_min', 'location', 'salary_range',
+            'experience_min', 'location', 'salary_range', 'status',
             'recruiter_name', 'question_sets_count',
             'created_at', 'updated_at',
         ]
