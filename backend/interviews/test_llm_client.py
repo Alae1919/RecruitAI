@@ -209,3 +209,55 @@ class TestCandidateEmail(TestCase):
     def test_real_addresses_are_emailed(self):
         self.assertTrue(send_candidate_email('Subject', 'Body', 'real.person@example.com'))
         self.assertEqual([m.to for m in mail.outbox], [['real.person@example.com']])
+
+
+# ---------------------------------------------------------------------------
+# Transcription language hint
+# ---------------------------------------------------------------------------
+
+from interviews.language import guess_language, whisper_language_for
+
+
+class TestTranscriptionLanguage(SimpleTestCase):
+    def test_guesses_english_and_french_questions(self):
+        self.assertEqual(guess_language('How would you evaluate a candidate-ranking model for fairness?'), 'en')
+        self.assertEqual(guess_language('Describe a model you took from notebook to production.'), 'en')
+        self.assertEqual(guess_language(
+            'Comment as-tu géré la mise en production et le monitoring de modèles NLP chez OCP Group ?'), 'fr')
+        self.assertEqual(guess_language('Quelles compétences en MLOps avez-vous développées ?'), 'fr')
+
+    def test_unclear_or_empty_text_means_auto_detect(self):
+        self.assertIsNone(guess_language('PyTorch NLP SQL'))
+        self.assertIsNone(guess_language(''))
+        self.assertIsNone(guess_language(None))
+
+    def test_setting_overrides_the_guess(self):
+        question = 'How would you evaluate a ranking model?'
+        self.assertEqual(whisper_language_for(question), 'en')
+        with override_settings(RECRUITMENT={'WHISPER_LANGUAGE': 'FR '}):
+            self.assertEqual(whisper_language_for(question), 'fr')
+
+
+class TestEvaluateAnswerLanguage(TestCase):
+    def test_evaluate_answer_transcribes_in_the_questions_language(self):
+        recruiter = _make_recruiter()
+        offer = _make_job_offer(recruiter)
+        qs = _make_question_set(offer, qs_status=QuestionSet.Status.LOCKED)
+        interview = _make_interview(_make_application(_make_job_seeker(), offer), qs)
+        question = _make_question(question_set=qs, text='Explain how you would reduce hallucinations in an LLM.')
+        with override_settings(MEDIA_ROOT=_MEDIA):
+            answer = Answer.objects.create(
+                interview=interview, question=question,
+                candidate_video=SimpleUploadedFile('a.webm', b'video', content_type='video/webm'),
+            )
+            audio = tempfile.NamedTemporaryFile(suffix='.wav', delete=False)
+            audio.write(b'audio')
+            audio.close()
+            llm = MagicMock()
+            llm.model = 'deepseek-chat'
+            llm.evaluate_answer_with_reasoning.return_value = {'score': 7.0, 'explanation': 'ok'}
+            with patch('interviews.tasks.extract_audio_ffmpeg', return_value=audio.name), \
+                    patch('interviews.tasks.transcribe_audio', return_value='an answer') as transcribe, \
+                    patch('interviews.tasks.get_llm', return_value=llm):
+                evaluate_answer(answer.id)
+        transcribe.assert_called_once_with(audio.name, language='en')

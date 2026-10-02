@@ -111,6 +111,8 @@ RECRUITMENT = {
     # but its hidden reasoning is billed against max_tokens (see llm_client.REASONER_HEADROOM).
     'LLM_MODEL': os.environ.get('DEEPSEEK_MODEL', 'deepseek-chat'),
     'LLM_TIMEOUT': int(os.environ.get('LLM_TIMEOUT', '60')),
+    # Force Whisper's language (e.g. 'fr', 'en'). Empty = use the question's language, else auto-detect.
+    'WHISPER_LANGUAGE': os.environ.get('WHISPER_LANGUAGE', ''),
 }
 
 SIMPLE_JWT = {

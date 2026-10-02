@@ -1,25 +1,43 @@
+import contextlib
 import logging
 import os
 import subprocess
+import tempfile
 
 import whisper
 from celery import shared_task
 from django.db.models import Avg
 
 from .adapters.llm_client import PROMPT_VERSION, get_llm
+from .language import whisper_language_for
 
 logger = logging.getLogger(__name__)
 
 _whisper_model = None
 
 
+@contextlib.contextmanager
+def _model_load_lock():
+    """Serialise model loading across the worker's processes: the first one downloads the
+    ~244 MB model, the others then read it from the cache instead of racing the download."""
+    try:
+        import fcntl
+    except ImportError:  # not available on Windows; loading is then simply unserialised
+        yield
+        return
+    with open(os.path.join(tempfile.gettempdir(), 'recrutai-whisper-load.lock'), 'w') as lock:
+        fcntl.flock(lock, fcntl.LOCK_EX)
+        try:
+            yield
+        finally:
+            fcntl.flock(lock, fcntl.LOCK_UN)
+
+
 def _get_whisper_model():
     global _whisper_model
     if _whisper_model is None:
-        try:
-            _whisper_model = whisper.load_model('small')
-        except Exception as e:
-            logger.warning(f'Whisper model not loaded: {e}')
+        with _model_load_lock():
+            _whisper_model = whisper.load_model('small')  # errors propagate so the task log shows why
     return _whisper_model
 
 
@@ -43,13 +61,10 @@ def extract_audio_ffmpeg(video_path: str) -> str:
         raise RuntimeError('Failed to extract audio from video.') from e
 
 
-def transcribe_audio(audio_path: str) -> str:
-    whisper_model = _get_whisper_model()
-    if whisper_model is None:
-        raise RuntimeError('Whisper model is not available.')
-    with open(audio_path, 'rb'):
-        result = whisper_model.transcribe(audio_path)
-        return result['text']  # type: ignore
+def transcribe_audio(audio_path: str, language: str | None = None) -> str:
+    """Transcribe an audio file. `language` ('fr', 'en', ...) skips Whisper's unreliable auto-detection."""
+    result = _get_whisper_model().transcribe(audio_path, language=language or None, fp16=False)
+    return result['text']  # type: ignore
 
 
 # ---------------------------------------------------------------------------
@@ -214,7 +229,7 @@ def evaluate_answer(self, answer_id: int):
         raise
 
     try:
-        transcript = transcribe_audio(audio_path)
+        transcript = transcribe_audio(audio_path, language=whisper_language_for(answer.question.question_text))
         if not transcript:
             raise RuntimeError('Transcription returned empty.')
         answer.transcript = transcript

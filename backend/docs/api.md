@@ -214,7 +214,7 @@ Celery workers use Redis as the broker. Tasks are idempotent and retry with back
 | `generate_question_set_task` | question-set create / regenerate | LLM base questions for the offer |
 | `generate_probe_questions_task` | candidate accepted | LLM CV-specific probe questions for that interview |
 | `send_acceptance_email` | candidate accepted | Invitation email (SMTP). Addresses on `@recrutai.demo` (seed data) are never emailed; without SMTP credentials emails print to the worker log. |
-| `evaluate_answer` | video upload | ffmpeg → Whisper transcript → LLM score → `AnswerEvaluation`; finalizes the interview when every question is scored |
+| `evaluate_answer` | video upload | ffmpeg → Whisper transcript (language taken from the question, because auto-detection mislabelled clear English as French) → LLM score → `AnswerEvaluation`; finalizes the interview when every question is scored |
 
 ---
 
@@ -247,6 +247,7 @@ All settings come from environment variables (`.env` at the project root for Doc
 | `EVALUATION_PASS_THRESHOLD` | `6.0` | Interview average needed for an `accepted` AI decision |
 | `PROBE_QUESTION_COUNT` | `2` | CV-specific questions per interview |
 | `LLM_TIMEOUT` | `60` | Seconds per LLM call |
+| `WHISPER_LANGUAGE` | — | Force the transcription language (`fr`, `en`, …). Empty: use the language of the question being answered, else auto-detect. |
 
 ---
 
