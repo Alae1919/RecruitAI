@@ -47,12 +47,12 @@ function Flag({ kind, text }) {
 function AiAssessment({ candidate }) {
   const { analysis } = candidate;
   return (
-    <div className="mt-8 rounded-xl overflow-hidden" style={{ border: '1px solid rgba(245,158,11,0.25)', background: 'rgba(245,158,11,0.05)' }}>
-      <div className="px-5 py-3 flex items-center gap-2" style={{ borderBottom: '1px solid rgba(245,158,11,0.2)' }}>
-        <div className="w-7 h-7 rounded-md grid place-items-center" style={{ background: 'rgba(245,158,11,0.2)', color: '#F59E0B' }}>
+    <div className="mt-8 rounded-xl overflow-hidden" style={{ border: '1px solid rgb(var(--accent-rgb) / 0.25)', background: 'rgb(var(--accent-rgb) / 0.05)' }}>
+      <div className="px-5 py-3 flex items-center gap-2" style={{ borderBottom: '1px solid rgb(var(--accent-rgb) / 0.2)' }}>
+        <div className="w-7 h-7 rounded-md grid place-items-center" style={{ background: 'rgb(var(--accent-rgb) / 0.2)', color: 'var(--accent)' }}>
           <Brain size={13} />
         </div>
-        <h3 className="text-xs font-semibold uppercase tracking-widest" style={{ color: '#F59E0B' }}>AI assessment</h3>
+        <h3 className="text-xs font-semibold uppercase tracking-widest" style={{ color: 'var(--accent)' }}>AI assessment</h3>
         {analysis?.analyzed_at && (
           <span className="ml-auto text-[10px] font-mono text-brand-text-disabled">updated {timeAgo(analysis.analyzed_at)}</span>
         )}
@@ -108,7 +108,7 @@ function InterviewQuestions({ interview }) {
             <li key={q.id} className="flex gap-3 p-3 rounded-lg"
               style={{ background: 'rgba(24,30,46,0.4)', border: '1px solid rgba(35,42,62,0.8)' }}>
               <span className="w-7 h-7 rounded-md grid place-items-center font-mono text-[11px] shrink-0"
-                style={{ background: 'rgba(245,158,11,0.15)', color: '#F59E0B' }}>Q{i + 1}</span>
+                style={{ background: 'rgb(var(--accent-rgb) / 0.15)', color: 'var(--accent)' }}>Q{i + 1}</span>
               <p className="text-sm text-brand-text-primary leading-relaxed flex-1">{q.text}</p>
               {q.source === 'probe' && (
                 <span className="self-start text-[10px] font-mono px-1.5 py-0.5 rounded"
@@ -153,7 +153,7 @@ function Timeline({ events }) {
         <li key={s.key} className="relative" aria-current={s.state === 'current' ? 'step' : undefined}>
           <span className="absolute -left-5 top-1 w-3 h-3 rounded-full border-2"
             style={s.state === 'current'
-              ? { background: '#F59E0B', borderColor: '#090C14' }
+              ? { background: 'var(--accent)', borderColor: '#090C14' }
               : s.state === 'done'
                 ? { background: '#59628A', borderColor: '#59628A' }
                 : { background: '#090C14', borderColor: '#59628A' }} />
@@ -194,7 +194,7 @@ export default function CandidateDetail({ candidate, busy, onAdvance, onReject, 
         {next && (
           <button onClick={() => onAdvance(candidate)} disabled={busy}
             className="h-9 px-4 text-sm rounded-xl font-semibold inline-flex items-center gap-1.5 transition-all active:scale-[.97] disabled:opacity-50"
-            style={{ background: 'linear-gradient(135deg, #F59E0B 0%, #FCD34D 100%)', color: '#111827', boxShadow: '0 0 16px rgba(245,158,11,0.25)' }}>
+            style={{ background: 'linear-gradient(135deg, var(--accent) 0%, var(--accent-bright) 100%)', color: '#111827', boxShadow: '0 0 16px rgb(var(--accent-rgb) / 0.25)' }}>
             <Check size={13} strokeWidth={2.5} /> {next.label} <ArrowRight size={13} />
           </button>
         )}

@@ -73,7 +73,7 @@ export default function CommandPalette({ isOpen, onClose }) {
             placeholder="Search candidates, offers, pages…"
             className="flex-1 bg-transparent text-sm text-brand-text-primary placeholder:text-brand-text-disabled outline-none"
             style={{ outline: 'none', boxShadow: 'none', border: 'none' }} />
-          {loading && <span className="w-3.5 h-3.5 border-2 border-t-transparent rounded-full animate-spin" style={{ borderColor: 'rgba(245,158,11,0.5)', borderTopColor: 'transparent' }} />}
+          {loading && <span className="w-3.5 h-3.5 border-2 border-t-transparent rounded-full animate-spin" style={{ borderColor: 'rgb(var(--accent-rgb) / 0.5)', borderTopColor: 'transparent' }} />}
           <kbd className="text-[10px] font-mono text-brand-text-disabled px-1.5 py-0.5 rounded" style={{ border: '1px solid rgba(35,42,62,0.9)' }}>esc</kbd>
         </div>
 
@@ -91,7 +91,7 @@ export default function CommandPalette({ isOpen, onClose }) {
                   <div key={item.id} id={`palette-${item.id}`} role="option" aria-selected={selected}
                     onMouseMove={() => setActive(item.index)} onClick={() => go(item)}
                     className="flex items-center gap-3 px-3 h-10 rounded-lg cursor-pointer"
-                    style={{ background: selected ? 'rgba(245,158,11,0.1)' : 'transparent' }}>
+                    style={{ background: selected ? 'rgb(var(--accent-rgb) / 0.1)' : 'transparent' }}>
                     <span className="text-sm text-brand-text-primary truncate">{item.label}</span>
                     {item.hint && <span className="text-xs text-brand-text-disabled truncate flex-1">{item.hint}</span>}
                     {selected && <CornerDownLeft size={12} className="text-brand-accent shrink-0 ml-auto" />}

@@ -41,7 +41,7 @@ export default function StepScreening({ data, setData, onBack, onNext }) {
         ))}
         {data.screening.video && (
           <div className="px-6 py-4 flex items-center justify-between"
-            style={{ borderTop: '1px solid rgba(35,42,62,0.5)', background: 'rgba(245,158,11,0.03)' }}>
+            style={{ borderTop: '1px solid rgba(35,42,62,0.5)', background: 'rgb(var(--accent-rgb) / 0.03)' }}>
             <div className="flex items-center gap-2 text-xs text-brand-text-muted">
               <SparklesIcon /> AI will generate questions per candidate
             </div>
@@ -52,7 +52,7 @@ export default function StepScreening({ data, setData, onBack, onNext }) {
                   <button key={n} type="button" onClick={() => setScreening('questions', n)}
                     className="w-9 h-7 text-xs font-mono transition-colors"
                     style={data.screening.questions === n
-                      ? { background: '#F59E0B', color: '#111827' }
+                      ? { background: 'var(--accent)', color: '#111827' }
                       : { background: 'rgba(16,20,32,0.8)', color: '#9BA6C4' }}>
                     {n}
                   </button>
@@ -63,10 +63,10 @@ export default function StepScreening({ data, setData, onBack, onNext }) {
         )}
       </SectionCard>
 
-      <div className="rounded-2xl p-5" style={{ background: 'rgba(245,158,11,0.05)', border: '1px solid rgba(245,158,11,0.2)' }}>
+      <div className="rounded-2xl p-5" style={{ background: 'rgb(var(--accent-rgb) / 0.05)', border: '1px solid rgb(var(--accent-rgb) / 0.2)' }}>
         <div className="flex gap-3 items-start">
           <div className="w-8 h-8 rounded-lg grid place-items-center shrink-0"
-            style={{ background: 'rgba(245,158,11,0.15)', color: '#F59E0B' }}>
+            style={{ background: 'rgb(var(--accent-rgb) / 0.15)', color: 'var(--accent)' }}>
             <BrainIcon />
           </div>
           <div className="flex-1">

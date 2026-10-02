@@ -19,7 +19,7 @@ export default function ResumeCard({ resume, onSetDefault, onDelete, isSettingDe
   return (
     <>
       <div className="flex items-center gap-3 p-4 rounded-xl transition-all"
-        style={{ background: 'rgba(16,20,32,0.8)', border: `1px solid ${resume.is_default ? 'rgba(245,158,11,0.35)' : 'rgba(35,42,62,0.8)'}` }}>
+        style={{ background: 'rgba(16,20,32,0.8)', border: `1px solid ${resume.is_default ? 'rgb(var(--accent-rgb) / 0.35)' : 'rgba(35,42,62,0.8)'}` }}>
 
         {/* File icon */}
         <div className="w-9 h-9 rounded-lg grid place-items-center shrink-0"
@@ -35,7 +35,7 @@ export default function ResumeCard({ resume, onSetDefault, onDelete, isSettingDe
             </span>
             {resume.is_default && (
               <span className="inline-flex items-center gap-1 text-[10px] px-1.5 py-0.5 rounded-full font-medium"
-                style={{ background: 'rgba(245,158,11,0.12)', border: '1px solid rgba(245,158,11,0.3)', color: '#F59E0B' }}>
+                style={{ background: 'rgb(var(--accent-rgb) / 0.12)', border: '1px solid rgb(var(--accent-rgb) / 0.3)', color: 'var(--accent)' }}>
                 <Star size={9} fill="currentColor" /> Default
               </span>
             )}
@@ -57,9 +57,9 @@ export default function ResumeCard({ resume, onSetDefault, onDelete, isSettingDe
           {resume.file_url && (
             <a href={resume.file_url} target="_blank" rel="noopener noreferrer"
               aria-label={`View ${resume.label || `Resume #${resume.id}`}`}
-              className="w-7 h-7 rounded-md grid place-items-center transition-colors text-brand-text-disabled focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-400/50"
+              className="w-7 h-7 rounded-md grid place-items-center transition-colors text-brand-text-disabled focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-accent/50"
               style={{ border: '1px solid rgba(35,42,62,0.7)', background: 'rgba(35,42,62,0.4)' }}
-              onMouseEnter={e => { e.currentTarget.style.color = '#F59E0B'; e.currentTarget.style.borderColor = 'rgba(245,158,11,0.3)'; }}
+              onMouseEnter={e => { e.currentTarget.style.color = 'var(--accent)'; e.currentTarget.style.borderColor = 'rgb(var(--accent-rgb) / 0.3)'; }}
               onMouseLeave={e => { e.currentTarget.style.color = ''; e.currentTarget.style.borderColor = 'rgba(35,42,62,0.7)'; }}>
               <ExternalLink size={12} />
             </a>
@@ -69,9 +69,9 @@ export default function ResumeCard({ resume, onSetDefault, onDelete, isSettingDe
               onClick={() => onSetDefault(resume.id)}
               disabled={isSettingDefault}
               aria-label="Set as default resume"
-              className="h-7 px-2 rounded-md text-[11px] inline-flex items-center gap-1 transition-colors text-brand-text-disabled disabled:opacity-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-400/50"
+              className="h-7 px-2 rounded-md text-[11px] inline-flex items-center gap-1 transition-colors text-brand-text-disabled disabled:opacity-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-accent/50"
               style={{ border: '1px solid rgba(35,42,62,0.7)', background: 'rgba(35,42,62,0.4)' }}
-              onMouseEnter={e => { e.currentTarget.style.color = '#F59E0B'; e.currentTarget.style.borderColor = 'rgba(245,158,11,0.3)'; }}
+              onMouseEnter={e => { e.currentTarget.style.color = 'var(--accent)'; e.currentTarget.style.borderColor = 'rgb(var(--accent-rgb) / 0.3)'; }}
               onMouseLeave={e => { e.currentTarget.style.color = ''; e.currentTarget.style.borderColor = 'rgba(35,42,62,0.7)'; }}>
               <Star size={11} /> Set default
             </button>

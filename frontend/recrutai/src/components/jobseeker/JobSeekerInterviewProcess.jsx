@@ -19,7 +19,7 @@ function StepIndicator({ current, total }) {
             style={i + 1 < current
               ? { background: 'rgba(16,185,129,0.15)', border: '1px solid rgba(16,185,129,0.35)', color: '#34D399' }
               : i + 1 === current
-                ? { background: 'linear-gradient(135deg, #F59E0B 0%, #FCD34D 100%)', color: '#111827', boxShadow: '0 0 14px rgba(245,158,11,0.35)' }
+                ? { background: 'linear-gradient(135deg, var(--accent) 0%, var(--accent-bright) 100%)', color: '#111827', boxShadow: '0 0 14px rgb(var(--accent-rgb) / 0.35)' }
                 : { background: 'rgba(35,42,62,0.5)', border: '1px solid rgba(35,42,62,0.8)', color: '#59628A' }}>
             {i + 1 < current ? <CheckIcon size={11} /> : i + 1}
           </div>
@@ -70,7 +70,7 @@ export default function JobSeekerInterviewProcess({ interview, onClose }) {
           <h2 className="text-lg font-bold text-brand-text-primary mb-2">Interview complete!</h2>
           <p className="text-sm text-brand-text-muted mb-6">Your answers have been submitted. We'll notify you once they're reviewed.</p>
           <button onClick={onClose} className="w-full h-10 rounded-xl text-sm font-semibold transition-all"
-            style={{ background: 'linear-gradient(135deg, #F59E0B 0%, #FCD34D 100%)', color: '#111827' }}>
+            style={{ background: 'linear-gradient(135deg, var(--accent) 0%, var(--accent-bright) 100%)', color: '#111827' }}>
             Back to interviews
           </button>
         </div>
@@ -90,7 +90,7 @@ export default function JobSeekerInterviewProcess({ interview, onClose }) {
         </button>
         <div className="flex-1 min-w-0">
           <h1 className="text-[15px] font-semibold text-brand-text-primary truncate">
-            Interview — <span style={{ color: '#F59E0B' }}>{interview.offerName}</span>
+            Interview — <span style={{ color: 'var(--accent)' }}>{interview.offerName}</span>
           </h1>
         </div>
         <StepIndicator current={wizardStep} total={3} />
@@ -118,7 +118,7 @@ export default function JobSeekerInterviewProcess({ interview, onClose }) {
                 ].map((tip, i) => (
                   <li key={i} className="flex items-start gap-3 text-sm text-brand-text-muted">
                     <span className="w-5 h-5 rounded-full grid place-items-center shrink-0 mt-0.5 text-[10px] font-bold"
-                      style={{ background: 'rgba(245,158,11,0.1)', border: '1px solid rgba(245,158,11,0.2)', color: '#F59E0B' }}>
+                      style={{ background: 'rgb(var(--accent-rgb) / 0.1)', border: '1px solid rgb(var(--accent-rgb) / 0.2)', color: 'var(--accent)' }}>
                       {i + 1}
                     </span>
                     {tip}
@@ -129,7 +129,7 @@ export default function JobSeekerInterviewProcess({ interview, onClose }) {
               {loadingQ ? (
                 <div className="flex items-center gap-2 text-sm text-brand-text-muted mb-6"><Spinner /> Loading questions…</div>
               ) : (
-                <div className="flex items-center gap-2 mb-6 text-sm" style={{ color: '#F59E0B' }}>
+                <div className="flex items-center gap-2 mb-6 text-sm" style={{ color: 'var(--accent)' }}>
                   <span className="font-mono font-bold">{questions.length}</span>
                   <span className="text-brand-text-muted">question{questions.length !== 1 ? 's' : ''} in this interview</span>
                 </div>
@@ -138,7 +138,7 @@ export default function JobSeekerInterviewProcess({ interview, onClose }) {
               <button disabled={loadingQ || questions.length === 0}
                 onClick={() => setWizardStep(2)}
                 className="w-full h-10 rounded-xl text-sm font-semibold inline-flex items-center justify-center gap-2 transition-all disabled:opacity-40 disabled:cursor-not-allowed"
-                style={{ background: 'linear-gradient(135deg, #F59E0B 0%, #FCD34D 100%)', color: '#111827', boxShadow: '0 0 16px rgba(245,158,11,0.25)' }}>
+                style={{ background: 'linear-gradient(135deg, var(--accent) 0%, var(--accent-bright) 100%)', color: '#111827', boxShadow: '0 0 16px rgb(var(--accent-rgb) / 0.25)' }}>
                 Continue <ArrowRightIcon />
               </button>
             </div>
@@ -151,7 +151,7 @@ export default function JobSeekerInterviewProcess({ interview, onClose }) {
             <div className="rounded-2xl p-8"
               style={{ background: '#101420', border: '1px solid rgba(35,42,62,0.8)', boxShadow: '0 4px 24px rgba(0,0,0,0.3)' }}>
               <div className="w-12 h-12 rounded-xl grid place-items-center mb-6"
-                style={{ background: 'rgba(245,158,11,0.1)', border: '1px solid rgba(245,158,11,0.2)', color: '#F59E0B' }}>
+                style={{ background: 'rgb(var(--accent-rgb) / 0.1)', border: '1px solid rgb(var(--accent-rgb) / 0.2)', color: 'var(--accent)' }}>
                 <MicIcon />
               </div>
               <h2 className="text-lg font-bold text-brand-text-primary mb-2">Technical check</h2>
@@ -159,9 +159,9 @@ export default function JobSeekerInterviewProcess({ interview, onClose }) {
                 Make sure your camera and microphone are working. Your browser will request permission when you start.
               </p>
               <div className="rounded-xl p-4 mb-8"
-                style={{ background: 'rgba(245,158,11,0.05)', border: '1px solid rgba(245,158,11,0.15)' }}>
+                style={{ background: 'rgb(var(--accent-rgb) / 0.05)', border: '1px solid rgb(var(--accent-rgb) / 0.15)' }}>
                 <div className="flex items-start gap-3">
-                  <div className="w-1.5 h-1.5 rounded-full mt-1.5 shrink-0" style={{ background: '#F59E0B' }} />
+                  <div className="w-1.5 h-1.5 rounded-full mt-1.5 shrink-0" style={{ background: 'var(--accent)' }} />
                   <p className="text-xs text-brand-text-muted leading-relaxed">
                     When prompted, click <strong className="text-brand-text-primary">Allow</strong> to grant camera and microphone access.
                   </p>
@@ -175,7 +175,7 @@ export default function JobSeekerInterviewProcess({ interview, onClose }) {
                 </button>
                 <button onClick={handleStartInterview}
                   className="flex-1 h-10 rounded-xl text-sm font-semibold inline-flex items-center justify-center gap-2 transition-all"
-                  style={{ background: 'linear-gradient(135deg, #F59E0B 0%, #FCD34D 100%)', color: '#111827', boxShadow: '0 0 16px rgba(245,158,11,0.25)' }}>
+                  style={{ background: 'linear-gradient(135deg, var(--accent) 0%, var(--accent-bright) 100%)', color: '#111827', boxShadow: '0 0 16px rgb(var(--accent-rgb) / 0.25)' }}>
                   Start Interview <ArrowRightIcon />
                 </button>
               </div>
@@ -200,7 +200,7 @@ export default function JobSeekerInterviewProcess({ interview, onClose }) {
                 )}
                 {qIdx >= 0 && (
                   <div className="absolute top-3 right-3 px-2.5 py-1 rounded-lg text-xs font-mono font-semibold"
-                    style={{ background: 'rgba(0,0,0,0.6)', backdropFilter: 'blur(8px)', color: '#F59E0B', border: '1px solid rgba(245,158,11,0.3)' }}>
+                    style={{ background: 'rgba(0,0,0,0.6)', backdropFilter: 'blur(8px)', color: 'var(--accent)', border: '1px solid rgb(var(--accent-rgb) / 0.3)' }}>
                     Q{qIdx + 1}/{questions.length}
                   </div>
                 )}
@@ -209,7 +209,7 @@ export default function JobSeekerInterviewProcess({ interview, onClose }) {
               <div className="flex items-center gap-1.5 mt-4 px-1">
                 {questions.map((_, i) => (
                   <div key={i} className="h-1 rounded-full flex-1 transition-all"
-                    style={{ background: i < qIdx ? 'rgba(16,185,129,0.6)' : i === qIdx ? '#F59E0B' : 'rgba(35,42,62,0.8)' }} />
+                    style={{ background: i < qIdx ? 'rgba(16,185,129,0.6)' : i === qIdx ? 'var(--accent)' : 'rgba(35,42,62,0.8)' }} />
                 ))}
               </div>
             </div>
@@ -254,7 +254,7 @@ export default function JobSeekerInterviewProcess({ interview, onClose }) {
                     disabled={!isRecording}
                     onClick={next}
                     className="w-full h-10 rounded-xl text-sm font-semibold inline-flex items-center justify-center gap-2 transition-all disabled:opacity-40 disabled:cursor-not-allowed"
-                    style={{ background: 'linear-gradient(135deg, #F59E0B 0%, #FCD34D 100%)', color: '#111827', boxShadow: '0 0 16px rgba(245,158,11,0.25)' }}>
+                    style={{ background: 'linear-gradient(135deg, var(--accent) 0%, var(--accent-bright) 100%)', color: '#111827', boxShadow: '0 0 16px rgb(var(--accent-rgb) / 0.25)' }}>
                     {isSubmitting ? <><Spinner /> Saving…</> : <>Next Question <ArrowRightIcon /></>}
                   </button>
                 ) : (

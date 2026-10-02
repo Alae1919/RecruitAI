@@ -1,6 +1,7 @@
 import React, { useEffect, useState, useCallback } from 'react';
 import { Link } from 'react-router-dom';
 import { Logo } from '../components/navigation/PublicHeader';
+import AccentToggle from '../components/navigation/AccentToggle';
 import Avatar from '../components/ui/Avatar';
 
 /* ── Icons ─────────────────────────────────────────────────────────── */
@@ -69,16 +70,16 @@ function MatchRing({ score, size = 48, stroke = 4 }) {
   const r = (size - stroke) / 2;
   const c = 2 * Math.PI * r;
   const off = c * (1 - score / 100);
-  const color = score >= 80 ? '#F59E0B' : score >= 60 ? '#eab308' : '#64748b';
+  const color = score >= 80 ? 'var(--accent)' : score >= 60 ? '#eab308' : '#64748b';
   return (
     <div className="relative inline-flex items-center justify-center" style={{ width: size, height: size }}>
       <svg width={size} height={size} className="-rotate-90">
         <circle cx={size/2} cy={size/2} r={r} stroke="#232A3E" strokeWidth={stroke} fill="none"/>
         <circle cx={size/2} cy={size/2} r={r} stroke={color} strokeLinecap="round" strokeWidth={stroke} fill="none"
-          strokeDasharray={c} strokeDashoffset={off} style={{ filter: `drop-shadow(0 0 4px ${color}aa)` }}/>
+          strokeDasharray={c} strokeDashoffset={off} style={{ filter: `drop-shadow(0 0 4px color-mix(in srgb, ${color} 67%, transparent))` }}/>
       </svg>
       <div className="absolute inset-0 grid place-items-center">
-        <div className="font-bold font-mono" style={{ fontSize: size * 0.3, color, textShadow: `0 0 10px ${color}88` }}>{score}</div>
+        <div className="font-bold font-mono" style={{ fontSize: size * 0.3, color, textShadow: `0 0 10px color-mix(in srgb, ${color} 53%, transparent)` }}>{score}</div>
       </div>
     </div>
   );
@@ -94,7 +95,7 @@ function ParseDemo() {
         amira-cv.pdf → parsed
       </div>
       <div><span className="text-brand-text-disabled">name</span>{'     '}<span className="text-brand-text-primary">"Amira El-Khalil"</span></div>
-      <div><span className="text-brand-text-disabled">years</span>{'    '}<span className="text-brand-accent" style={{ textShadow: '0 0 12px rgba(245,158,11,0.5)' }}>7</span></div>
+      <div><span className="text-brand-text-disabled">years</span>{'    '}<span className="text-brand-accent" style={{ textShadow: '0 0 12px rgb(var(--accent-rgb) / 0.5)' }}>7</span></div>
       <div><span className="text-brand-text-disabled">skills</span>{'   '}<span className="text-brand-text-primary">[react, typescript,</span></div>
       <div className="pl-[72px] text-brand-text-primary">graphql, design-systems]</div>
       <div><span className="text-brand-text-disabled">seniority</span>{' '}<span className="text-violet-300">"staff"</span></div>
@@ -118,7 +119,7 @@ function MatchDemo() {
       style={{ boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.04)' }}>
       <div className="flex items-center justify-between">
         <div className="text-xs font-semibold text-brand-text-primary">vs. Senior Frontend JD</div>
-        <div className="font-mono font-bold text-brand-accent" style={{ textShadow: '0 0 15px rgba(245,158,11,0.5)' }}>94</div>
+        <div className="font-mono font-bold text-brand-accent" style={{ textShadow: '0 0 15px rgb(var(--accent-rgb) / 0.5)' }}>94</div>
       </div>
       {rows.map(r => (
         <div key={r.k} className="space-y-1">
@@ -128,8 +129,8 @@ function MatchDemo() {
           </div>
           <div className="h-1 rounded-full bg-brand-elevated overflow-hidden">
             <div className="h-full rounded-full transition-all duration-1000"
-              style={{ width: `${r.v}%`, background: r.v >= 70 ? 'linear-gradient(90deg, #F59E0B, #FCD34D)' : '#eab308',
-                boxShadow: r.v >= 70 ? '0 0 8px rgba(245,158,11,0.5)' : 'none' }} />
+              style={{ width: `${r.v}%`, background: r.v >= 70 ? 'linear-gradient(90deg, var(--accent), var(--accent-bright))' : '#eab308',
+                boxShadow: r.v >= 70 ? '0 0 8px rgb(var(--accent-rgb) / 0.5)' : 'none' }} />
           </div>
         </div>
       ))}
@@ -149,7 +150,7 @@ function InterviewDemo() {
       ].map((q, i) => (
         <div key={i} className="flex gap-3">
           <span className="w-6 h-6 rounded-md bg-brand-accent/15 text-brand-accent grid place-items-center font-mono text-[10px] shrink-0"
-            style={{ boxShadow: '0 0 10px rgba(245,158,11,0.15)' }}>
+            style={{ boxShadow: '0 0 10px rgb(var(--accent-rgb) / 0.15)' }}>
             Q{i + 1}
           </span>
           <p className="text-[13px] text-brand-text-primary leading-relaxed">{q}</p>
@@ -178,9 +179,9 @@ function ProductShotHero() {
   return (
     <div className="relative">
       <div className="absolute -inset-4 rounded-3xl opacity-60 pointer-events-none"
-        style={{ background: 'radial-gradient(ellipse at center, rgba(245,158,11,0.25) 0%, transparent 70%)', filter: 'blur(30px)' }} />
+        style={{ background: 'radial-gradient(ellipse at center, rgb(var(--accent-rgb) / 0.25) 0%, transparent 70%)', filter: 'blur(30px)' }} />
       <div className="relative rounded-2xl overflow-hidden border border-brand-border/60 bg-brand-surface"
-        style={{ boxShadow: '0 40px 120px -20px rgba(0,0,0,0.9), 0 0 0 1px rgba(255,255,255,0.05), 0 0 80px -30px rgba(245,158,11,0.2)' }}>
+        style={{ boxShadow: '0 40px 120px -20px rgba(0,0,0,0.9), 0 0 0 1px rgba(255,255,255,0.05), 0 0 80px -30px rgb(var(--accent-rgb) / 0.2)' }}>
         {/* Window chrome */}
         <div className="h-9 px-4 border-b border-brand-border bg-brand-surface flex items-center gap-3"
           style={{ background: 'linear-gradient(180deg, #181E2E 0%, #101420 100%)' }}>
@@ -204,7 +205,7 @@ function ProductShotHero() {
                 i === 2
                   ? 'text-brand-accent font-medium nav-active-glow'
                   : 'text-brand-text-muted'}`}
-                style={i === 2 ? { background: 'rgba(245,158,11,0.08)', border: '1px solid rgba(245,158,11,0.15)' } : {}}>
+                style={i === 2 ? { background: 'rgb(var(--accent-rgb) / 0.08)', border: '1px solid rgb(var(--accent-rgb) / 0.15)' } : {}}>
                 <span className={`w-1.5 h-1.5 rounded-full ${i === 2 ? 'bg-brand-accent' : 'bg-brand-text-disabled'}`} />
                 {l}
                 {i === 1 && <span className="ml-auto text-[10px] font-mono text-brand-text-disabled">5</span>}
@@ -226,7 +227,7 @@ function ProductShotHero() {
                   <FilterIcon />3 filters
                 </div>
                 <div className="h-7 px-2 rounded-lg text-brand-base text-xs flex items-center gap-1.5 font-semibold"
-                  style={{ background: 'linear-gradient(135deg, #F59E0B 0%, #FCD34D 100%)', boxShadow: '0 0 15px rgba(245,158,11,0.4)' }}>
+                  style={{ background: 'linear-gradient(135deg, var(--accent) 0%, var(--accent-bright) 100%)', boxShadow: '0 0 15px rgb(var(--accent-rgb) / 0.4)' }}>
                   <Sparkles />Rank with AI
                 </div>
               </div>
@@ -262,15 +263,15 @@ function StatCard({ value, label, sub, delay = 0 }) {
       className="relative group cursor-default p-6 rounded-2xl border border-brand-border card-shine transition-all duration-500 hover:-translate-y-1"
       style={{ background: 'linear-gradient(135deg, rgba(24,30,46,0.9) 0%, rgba(9,12,20,0.9) 100%)', boxShadow: '0 4px 20px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.05)' }}>
       <div className="absolute inset-0 rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none"
-        style={{ background: 'radial-gradient(ellipse at 50% 0%, rgba(245,158,11,0.08) 0%, transparent 70%)' }} />
+        style={{ background: 'radial-gradient(ellipse at 50% 0%, rgb(var(--accent-rgb) / 0.08) 0%, transparent 70%)' }} />
       <div className="text-5xl font-bold font-mono tracking-tight text-brand-accent relative"
-        style={{ textShadow: '0 0 40px rgba(245,158,11,0.45)' }}>
+        style={{ textShadow: '0 0 40px rgb(var(--accent-rgb) / 0.45)' }}>
         {value}
       </div>
       <div className="text-sm text-brand-text-muted mt-2 font-medium">{label}</div>
       <div className="text-[11px] font-mono text-brand-text-disabled mt-1">{sub}</div>
       <div className="absolute bottom-4 right-4 w-8 h-8 rounded-full opacity-0 group-hover:opacity-100 transition-opacity"
-        style={{ background: 'radial-gradient(circle, rgba(245,158,11,0.3) 0%, transparent 70%)' }} />
+        style={{ background: 'radial-gradient(circle, rgb(var(--accent-rgb) / 0.3) 0%, transparent 70%)' }} />
     </div>
   );
 }
@@ -287,10 +288,10 @@ function PillarCard({ n, title, Icon, body, demo, delay }) {
       }}>
       {/* Hover gradient */}
       <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-700 pointer-events-none"
-        style={{ background: 'radial-gradient(ellipse at 0% 0%, rgba(245,158,11,0.07) 0%, transparent 60%)' }} />
+        style={{ background: 'radial-gradient(ellipse at 0% 0%, rgb(var(--accent-rgb) / 0.07) 0%, transparent 60%)' }} />
       {/* Top accent line */}
       <div className="absolute top-0 left-0 right-0 h-px opacity-0 group-hover:opacity-100 transition-opacity duration-500"
-        style={{ background: 'linear-gradient(90deg, transparent, rgba(245,158,11,0.5), transparent)' }} />
+        style={{ background: 'linear-gradient(90deg, transparent, rgb(var(--accent-rgb) / 0.5), transparent)' }} />
 
       <div className="flex items-center gap-2 text-[11px] font-mono text-brand-text-disabled tracking-widest relative">
         <span>{n}</span>
@@ -326,12 +327,13 @@ export default function Home() {
           ))}
         </div>
         <div className="ml-auto flex items-center gap-2">
+          <AccentToggle />
           <Link to="/login" className="h-8 px-3 text-xs rounded-lg font-medium text-brand-text-muted hover:text-brand-text-primary hover:bg-brand-elevated/50 transition-all inline-flex items-center">
             Sign in
           </Link>
           <Link to="/register"
             className="h-8 px-3 text-xs rounded-lg text-gray-900 font-semibold inline-flex items-center gap-1.5 transition-all shadow-glow"
-            style={{ background: 'linear-gradient(135deg, #F59E0B 0%, #FCD34D 100%)' }}>
+            style={{ background: 'linear-gradient(135deg, var(--accent) 0%, var(--accent-bright) 100%)' }}>
             Get started <ArrowRight />
           </Link>
         </div>
@@ -357,9 +359,9 @@ export default function Home() {
           {/* Announcement pill */}
           <div className="flex justify-center mb-10 animate-fadeIn">
             <div className="group inline-flex items-center gap-2 pl-2 pr-3 py-1 rounded-full cursor-pointer transition-all"
-              style={{ background: 'rgba(24,30,46,0.8)', border: '1px solid rgba(245,158,11,0.25)', backdropFilter: 'blur(10px)', boxShadow: '0 0 20px rgba(245,158,11,0.1)' }}>
+              style={{ background: 'rgba(24,30,46,0.8)', border: '1px solid rgb(var(--accent-rgb) / 0.25)', backdropFilter: 'blur(10px)', boxShadow: '0 0 20px rgb(var(--accent-rgb) / 0.1)' }}>
               <span className="px-1.5 py-0.5 rounded-full text-brand-accent text-[10px] font-semibold tracking-wider"
-                style={{ background: 'rgba(245,158,11,0.15)' }}>NEW</span>
+                style={{ background: 'rgb(var(--accent-rgb) / 0.15)' }}>NEW</span>
               <span className="text-brand-text-muted text-xs group-hover:text-brand-text-primary transition-colors">Interview question generator is live</span>
               <ArrowRight size={12} />
             </div>
@@ -381,13 +383,13 @@ export default function Home() {
           <div className="flex items-center justify-center gap-3 mt-10 animate-fadeIn">
             <Link to="/register"
               className="group h-12 px-7 text-sm rounded-xl text-gray-900 font-bold inline-flex items-center gap-2 transition-all active:scale-[.97]"
-              style={{ background: 'linear-gradient(135deg, #F59E0B 0%, #FCD34D 100%)', boxShadow: '0 0 30px rgba(245,158,11,0.4), 0 4px 12px rgba(245,158,11,0.3)' }}>
+              style={{ background: 'linear-gradient(135deg, var(--accent) 0%, var(--accent-bright) 100%)', boxShadow: '0 0 30px rgb(var(--accent-rgb) / 0.4), 0 4px 12px rgb(var(--accent-rgb) / 0.3)' }}>
               Start free trial
               <span className="transition-transform duration-200 group-hover:translate-x-0.5"><ArrowRight size={15} /></span>
             </Link>
             <button className="h-12 px-7 text-sm rounded-xl font-medium text-brand-text-primary transition-all active:scale-[.97]"
               style={{ border: '1px solid rgba(35,42,62,0.9)', background: 'rgba(16,20,32,0.8)', backdropFilter: 'blur(10px)' }}
-              onMouseEnter={e => e.currentTarget.style.borderColor = 'rgba(245,158,11,0.3)'}
+              onMouseEnter={e => e.currentTarget.style.borderColor = 'rgb(var(--accent-rgb) / 0.3)'}
               onMouseLeave={e => e.currentTarget.style.borderColor = 'rgba(35,42,62,0.9)'}>
               Watch 90-sec demo
             </button>
@@ -435,14 +437,14 @@ export default function Home() {
         {/* Section ambient glow */}
         <div className="absolute inset-0 pointer-events-none overflow-hidden">
           <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[400px] rounded-full"
-            style={{ background: 'radial-gradient(ellipse, rgba(245,158,11,0.04) 0%, transparent 70%)', filter: 'blur(40px)' }} />
+            style={{ background: 'radial-gradient(ellipse, rgb(var(--accent-rgb) / 0.04) 0%, transparent 70%)', filter: 'blur(40px)' }} />
         </div>
 
         <div className="relative max-w-[1180px] mx-auto px-8">
           <div className="max-w-[680px] mb-20">
             <div data-reveal
               className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-brand-accent text-[11px] font-medium mb-5"
-              style={{ background: 'rgba(245,158,11,0.08)', border: '1px solid rgba(245,158,11,0.2)', boxShadow: '0 0 20px rgba(245,158,11,0.08)' }}>
+              style={{ background: 'rgb(var(--accent-rgb) / 0.08)', border: '1px solid rgb(var(--accent-rgb) / 0.2)', boxShadow: '0 0 20px rgb(var(--accent-rgb) / 0.08)' }}>
               <Sparkles /> How it works
             </div>
             <h2 data-reveal data-delay="1" className="text-4xl md:text-5xl font-extrabold text-brand-text-primary tracking-tight leading-[1.05]">
@@ -480,13 +482,13 @@ export default function Home() {
             },
           ].map((s, i) => (
             <div key={i} data-reveal data-delay={s.delay} className="space-y-5">
-              <div className="text-[11px] font-mono tracking-widest uppercase text-brand-accent" style={{ textShadow: '0 0 20px rgba(245,158,11,0.4)' }}>{s.who}</div>
+              <div className="text-[11px] font-mono tracking-widest uppercase text-brand-accent" style={{ textShadow: '0 0 20px rgb(var(--accent-rgb) / 0.4)' }}>{s.who}</div>
               <h3 className="text-3xl font-bold tracking-tight text-brand-text-primary whitespace-pre-line leading-tight">{s.title}</h3>
               <ul className="space-y-3.5 mt-6">
                 {s.bullets.map(b => (
                   <li key={b} className="flex items-start gap-3 text-sm text-brand-text-muted">
                     <span className="mt-0.5 w-5 h-5 rounded-full grid place-items-center shrink-0"
-                      style={{ background: 'rgba(245,158,11,0.12)', border: '1px solid rgba(245,158,11,0.25)', color: '#F59E0B' }}>
+                      style={{ background: 'rgb(var(--accent-rgb) / 0.12)', border: '1px solid rgb(var(--accent-rgb) / 0.25)', color: 'var(--accent)' }}>
                       <Check />
                     </span>
                     {b}
@@ -525,15 +527,15 @@ export default function Home() {
         <div className="max-w-[900px] mx-auto px-8 py-28 text-center">
           <div data-reveal className="text-brand-accent mb-8 flex justify-center gap-1">
             {Array.from({ length: 5 }).map((_, i) => (
-              <span key={i} style={{ filter: 'drop-shadow(0 0 6px rgba(245,158,11,0.6))' }}><Star /></span>
+              <span key={i} style={{ filter: 'drop-shadow(0 0 6px rgb(var(--accent-rgb) / 0.6))' }}><Star /></span>
             ))}
           </div>
           <blockquote data-reveal data-delay="1"
             className="text-2xl md:text-[32px] font-medium text-brand-text-primary leading-[1.3] tracking-tight">
             "We cut our time-to-offer from{' '}
-            <span className="text-brand-accent" style={{ textShadow: '0 0 20px rgba(245,158,11,0.4)' }}>6 weeks</span>{' '}
+            <span className="text-brand-accent" style={{ textShadow: '0 0 20px rgb(var(--accent-rgb) / 0.4)' }}>6 weeks</span>{' '}
             to{' '}
-            <span className="text-brand-accent" style={{ textShadow: '0 0 20px rgba(245,158,11,0.4)' }}>11 days</span>.
+            <span className="text-brand-accent" style={{ textShadow: '0 0 20px rgb(var(--accent-rgb) / 0.4)' }}>11 days</span>.
             The interviewers actually{' '}
             <em className="text-brand-accent not-italic">want</em>{' '}
             to read the AI shortlist now — that's the real signal."
@@ -553,7 +555,7 @@ export default function Home() {
         {/* Big glow behind text */}
         <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
           <div className="w-[700px] h-[350px] rounded-full"
-            style={{ background: 'radial-gradient(ellipse, rgba(245,158,11,0.1) 0%, transparent 70%)', filter: 'blur(60px)' }} />
+            style={{ background: 'radial-gradient(ellipse, rgb(var(--accent-rgb) / 0.1) 0%, transparent 70%)', filter: 'blur(60px)' }} />
         </div>
         <div className="max-w-[1180px] mx-auto px-8 py-32 text-center relative">
           <h2 data-reveal
@@ -565,7 +567,7 @@ export default function Home() {
           <div data-reveal data-delay="1" className="flex items-center justify-center gap-3 mt-12">
             <Link to="/register"
               className="group h-12 px-8 text-sm rounded-xl text-gray-900 font-bold inline-flex items-center gap-2 transition-all active:scale-[.97]"
-              style={{ background: 'linear-gradient(135deg, #F59E0B 0%, #FCD34D 100%)', boxShadow: '0 0 40px rgba(245,158,11,0.4), 0 4px 12px rgba(245,158,11,0.25)' }}>
+              style={{ background: 'linear-gradient(135deg, var(--accent) 0%, var(--accent-bright) 100%)', boxShadow: '0 0 40px rgb(var(--accent-rgb) / 0.4), 0 4px 12px rgb(var(--accent-rgb) / 0.25)' }}>
               Get started free
               <span className="group-hover:translate-x-0.5 transition-transform duration-200"><ArrowRight size={15} /></span>
             </Link>

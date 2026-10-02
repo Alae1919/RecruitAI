@@ -33,9 +33,9 @@ export default function StepDetails({ data, setData, onBack, onNext }) {
             <div className="flex justify-between mb-1.5">
               <label className="text-xs font-medium text-brand-text-muted">Description</label>
               <button type="button" className="text-[11px] font-medium inline-flex items-center gap-1 transition-colors"
-                style={{ color: '#F59E0B' }}
-                onMouseEnter={e => e.currentTarget.style.color = '#FCD34D'}
-                onMouseLeave={e => e.currentTarget.style.color = '#F59E0B'}>
+                style={{ color: 'var(--accent)' }}
+                onMouseEnter={e => e.currentTarget.style.color = 'var(--accent-bright)'}
+                onMouseLeave={e => e.currentTarget.style.color = 'var(--accent)'}>
                 <SparklesIcon /> Rewrite with AI
               </button>
             </div>
@@ -43,7 +43,7 @@ export default function StepDetails({ data, setData, onBack, onNext }) {
               placeholder="Describe the role, responsibilities, and team…"
               className="w-full px-3.5 py-2.5 text-sm rounded-xl text-brand-text-primary placeholder:text-brand-text-disabled outline-none transition-all resize-y"
               style={{ background: '#101420', border: '1px solid rgba(35,42,62,0.8)' }}
-              onFocus={e => { e.currentTarget.style.borderColor = 'rgba(245,158,11,0.5)'; }}
+              onFocus={e => { e.currentTarget.style.borderColor = 'rgb(var(--accent-rgb) / 0.5)'; }}
               onBlur={e => { e.currentTarget.style.borderColor = 'rgba(35,42,62,0.8)'; }} />
           </div>
         </div>

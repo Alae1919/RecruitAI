@@ -46,13 +46,13 @@ export default function GenerateQuestionSetForm({ isOpen, onClose, onSubmit, loa
 
         <div>
           <label className="block text-[11px] font-medium text-brand-text-muted uppercase tracking-wider mb-1.5">
-            Number of questions — <span className="text-amber-400">{targetCount}</span>
+            Number of questions — <span className="text-brand-accent">{targetCount}</span>
           </label>
           <input
             type="range" min="3" max="15" step="1"
             value={targetCount}
             onChange={e => setTargetCount(Number(e.target.value))}
-            className="w-full accent-amber-400 cursor-pointer"
+            className="w-full accent-brand-accent cursor-pointer"
           />
           <div className="flex justify-between text-[10px] text-brand-text-disabled mt-0.5">
             <span>3</span><span>15</span>

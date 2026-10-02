@@ -38,7 +38,7 @@ export default function AsyncTaskBanner({ state, label = 'Processing', onRetry }
 
   return (
     <div className="flex items-center gap-3 px-4 py-3 rounded-xl text-sm text-brand-text-muted"
-      style={{ background: 'rgba(245,158,11,0.06)', border: '1px solid rgba(245,158,11,0.15)' }}>
+      style={{ background: 'rgb(var(--accent-rgb) / 0.06)', border: '1px solid rgb(var(--accent-rgb) / 0.15)' }}>
       <Spinner size="sm" />
       <span className="flex-1 text-brand-text-primary">{label}…</span>
       {elapsed > 0 && <span className="tabular-nums text-xs">{elapsed}s</span>}

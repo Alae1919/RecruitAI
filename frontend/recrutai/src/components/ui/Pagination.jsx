@@ -16,7 +16,7 @@ export default function Pagination({ count, page, pageSize = 20, onChange }) {
      }`;
 
   const activeStyle = {
-    background: 'linear-gradient(135deg, rgba(245,158,11,0.85), rgba(252,211,77,0.85))',
+    background: 'linear-gradient(135deg, rgb(var(--accent-rgb) / 0.85), rgb(var(--accent-bright-rgb) / 0.85))',
   };
 
   const pages = [];

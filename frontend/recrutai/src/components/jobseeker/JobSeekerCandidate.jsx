@@ -31,7 +31,7 @@ export default function JobSeekerCandidate() {
   };
 
   const kpis = [
-    { label: 'Total',    value: counts.total,    color: '#F59E0B' },
+    { label: 'Total',    value: counts.total,    color: 'var(--accent)' },
     { label: 'Pending',  value: counts.pending,  color: '#F59E0B' },
     { label: 'Accepted', value: counts.accepted, color: '#10B981' },
   ];
@@ -59,7 +59,7 @@ export default function JobSeekerCandidate() {
             <div key={k.label} className="rounded-xl p-5 relative overflow-hidden"
               style={{ background: '#101420', border: '1px solid rgba(35,42,62,0.8)', boxShadow: '0 4px 20px rgba(0,0,0,0.3)' }}>
               <div className="absolute top-0 left-0 right-0 h-[2px] rounded-t-xl"
-                style={{ background: `linear-gradient(90deg, ${k.color}60, ${k.color}15)` }} />
+                style={{ background: `linear-gradient(90deg, color-mix(in srgb, ${k.color} 38%, transparent), color-mix(in srgb, ${k.color} 8%, transparent))` }} />
               <div className="text-[10px] font-mono uppercase tracking-widest text-brand-text-disabled">{k.label}</div>
               <div className="mt-2 text-3xl font-bold font-mono tracking-tight text-brand-text-primary">
                 {loading

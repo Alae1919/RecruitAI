@@ -217,7 +217,7 @@ export default function ViewOffers() {
           <button
             onClick={() => navigate('/recruiter-dashboard/add-offers')}
             className="h-8 px-3 text-xs rounded-lg font-semibold inline-flex items-center gap-1.5 transition-all active:scale-[.97]"
-            style={{ background: 'linear-gradient(135deg, #F59E0B 0%, #FCD34D 100%)', color: '#111827', boxShadow: '0 0 16px rgba(245,158,11,0.3)' }}>
+            style={{ background: 'linear-gradient(135deg, var(--accent) 0%, var(--accent-bright) 100%)', color: '#111827', boxShadow: '0 0 16px rgb(var(--accent-rgb) / 0.3)' }}>
             <PlusIcon /> New offer
           </button>
         }
@@ -229,7 +229,7 @@ export default function ViewOffers() {
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
           {kpis.map((k, i) => (
             <KpiCard key={k.label} loading={loading} label={k.label} value={k.value} sub={k.sub}
-              accentColor={i === 0 ? '#F59E0B' : i === 1 ? '#7C3AED' : i === 2 ? '#10B981' : '#3B82F6'} />
+              accentColor={i === 0 ? 'var(--accent)' : i === 1 ? '#7C3AED' : i === 2 ? '#10B981' : '#06B6D4'} />
           ))}
         </div>
 
@@ -254,7 +254,7 @@ export default function ViewOffers() {
                 return (
                   <button key={t.label} type="button" aria-pressed={active}
                     onClick={() => handleFiltersChange({ ...filters, status: t.value, page: 1 })}
-                    className={`h-7 px-2.5 text-xs rounded-md font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-400/50 ${
+                    className={`h-7 px-2.5 text-xs rounded-md font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-accent/50 ${
                       active ? 'bg-brand-accent text-gray-900' : 'text-brand-text-muted hover:text-brand-text-primary'
                     }`}>
                     {t.label}
@@ -328,7 +328,7 @@ export default function ViewOffers() {
                       <td className="p-4 pl-6">
                         <div className="flex items-center gap-3">
                           <div className="w-8 h-8 rounded-lg grid place-items-center shrink-0 transition-colors"
-                            style={{ background: 'rgba(245,158,11,0.08)', border: '1px solid rgba(245,158,11,0.15)', color: '#F59E0B' }}>
+                            style={{ background: 'rgb(var(--accent-rgb) / 0.08)', border: '1px solid rgb(var(--accent-rgb) / 0.15)', color: 'var(--accent)' }}>
                             <BriefcaseIcon size={14} />
                           </div>
                           <div className="min-w-0">
@@ -361,21 +361,21 @@ export default function ViewOffers() {
                         <div className="flex items-center justify-end gap-1 opacity-70 group-hover:opacity-100 focus-within:opacity-100 transition-opacity">
                           <button
                             aria-label={`Interview questions for ${offer.title}`}
-                            className="h-7 px-2 rounded-md text-[11px] inline-flex items-center gap-1 transition-colors text-brand-text-muted hover:text-indigo-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-400/50"
+                            className="h-7 px-2 rounded-md text-[11px] inline-flex items-center gap-1 transition-colors text-brand-text-muted hover:text-indigo-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-accent/50"
                             style={{ background: 'rgba(35,42,62,0.4)', border: '1px solid rgba(35,42,62,0.7)' }}
                             onClick={() => navigate(`/recruiter-dashboard/offers/${offer.id}/questions`)}>
                             <QuestionsIcon /> Questions
                           </button>
                           <button
                             aria-label={`Edit ${offer.title}`}
-                            className="h-7 px-2 rounded-md text-[11px] inline-flex items-center gap-1 transition-colors text-brand-text-muted hover:text-brand-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-400/50"
+                            className="h-7 px-2 rounded-md text-[11px] inline-flex items-center gap-1 transition-colors text-brand-text-muted hover:text-brand-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-accent/50"
                             style={{ background: 'rgba(35,42,62,0.4)', border: '1px solid rgba(35,42,62,0.7)' }}
                             onClick={() => setEditingOffer({ ...offer })}>
                             <EditIcon /> Edit
                           </button>
                           <button
                             aria-label={`Delete ${offer.title}`}
-                            className="w-7 h-7 rounded-md grid place-items-center transition-colors text-brand-text-disabled hover:text-red-400 hover:bg-red-500/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-400/50"
+                            className="w-7 h-7 rounded-md grid place-items-center transition-colors text-brand-text-disabled hover:text-red-400 hover:bg-red-500/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-accent/50"
                             style={{ background: 'rgba(35,42,62,0.4)', border: '1px solid rgba(35,42,62,0.7)' }}
                             onClick={() => setDeleteTarget(offer)}>
                             <TrashIcon />
@@ -439,7 +439,7 @@ export default function ViewOffers() {
                   onClick={handleRegenerate}
                   disabled={regenState === 'pending'}
                   className="inline-flex items-center gap-1 h-6 px-2 rounded-md text-[11px] font-medium transition-all disabled:opacity-50"
-                  style={{ background: 'rgba(245,158,11,0.08)', border: '1px solid rgba(245,158,11,0.2)', color: '#F59E0B' }}>
+                  style={{ background: 'rgb(var(--accent-rgb) / 0.08)', border: '1px solid rgb(var(--accent-rgb) / 0.2)', color: 'var(--accent)' }}>
                   <Sparkles size={11} />
                   {regenState === 'pending' ? 'Generating…' : 'Regenerate with AI'}
                 </button>

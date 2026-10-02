@@ -30,8 +30,8 @@ export default function Kanban({ candidates, onSelect, onAdvance, busyId }) {
               onDrop={e => { e.preventDefault(); const c = dragging; endDrag(); if (c && canDrop(c.stage, stage)) onAdvance(c); }}
               className="w-[300px] shrink-0 flex flex-col rounded-2xl overflow-hidden transition-colors"
               style={{
-                border: `1px solid ${hovered ? 'rgba(245,158,11,0.7)' : droppable ? 'rgba(245,158,11,0.3)' : 'rgba(35,42,62,0.8)'}`,
-                background: hovered ? 'rgba(245,158,11,0.06)' : 'rgba(16,20,32,0.7)',
+                border: `1px solid ${hovered ? 'rgb(var(--accent-rgb) / 0.7)' : droppable ? 'rgb(var(--accent-rgb) / 0.3)' : 'rgba(35,42,62,0.8)'}`,
+                background: hovered ? 'rgb(var(--accent-rgb) / 0.06)' : 'rgba(16,20,32,0.7)',
                 opacity: dragging && !droppable && dragging.stage !== stage ? 0.55 : 1,
               }}>
               <div className="px-4 py-3 flex items-center gap-2"
@@ -49,7 +49,7 @@ export default function Kanban({ candidates, onSelect, onAdvance, busyId }) {
                       onDragStart={e => { setDragging(c); e.dataTransfer.effectAllowed = 'move'; e.dataTransfer.setData('text/plain', String(c.id)); }}
                       onDragEnd={endDrag}
                       aria-roledescription={movable ? 'draggable card' : undefined}
-                      className={`w-full text-left p-3 rounded-xl transition-all hover:border-amber-400/30 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-400/50 ${movable ? 'cursor-grab active:cursor-grabbing' : 'cursor-pointer'} ${dragging?.id === c.id ? 'opacity-40' : ''}`}
+                      className={`w-full text-left p-3 rounded-xl transition-all hover:border-brand-accent/30 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-accent/50 ${movable ? 'cursor-grab active:cursor-grabbing' : 'cursor-pointer'} ${dragging?.id === c.id ? 'opacity-40' : ''}`}
                       style={{ background: 'rgba(24,30,46,0.7)', border: '1px solid rgba(35,42,62,0.7)' }}>
                       <div className="flex items-center gap-2 mb-2">
                         <Avatar name={c.candidate_name} size={28} />
@@ -75,7 +75,7 @@ export default function Kanban({ candidates, onSelect, onAdvance, busyId }) {
                 })}
                 {col.length === 0 && (
                   <div className="h-16 rounded-xl grid place-items-center text-[11px] text-brand-text-disabled"
-                    style={{ border: `1.5px dashed ${droppable ? 'rgba(245,158,11,0.5)' : 'rgba(35,42,62,0.6)'}` }}>
+                    style={{ border: `1.5px dashed ${droppable ? 'rgb(var(--accent-rgb) / 0.5)' : 'rgba(35,42,62,0.6)'}` }}>
                     {droppable ? 'Drop here' : 'No candidates'}
                   </div>
                 )}

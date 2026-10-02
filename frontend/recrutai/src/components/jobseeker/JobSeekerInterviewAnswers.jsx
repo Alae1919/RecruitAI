@@ -65,7 +65,7 @@ export default function JobSeekerInterviewAnswers({ interviewId, onBack }) {
       {/* Topbar */}
       <div className="h-14 px-6 flex items-center gap-3 sticky top-0 z-20"
         style={{ borderBottom: '1px solid rgba(35,42,62,0.7)', background: 'rgba(9,12,20,0.85)', backdropFilter: 'blur(12px)' }}>
-        <button onClick={onBack} aria-label="Go back" className="w-8 h-8 rounded-lg grid place-items-center text-brand-text-muted transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-400/50"
+        <button onClick={onBack} aria-label="Go back" className="w-8 h-8 rounded-lg grid place-items-center text-brand-text-muted transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-accent/50"
           onMouseEnter={e => e.currentTarget.style.background = 'rgba(35,42,62,0.6)'}
           onMouseLeave={e => e.currentTarget.style.background = 'transparent'}>
           <ArrowLeftIcon />
@@ -125,7 +125,7 @@ export default function JobSeekerInterviewAnswers({ interviewId, onBack }) {
                       onClick={() => setSelectedQuestion(i)}
                       className="w-full text-left px-3 py-2.5 rounded-lg text-sm transition-all"
                       style={selectedQuestion === i
-                        ? { background: 'rgba(245,158,11,0.1)', border: '1px solid rgba(245,158,11,0.2)', color: '#F59E0B' }
+                        ? { background: 'rgb(var(--accent-rgb) / 0.1)', border: '1px solid rgb(var(--accent-rgb) / 0.2)', color: 'var(--accent)' }
                         : { background: 'transparent', border: '1px solid transparent', color: '#9BA6C4' }}
                       onMouseEnter={e => selectedQuestion !== i && (e.currentTarget.style.background = 'rgba(35,42,62,0.5)')}
                       onMouseLeave={e => selectedQuestion !== i && (e.currentTarget.style.background = 'transparent')}>
@@ -168,8 +168,8 @@ export default function JobSeekerInterviewAnswers({ interviewId, onBack }) {
 
               {/* Question display */}
               <div className="rounded-xl p-4"
-                style={{ background: 'rgba(245,158,11,0.04)', border: '1px solid rgba(245,158,11,0.12)' }}>
-                <div className="text-[10px] font-mono uppercase tracking-widest mb-2" style={{ color: '#F59E0B' }}>
+                style={{ background: 'rgb(var(--accent-rgb) / 0.04)', border: '1px solid rgb(var(--accent-rgb) / 0.12)' }}>
+                <div className="text-[10px] font-mono uppercase tracking-widest mb-2" style={{ color: 'var(--accent)' }}>
                   Question {selectedQuestion + 1}
                 </div>
                 <p className="text-sm text-brand-text-primary font-medium leading-relaxed">
@@ -198,7 +198,7 @@ export default function JobSeekerInterviewAnswers({ interviewId, onBack }) {
                   onClick={() => setSelectedQuestion(i => i - 1)}
                   className="h-8 px-4 rounded-lg text-xs font-medium text-brand-text-muted inline-flex items-center gap-1.5 transition-all disabled:opacity-30 disabled:cursor-not-allowed"
                   style={{ border: '1px solid rgba(35,42,62,0.7)', background: 'rgba(35,42,62,0.3)' }}
-                  onMouseEnter={e => !e.currentTarget.disabled && (e.currentTarget.style.borderColor = 'rgba(245,158,11,0.3)')}
+                  onMouseEnter={e => !e.currentTarget.disabled && (e.currentTarget.style.borderColor = 'rgb(var(--accent-rgb) / 0.3)')}
                   onMouseLeave={e => (e.currentTarget.style.borderColor = 'rgba(35,42,62,0.7)')}>
                   <ArrowLeftIcon /> Previous
                 </button>
@@ -210,7 +210,7 @@ export default function JobSeekerInterviewAnswers({ interviewId, onBack }) {
                   onClick={() => setSelectedQuestion(i => i + 1)}
                   className="h-8 px-4 rounded-lg text-xs font-medium text-brand-text-muted inline-flex items-center gap-1.5 transition-all disabled:opacity-30 disabled:cursor-not-allowed"
                   style={{ border: '1px solid rgba(35,42,62,0.7)', background: 'rgba(35,42,62,0.3)' }}
-                  onMouseEnter={e => !e.currentTarget.disabled && (e.currentTarget.style.borderColor = 'rgba(245,158,11,0.3)')}
+                  onMouseEnter={e => !e.currentTarget.disabled && (e.currentTarget.style.borderColor = 'rgb(var(--accent-rgb) / 0.3)')}
                   onMouseLeave={e => (e.currentTarget.style.borderColor = 'rgba(35,42,62,0.7)')}>
                   Next <ArrowLeftIcon size={14} />
                 </button>

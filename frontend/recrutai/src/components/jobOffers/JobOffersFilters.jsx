@@ -69,15 +69,15 @@ export default function JobOffersFilters({ filters = {}, onChange, hideOrdering 
         aria-haspopup="true"
         className="h-9 px-3 rounded-lg text-xs inline-flex items-center gap-1.5 transition-all"
         style={{
-          border: `1px solid ${open || hasActive ? 'rgba(245,158,11,0.4)' : 'rgba(35,42,62,0.8)'}`,
-          background: open || hasActive ? 'rgba(245,158,11,0.06)' : 'rgba(16,20,32,0.8)',
-          color: open || hasActive ? '#F59E0B' : '#9BA6C4',
+          border: `1px solid ${open || hasActive ? 'rgb(var(--accent-rgb) / 0.4)' : 'rgba(35,42,62,0.8)'}`,
+          background: open || hasActive ? 'rgb(var(--accent-rgb) / 0.06)' : 'rgba(16,20,32,0.8)',
+          color: open || hasActive ? 'var(--accent)' : '#9BA6C4',
         }}
       >
         <SlidersHorizontal size={13} />
         Filters
         {hasActive && (
-          <span className="w-1.5 h-1.5 rounded-full bg-amber-400 ml-0.5" />
+          <span className="w-1.5 h-1.5 rounded-full bg-brand-accent ml-0.5" />
         )}
       </button>
 
@@ -90,12 +90,12 @@ export default function JobOffersFilters({ filters = {}, onChange, hideOrdering 
             <span className="text-xs font-semibold text-brand-text-primary uppercase tracking-wider">Filters</span>
             <div className="flex gap-2">
               {hasActive && (
-                <button onClick={reset} className="text-[11px] text-amber-400 hover:text-amber-300 transition-colors">
+                <button onClick={reset} className="text-[11px] text-brand-accent hover:text-brand-accent-bright transition-colors">
                   Reset
                 </button>
               )}
               <button onClick={() => setOpen(false)} aria-label="Close filters"
-                className="text-brand-text-disabled hover:text-brand-text-muted transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-amber-400/50 rounded">
+                className="text-brand-text-disabled hover:text-brand-text-muted transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-brand-accent/50 rounded">
                 <X size={14} />
               </button>
             </div>
@@ -130,7 +130,7 @@ export default function JobOffersFilters({ filters = {}, onChange, hideOrdering 
           {/* Experience */}
           <div>
             <label className="block text-[11px] font-medium text-brand-text-muted mb-1.5 uppercase tracking-wider">
-              Max experience — <span className="text-amber-400">{localExpMin ? `${localExpMin} yr` : 'any'}</span>
+              Max experience — <span className="text-brand-accent">{localExpMin ? `${localExpMin} yr` : 'any'}</span>
             </label>
             <input
               type="range"
@@ -139,7 +139,7 @@ export default function JobOffersFilters({ filters = {}, onChange, hideOrdering 
               step="1"
               value={localExpMin || 0}
               onChange={e => setLocalExpMin(e.target.value === '0' ? '' : e.target.value)}
-              className="w-full accent-amber-400 cursor-pointer"
+              className="w-full accent-brand-accent cursor-pointer"
             />
             <div className="flex justify-between text-[10px] text-brand-text-disabled mt-0.5">
               <span>0</span><span>15 yr</span>

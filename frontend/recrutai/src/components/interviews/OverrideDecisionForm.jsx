@@ -31,7 +31,7 @@ export default function OverrideDecisionForm({ interviewId, currentDecision }) {
     return (
       <button
         onClick={() => setOpen(true)}
-        className="w-full py-2.5 rounded-xl text-xs font-medium text-brand-text-muted transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-400/50"
+        className="w-full py-2.5 rounded-xl text-xs font-medium text-brand-text-muted transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-accent/50"
         style={{ border: '1px solid rgba(35,42,62,0.8)', background: 'rgba(16,20,32,0.6)' }}
         onMouseEnter={e => { e.currentTarget.style.color = '#F59E0B'; e.currentTarget.style.borderColor = 'rgba(245,158,11,0.3)'; }}
         onMouseLeave={e => { e.currentTarget.style.color = ''; e.currentTarget.style.borderColor = 'rgba(35,42,62,0.8)'; }}>

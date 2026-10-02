@@ -1,9 +1,15 @@
-import React, { createContext, useContext, useEffect, useState } from 'react';
+import React, { createContext, useContext, useEffect, useLayoutEffect, useState } from 'react';
 
 const ThemeContext = createContext(null);
 
+const ACCENTS = ['amber', 'blue'];
+
 export function ThemeProvider({ children }) {
   const [theme, setTheme] = useState(() => localStorage.getItem('theme') || 'dark');
+  const [accent, setAccent] = useState(() => {
+    const stored = localStorage.getItem('accent');
+    return ACCENTS.includes(stored) ? stored : 'amber';
+  });
 
   useEffect(() => {
     const root = document.documentElement;
@@ -15,10 +21,17 @@ export function ThemeProvider({ children }) {
     localStorage.setItem('theme', theme);
   }, [theme]);
 
+  // Layout effect so the accent is on <html> before the first paint (no amber flash for blue users).
+  useLayoutEffect(() => {
+    document.documentElement.dataset.accent = accent;
+    localStorage.setItem('accent', accent);
+  }, [accent]);
+
   const toggleTheme = () => setTheme(t => (t === 'dark' ? 'light' : 'dark'));
+  const toggleAccent = () => setAccent(a => (a === 'amber' ? 'blue' : 'amber'));
 
   return (
-    <ThemeContext.Provider value={{ theme, toggleTheme, isDark: theme === 'dark' }}>
+    <ThemeContext.Provider value={{ theme, toggleTheme, isDark: theme === 'dark', accent, setAccent, toggleAccent }}>
       {children}
     </ThemeContext.Provider>
   );

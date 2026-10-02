@@ -49,7 +49,7 @@ export default function QuestionEditor({ question, onSave, onDelete, readOnly, i
               </button>
               <button onClick={handleCancel}
                 aria-label="Cancel editing"
-                className="w-6 h-6 rounded grid place-items-center text-brand-text-disabled hover:text-brand-text-muted transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-amber-400/40">
+                className="w-6 h-6 rounded grid place-items-center text-brand-text-disabled hover:text-brand-text-muted transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-brand-accent/40">
                 <X size={13} />
               </button>
             </>
@@ -57,7 +57,7 @@ export default function QuestionEditor({ question, onSave, onDelete, readOnly, i
             <>
               <button onClick={() => setEditing(true)}
                 aria-label="Edit question"
-                className="w-6 h-6 rounded grid place-items-center text-brand-text-disabled hover:text-amber-400 transition-colors opacity-0 group-hover:opacity-100 focus-visible:opacity-100 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-amber-400/60">
+                className="w-6 h-6 rounded grid place-items-center text-brand-text-disabled hover:text-brand-accent transition-colors opacity-0 group-hover:opacity-100 focus-visible:opacity-100 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-brand-accent/60">
                 <Pencil size={12} />
               </button>
               <button onClick={() => onDelete(question.id)} disabled={isDeleting}

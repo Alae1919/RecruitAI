@@ -76,7 +76,7 @@ export default function StepPreview({ data, onBack, onPublish, onSaveDraft, publ
           </button>
           <button type="button" onClick={onPublish} disabled={publishing}
             className="h-9 px-5 text-sm rounded-xl font-semibold inline-flex items-center gap-2 transition-all disabled:opacity-50 active:scale-[.98]"
-            style={{ background: 'linear-gradient(135deg, #F59E0B 0%, #FCD34D 100%)', color: '#111827', boxShadow: '0 0 20px rgba(245,158,11,0.25)' }}>
+            style={{ background: 'linear-gradient(135deg, var(--accent) 0%, var(--accent-bright) 100%)', color: '#111827', boxShadow: '0 0 20px rgb(var(--accent-rgb) / 0.25)' }}>
             {publishing
               ? <div className="w-4 h-4 border-2 border-gray-900 border-t-transparent rounded-full animate-spin" />
               : <>Publish offer <ArrowRight /></>}

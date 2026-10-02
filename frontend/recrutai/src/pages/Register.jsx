@@ -31,14 +31,14 @@ function LeftPanel({ step, role }) {
 
       {/* Ambient orbs */}
       <div className="absolute top-[-60px] right-[-40px] w-[320px] h-[320px] rounded-full pointer-events-none animate-float-slow"
-        style={{ background: 'radial-gradient(circle, rgba(245,158,11,0.18) 0%, transparent 70%)', filter: 'blur(40px)' }} />
+        style={{ background: 'radial-gradient(circle, rgb(var(--accent-rgb) / 0.18) 0%, transparent 70%)', filter: 'blur(40px)' }} />
       <div className="absolute bottom-[15%] left-[-30px] w-[280px] h-[280px] rounded-full pointer-events-none animate-float"
         style={{ background: 'radial-gradient(circle, rgba(124,58,237,0.15) 0%, transparent 70%)', filter: 'blur(35px)' }} />
 
       {/* 3D floating shapes */}
       <div className="absolute top-[22%] left-[14%] pointer-events-none animate-float-fast">
         <div className="w-12 h-12 rounded-xl opacity-25"
-          style={{ background: 'linear-gradient(135deg, rgba(245,158,11,0.7) 0%, rgba(245,158,11,0.1) 100%)', border: '1px solid rgba(245,158,11,0.35)', transform: 'perspective(180px) rotateX(20deg) rotateY(-12deg)', boxShadow: '0 6px 16px rgba(245,158,11,0.12)' }} />
+          style={{ background: 'linear-gradient(135deg, rgb(var(--accent-rgb) / 0.7) 0%, rgb(var(--accent-rgb) / 0.1) 100%)', border: '1px solid rgb(var(--accent-rgb) / 0.35)', transform: 'perspective(180px) rotateX(20deg) rotateY(-12deg)', boxShadow: '0 6px 16px rgb(var(--accent-rgb) / 0.12)' }} />
       </div>
       <div className="absolute top-[48%] right-[10%] pointer-events-none" style={{ animation: 'float 10s ease-in-out infinite 1.5s' }}>
         <div className="w-7 h-7 rounded-lg opacity-30"
@@ -46,7 +46,7 @@ function LeftPanel({ step, role }) {
       </div>
       <div className="absolute bottom-[32%] right-[18%] pointer-events-none animate-float-slow">
         <div className="w-5 h-5 rounded-full opacity-35"
-          style={{ background: 'radial-gradient(circle, rgba(245,158,11,0.9) 0%, transparent 70%)', boxShadow: '0 0 14px rgba(245,158,11,0.25)' }} />
+          style={{ background: 'radial-gradient(circle, rgb(var(--accent-rgb) / 0.9) 0%, transparent 70%)', boxShadow: '0 0 14px rgb(var(--accent-rgb) / 0.25)' }} />
       </div>
 
       {/* Logo */}
@@ -56,7 +56,7 @@ function LeftPanel({ step, role }) {
       <div className="relative space-y-6 max-w-[380px]">
         {/* Step pill */}
         <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full text-[10px] font-mono tracking-widest"
-          style={{ background: 'rgba(245,158,11,0.08)', border: '1px solid rgba(245,158,11,0.2)', color: '#F59E0B' }}>
+          style={{ background: 'rgb(var(--accent-rgb) / 0.08)', border: '1px solid rgb(var(--accent-rgb) / 0.2)', color: 'var(--accent)' }}>
           <span className="w-1.5 h-1.5 rounded-full bg-brand-accent pulse-dot" />
           {step === 0 ? 'CHOOSE YOUR ROLE' : `ACCOUNT SETUP · ${role === 'recruiter' ? 'RECRUITER' : 'JOB SEEKER'}`}
         </div>
@@ -71,7 +71,7 @@ function LeftPanel({ step, role }) {
           {benefits.map(({ Icon, text }, i) => (
             <div key={i} className="flex items-center gap-3 text-sm" style={{ color: '#B8C2DC' }}>
               <span className="w-7 h-7 rounded-lg grid place-items-center shrink-0"
-                style={{ background: 'rgba(245,158,11,0.1)', border: '1px solid rgba(245,158,11,0.2)', color: '#F59E0B' }}>
+                style={{ background: 'rgb(var(--accent-rgb) / 0.1)', border: '1px solid rgb(var(--accent-rgb) / 0.2)', color: 'var(--accent)' }}>
                 <Icon />
               </span>
               {text}
@@ -83,7 +83,7 @@ function LeftPanel({ step, role }) {
         <div className="mt-4 p-4 rounded-2xl" style={{ background: 'rgba(9,12,20,0.6)', border: '1px solid rgba(35,42,62,0.7)' }}>
           <div className="flex items-center gap-1 mb-2">
             {Array.from({ length: 5 }).map((_, i) => (
-              <svg key={i} width="12" height="12" viewBox="0 0 24 24" fill="#F59E0B" style={{ filter: 'drop-shadow(0 0 3px rgba(245,158,11,0.5))' }}>
+              <svg key={i} width="12" height="12" viewBox="0 0 24 24" style={{ fill: 'var(--accent)', filter: 'drop-shadow(0 0 3px rgb(var(--accent-rgb) / 0.5))' }}>
                 <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>
               </svg>
             ))}
@@ -118,9 +118,9 @@ function RoleCard({ id, Icon, title, description, onClick }) {
         {/* Icon box */}
         <div className="w-14 h-14 rounded-2xl shrink-0 grid place-items-center"
           style={{
-            background: 'rgba(245,158,11,0.1)',
-            border: '1px solid rgba(245,158,11,0.25)',
-            color: '#F59E0B',
+            background: 'rgb(var(--accent-rgb) / 0.1)',
+            border: '1px solid rgb(var(--accent-rgb) / 0.25)',
+            color: 'var(--accent)',
           }}>
           <Icon />
         </div>
@@ -149,9 +149,9 @@ function StepIndicator({ current, total }) {
           <div className="flex items-center gap-2">
             <div className="w-6 h-6 rounded-full grid place-items-center text-[11px] font-bold transition-all duration-300"
               style={i < current
-                ? { background: 'rgba(245,158,11,0.15)', border: '1px solid rgba(245,158,11,0.4)', color: '#F59E0B' }
+                ? { background: 'rgb(var(--accent-rgb) / 0.15)', border: '1px solid rgb(var(--accent-rgb) / 0.4)', color: 'var(--accent)' }
                 : i === current
-                  ? { background: 'linear-gradient(135deg, #F59E0B 0%, #FCD34D 100%)', color: '#090C14', boxShadow: '0 0 12px rgba(245,158,11,0.4)' }
+                  ? { background: 'linear-gradient(135deg, var(--accent) 0%, var(--accent-bright) 100%)', color: '#090C14', boxShadow: '0 0 12px rgb(var(--accent-rgb) / 0.4)' }
                   : { background: 'rgba(35,42,62,0.6)', border: '1px solid rgba(35,42,62,0.8)', color: '#59628A' }}>
               {i < current ? <CheckIcon size={8} /> : i + 1}
             </div>
@@ -162,7 +162,7 @@ function StepIndicator({ current, total }) {
           </div>
           {i < total - 1 && (
             <div className="flex-1 h-px max-w-[40px]"
-              style={{ background: i < current ? 'rgba(245,158,11,0.3)' : 'rgba(35,42,62,0.6)' }} />
+              style={{ background: i < current ? 'rgb(var(--accent-rgb) / 0.3)' : 'rgba(35,42,62,0.6)' }} />
           )}
         </React.Fragment>
       ))}
@@ -242,7 +242,7 @@ export default function Register() {
 
               {/* Role badge */}
               <div className="inline-flex items-center gap-2 px-2.5 py-1 rounded-full text-[11px] font-mono mb-4"
-                style={{ background: 'rgba(245,158,11,0.08)', border: '1px solid rgba(245,158,11,0.2)', color: '#F59E0B' }}>
+                style={{ background: 'rgb(var(--accent-rgb) / 0.08)', border: '1px solid rgb(var(--accent-rgb) / 0.2)', color: 'var(--accent)' }}>
                 {role === 'recruiter' ? <BriefcaseIcon size={11} /> : <SearchIcon size={11} />}
                 {role === 'recruiter' ? 'RECRUITER ACCOUNT' : 'JOB SEEKER ACCOUNT'}
               </div>

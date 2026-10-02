@@ -113,10 +113,10 @@ export default function RecruiterInterviews() {
         </div>
         <div className="flex items-center gap-2">
           <span className="inline-flex items-center gap-1.5 h-7 px-2.5 rounded-lg text-[11px] font-medium"
-            style={{ background: 'rgba(245,158,11,0.08)', border: '1px solid rgba(245,158,11,0.2)', color: '#F59E0B' }}>
+            style={{ background: 'rgb(var(--accent-rgb) / 0.08)', border: '1px solid rgb(var(--accent-rgb) / 0.2)', color: 'var(--accent)' }}>
             <SparklesIcon /> AI-evaluated
           </span>
-          <button aria-label="Notifications" className="w-9 h-9 rounded-lg text-brand-text-muted grid place-items-center transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-400/50"
+          <button aria-label="Notifications" className="w-9 h-9 rounded-lg text-brand-text-muted grid place-items-center transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-accent/50"
             onMouseEnter={e => e.currentTarget.style.background = 'rgba(35,42,62,0.6)'}
             onMouseLeave={e => e.currentTarget.style.background = 'transparent'}>
             <BellIcon />
@@ -215,7 +215,7 @@ export default function RecruiterInterviews() {
                                 onClick={() => window.open(i.video, '_blank')}
                                 className="h-7 px-2.5 text-xs rounded-lg inline-flex items-center gap-1.5 transition-colors font-medium"
                                 style={{ background: 'rgba(35,42,62,0.6)', border: '1px solid rgba(35,42,62,0.8)', color: '#9BA6C4' }}
-                                onMouseEnter={e => { e.currentTarget.style.borderColor = 'rgba(245,158,11,0.3)'; e.currentTarget.style.color = '#F59E0B'; }}
+                                onMouseEnter={e => { e.currentTarget.style.borderColor = 'rgb(var(--accent-rgb) / 0.3)'; e.currentTarget.style.color = 'var(--accent)'; }}
                                 onMouseLeave={e => { e.currentTarget.style.borderColor = 'rgba(35,42,62,0.8)'; e.currentTarget.style.color = '#9BA6C4'; }}>
                                 <ExternalLinkIcon /> View
                               </button>
@@ -270,7 +270,7 @@ export default function RecruiterInterviews() {
                           <button
                             onClick={() => window.open(i.video, '_blank')}
                             className="h-8 px-3 text-xs rounded-lg inline-flex items-center gap-1.5 font-medium transition-colors"
-                            style={{ background: 'rgba(245,158,11,0.1)', border: '1px solid rgba(245,158,11,0.25)', color: '#F59E0B' }}>
+                            style={{ background: 'rgb(var(--accent-rgb) / 0.1)', border: '1px solid rgb(var(--accent-rgb) / 0.25)', color: 'var(--accent)' }}>
                             <ExternalLinkIcon /> View Interview
                           </button>
                         )}

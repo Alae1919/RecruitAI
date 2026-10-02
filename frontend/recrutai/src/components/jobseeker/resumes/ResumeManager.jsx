@@ -19,14 +19,14 @@ function UploadZone({ onFile }) {
     <div
       className="rounded-xl cursor-pointer transition-all"
       style={{
-        border: dragging ? '1.5px dashed rgba(245,158,11,0.6)' : '1.5px dashed rgba(35,42,62,0.9)',
-        background: dragging ? 'rgba(245,158,11,0.04)' : 'rgba(16,20,32,0.4)',
+        border: dragging ? '1.5px dashed rgb(var(--accent-rgb) / 0.6)' : '1.5px dashed rgba(35,42,62,0.9)',
+        background: dragging ? 'rgb(var(--accent-rgb) / 0.04)' : 'rgba(16,20,32,0.4)',
       }}
       onClick={() => inputRef.current?.click()}
       onDragOver={e => { e.preventDefault(); setDragging(true); }}
       onDragLeave={() => setDragging(false)}
       onDrop={onDrop}
-      onMouseEnter={e => { if (!dragging) e.currentTarget.style.borderColor = 'rgba(245,158,11,0.3)'; }}
+      onMouseEnter={e => { if (!dragging) e.currentTarget.style.borderColor = 'rgb(var(--accent-rgb) / 0.3)'; }}
       onMouseLeave={e => { if (!dragging) e.currentTarget.style.borderColor = 'rgba(35,42,62,0.9)'; }}
     >
       <input ref={inputRef} type="file" accept=".pdf,.doc,.docx" className="sr-only"
@@ -38,7 +38,7 @@ function UploadZone({ onFile }) {
         </div>
         <div>
           <p className="text-sm font-medium text-brand-text-muted">
-            Drop a resume, or <span style={{ color: '#F59E0B' }}>browse</span>
+            Drop a resume, or <span style={{ color: 'var(--accent)' }}>browse</span>
           </p>
           <p className="text-[11px] text-brand-text-disabled mt-0.5">PDF, DOC, DOCX · Max 10 MB</p>
         </div>
@@ -115,8 +115,8 @@ export default function ResumeManager() {
       <UploadZone onFile={handleUpload} />
       {uploadMutation.isPending && (
         <div className="flex items-center gap-2 px-4 py-2 rounded-lg text-xs text-brand-text-muted"
-          style={{ background: 'rgba(245,158,11,0.06)', border: '1px solid rgba(245,158,11,0.15)' }}>
-          <div className="w-3 h-3 border border-t-transparent rounded-full animate-spin" style={{ borderColor: 'rgba(245,158,11,0.6)', borderTopColor: 'transparent' }} />
+          style={{ background: 'rgb(var(--accent-rgb) / 0.06)', border: '1px solid rgb(var(--accent-rgb) / 0.15)' }}>
+          <div className="w-3 h-3 border border-t-transparent rounded-full animate-spin" style={{ borderColor: 'rgb(var(--accent-rgb) / 0.6)', borderTopColor: 'transparent' }} />
           Uploading…
         </div>
       )}

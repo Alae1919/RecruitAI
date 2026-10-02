@@ -17,10 +17,10 @@ function SectionLabel({ icon: Icon, children }) {
     <div className="flex items-center gap-3 pt-1 pb-0.5">
       {Icon && <Icon size={13} />}
       <div className="text-[10px] font-mono tracking-[0.18em] uppercase"
-        style={{ color: '#F59E0B', textShadow: '0 0 12px rgba(245,158,11,0.35)' }}>
+        style={{ color: 'var(--accent)', textShadow: '0 0 12px rgb(var(--accent-rgb) / 0.35)' }}>
         {children}
       </div>
-      <div className="flex-1 h-px" style={{ background: 'rgba(245,158,11,0.12)' }} />
+      <div className="flex-1 h-px" style={{ background: 'rgb(var(--accent-rgb) / 0.12)' }} />
     </div>
   );
 }
@@ -98,9 +98,9 @@ export default function RecruiterProfile() {
           {!isEditing && (
             <button onClick={handleEdit}
               className="h-8 px-3 text-xs rounded-lg font-medium inline-flex items-center gap-1.5 transition-all"
-              style={{ background: 'rgba(245,158,11,0.12)', border: '1px solid rgba(245,158,11,0.25)', color: '#F59E0B' }}
-              onMouseEnter={e => e.currentTarget.style.background = 'rgba(245,158,11,0.2)'}
-              onMouseLeave={e => e.currentTarget.style.background = 'rgba(245,158,11,0.12)'}>
+              style={{ background: 'rgb(var(--accent-rgb) / 0.12)', border: '1px solid rgb(var(--accent-rgb) / 0.25)', color: 'var(--accent)' }}
+              onMouseEnter={e => e.currentTarget.style.background = 'rgb(var(--accent-rgb) / 0.2)'}
+              onMouseLeave={e => e.currentTarget.style.background = 'rgb(var(--accent-rgb) / 0.12)'}>
               <EditIcon /> Edit Profile
             </button>
           )}
@@ -118,7 +118,7 @@ export default function RecruiterProfile() {
           }}>
           {/* Ambient amber glow */}
           <div className="absolute top-0 right-0 w-48 h-48 pointer-events-none"
-            style={{ background: 'radial-gradient(ellipse at 100% 0%, rgba(245,158,11,0.06) 0%, transparent 70%)' }} />
+            style={{ background: 'radial-gradient(ellipse at 100% 0%, rgb(var(--accent-rgb) / 0.06) 0%, transparent 70%)' }} />
 
           <div className="flex items-center gap-5">
             {loading ? (
@@ -154,8 +154,8 @@ export default function RecruiterProfile() {
             </div>
             {isEditing && (
               <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-medium"
-                style={{ background: 'rgba(245,158,11,0.12)', border: '1px solid rgba(245,158,11,0.25)', color: '#F59E0B' }}>
-                <svg width="8" height="8" viewBox="0 0 8 8"><circle cx="4" cy="4" r="3" fill="#F59E0B"/></svg>
+                style={{ background: 'rgb(var(--accent-rgb) / 0.12)', border: '1px solid rgb(var(--accent-rgb) / 0.25)', color: 'var(--accent)' }}>
+                <svg width="8" height="8" viewBox="0 0 8 8"><circle cx="4" cy="4" r="3" style={{ fill: 'var(--accent)' }}/></svg>
                 Editing
               </span>
             )}

@@ -43,7 +43,7 @@ export default function MessageModal({ isOpen, onClose, candidate, recruiterName
           <span className="text-[11px] font-mono uppercase tracking-wider text-brand-text-disabled self-center mr-1">Templates</span>
           {templates.map(t => (
             <button key={t.key} type="button" onClick={() => apply(t)}
-              className="h-7 px-2.5 rounded-lg text-xs text-brand-text-muted hover:text-brand-accent transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-400/50"
+              className="h-7 px-2.5 rounded-lg text-xs text-brand-text-muted hover:text-brand-accent transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-accent/50"
               style={{ border: '1px solid rgba(35,42,62,0.8)', background: 'rgba(16,20,32,0.6)' }}>
               {t.label}
             </button>

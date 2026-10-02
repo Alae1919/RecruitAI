@@ -15,10 +15,10 @@ function SectionLabel({ children }) {
   return (
     <div className="flex items-center gap-3 pt-1 pb-0.5">
       <div className="text-[10px] font-mono tracking-[0.18em] uppercase"
-        style={{ color: '#F59E0B', textShadow: '0 0 12px rgba(245,158,11,0.35)' }}>
+        style={{ color: 'var(--accent)', textShadow: '0 0 12px rgb(var(--accent-rgb) / 0.35)' }}>
         {children}
       </div>
-      <div className="flex-1 h-px" style={{ background: 'rgba(245,158,11,0.12)' }} />
+      <div className="flex-1 h-px" style={{ background: 'rgb(var(--accent-rgb) / 0.12)' }} />
     </div>
   );
 }
@@ -27,14 +27,14 @@ function SuccessState() {
   return (
     <div className="text-center py-10 space-y-4 animate-fadeIn">
       <div className="w-16 h-16 rounded-full mx-auto grid place-items-center"
-        style={{ background: 'linear-gradient(135deg, rgba(245,158,11,0.2) 0%, rgba(245,158,11,0.05) 100%)', border: '1px solid rgba(245,158,11,0.3)', boxShadow: '0 0 30px rgba(245,158,11,0.15)' }}>
-        <Check size={28} strokeWidth={2.5} stroke="#F59E0B" />
+        style={{ background: 'linear-gradient(135deg, rgb(var(--accent-rgb) / 0.2) 0%, rgb(var(--accent-rgb) / 0.05) 100%)', border: '1px solid rgb(var(--accent-rgb) / 0.3)', boxShadow: '0 0 30px rgb(var(--accent-rgb) / 0.15)' }}>
+        <Check size={28} strokeWidth={2.5} style={{ stroke: 'var(--accent)' }} />
       </div>
       <h3 className="text-lg font-bold text-brand-text-primary">You're in!</h3>
       <p className="text-sm text-brand-text-muted">Your job seeker account is ready. Sign in to explore matched roles.</p>
       <Link to="/login"
         className="inline-flex items-center gap-2 h-11 px-6 rounded-xl text-gray-900 font-bold text-sm mt-2 transition-all active:scale-[.98]"
-        style={{ background: 'linear-gradient(135deg, #F59E0B 0%, #FCD34D 100%)', boxShadow: '0 0 24px rgba(245,158,11,0.3)' }}>
+        style={{ background: 'linear-gradient(135deg, var(--accent) 0%, var(--accent-bright) 100%)', boxShadow: '0 0 24px rgb(var(--accent-rgb) / 0.3)' }}>
         Sign in now
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
       </Link>
@@ -60,15 +60,15 @@ function FileUploadZone({ file, onChange, inputRef }) {
       <div
         className="relative rounded-xl cursor-pointer transition-all duration-200"
         style={{
-          border: dragging ? '1.5px dashed rgba(245,158,11,0.6)' : '1.5px dashed rgba(35,42,62,0.9)',
-          background: dragging ? 'rgba(245,158,11,0.04)' : 'rgba(16,20,32,0.6)',
-          boxShadow: dragging ? '0 0 20px rgba(245,158,11,0.08)' : 'none',
+          border: dragging ? '1.5px dashed rgb(var(--accent-rgb) / 0.6)' : '1.5px dashed rgba(35,42,62,0.9)',
+          background: dragging ? 'rgb(var(--accent-rgb) / 0.04)' : 'rgba(16,20,32,0.6)',
+          boxShadow: dragging ? '0 0 20px rgb(var(--accent-rgb) / 0.08)' : 'none',
         }}
         onClick={() => inputRef.current?.click()}
         onDragOver={e => { e.preventDefault(); setDragging(true); }}
         onDragLeave={() => setDragging(false)}
         onDrop={onDrop}
-        onMouseEnter={e => { if (!dragging) e.currentTarget.style.borderColor = 'rgba(245,158,11,0.3)'; }}
+        onMouseEnter={e => { if (!dragging) e.currentTarget.style.borderColor = 'rgb(var(--accent-rgb) / 0.3)'; }}
         onMouseLeave={e => { if (!dragging) e.currentTarget.style.borderColor = 'rgba(35,42,62,0.9)'; }}>
 
         <input
@@ -85,8 +85,8 @@ function FileUploadZone({ file, onChange, inputRef }) {
           {file ? (
             <>
               <div className="w-10 h-10 rounded-xl grid place-items-center"
-                style={{ background: 'rgba(245,158,11,0.12)', border: '1px solid rgba(245,158,11,0.25)' }}>
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#F59E0B" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                style={{ background: 'rgb(var(--accent-rgb) / 0.12)', border: '1px solid rgb(var(--accent-rgb) / 0.25)' }}>
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" style={{ stroke: 'var(--accent)' }} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                   <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
                   <polyline points="14 2 14 8 20 8"/>
                   <polyline points="20 6 9 17 4 12" strokeWidth="2.5"/>

@@ -20,7 +20,7 @@ function InterviewStatusBadge({ status }) {
 /* ── Score ring ─────────────────────────────────────────────────────── */
 function Score({ value }) {
   if (value == null) return <span className="text-brand-text-disabled font-mono text-sm">—</span>;
-  return <span className="font-mono text-sm font-bold" style={{ color: '#F59E0B' }}>{value}<span className="text-brand-text-disabled text-xs">/10</span></span>;
+  return <span className="font-mono text-sm font-bold" style={{ color: 'var(--accent)' }}>{value}<span className="text-brand-text-disabled text-xs">/10</span></span>;
 }
 
 /* ── Skeleton row ───────────────────────────────────────────────────── */
@@ -93,7 +93,7 @@ export default function JobSeekerEntretien() {
             <div key={k.label} className="rounded-xl p-5 relative overflow-hidden"
               style={{ background: '#101420', border: '1px solid rgba(35,42,62,0.8)', boxShadow: '0 4px 20px rgba(0,0,0,0.3)' }}>
               <div className="absolute top-0 left-0 right-0 h-[2px] rounded-t-xl"
-                style={{ background: `linear-gradient(90deg, ${k.color || '#F59E0B'}60, ${k.color || '#F59E0B'}15)` }} />
+                style={{ background: `linear-gradient(90deg, color-mix(in srgb, ${k.color || 'var(--accent)'} 38%, transparent), color-mix(in srgb, ${k.color || 'var(--accent)'} 8%, transparent))` }} />
               <div className="text-[10px] font-mono uppercase tracking-widest text-brand-text-disabled">{k.label}</div>
               <div className="mt-2 flex items-baseline gap-1">
                 <div className="text-3xl font-bold font-mono tracking-tight text-brand-text-primary">
@@ -168,7 +168,7 @@ export default function JobSeekerEntretien() {
                               onClick={() => i.status === 'available' && setCurrentInterview(i)}
                               className="h-7 px-3 text-xs rounded-lg font-semibold inline-flex items-center gap-1.5 transition-all disabled:opacity-40 disabled:cursor-not-allowed"
                               style={i.status === 'available'
-                                ? { background: 'linear-gradient(135deg, #F59E0B 0%, #FCD34D 100%)', color: '#111827', boxShadow: '0 0 12px rgba(245,158,11,0.25)' }
+                                ? { background: 'linear-gradient(135deg, var(--accent) 0%, var(--accent-bright) 100%)', color: '#111827', boxShadow: '0 0 12px rgb(var(--accent-rgb) / 0.25)' }
                                 : { background: 'rgba(35,42,62,0.5)', border: '1px solid rgba(35,42,62,0.7)', color: '#59628A' }}>
                               <PlayIcon /> Start
                             </button>
@@ -181,8 +181,8 @@ export default function JobSeekerEntretien() {
                               style={{ border: '1px solid rgba(35,42,62,0.7)', background: 'rgba(35,42,62,0.4)' }}
                               onMouseEnter={e => {
                                 if (e.currentTarget.disabled) return;
-                                e.currentTarget.style.borderColor = 'rgba(245,158,11,0.3)';
-                                e.currentTarget.style.color = '#F59E0B';
+                                e.currentTarget.style.borderColor = 'rgb(var(--accent-rgb) / 0.3)';
+                                e.currentTarget.style.color = 'var(--accent)';
                               }}
                               onMouseLeave={e => {
                                 e.currentTarget.style.borderColor = 'rgba(35,42,62,0.7)';
@@ -225,7 +225,7 @@ export default function JobSeekerEntretien() {
                           onClick={() => i.status === 'available' && setCurrentInterview(i)}
                           className="flex-1 h-8 text-xs rounded-lg font-semibold inline-flex items-center justify-center gap-1.5 transition-all disabled:opacity-40"
                           style={i.status === 'available'
-                            ? { background: 'linear-gradient(135deg, #F59E0B 0%, #FCD34D 100%)', color: '#111827' }
+                            ? { background: 'linear-gradient(135deg, var(--accent) 0%, var(--accent-bright) 100%)', color: '#111827' }
                             : { background: 'rgba(35,42,62,0.5)', border: '1px solid rgba(35,42,62,0.7)', color: '#59628A' }}>
                           <PlayIcon /> Start
                         </button>

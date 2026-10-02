@@ -2,6 +2,7 @@ import React from 'react';
 import { NavLink, Outlet, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../hooks/useAuth';
 import { Logo } from '../navigation/PublicHeader';
+import AccentToggle from '../navigation/AccentToggle';
 import { Briefcase, Users, Plus, LogOut, User, Calendar } from 'lucide-react';
 import Avatar from '../ui/Avatar';
 
@@ -24,7 +25,7 @@ function Sidebar({ navItems, user, onLogout, extra }) {
 
       {/* Ambient glow at top */}
       <div className="absolute top-0 left-0 right-0 h-32 pointer-events-none"
-        style={{ background: 'radial-gradient(ellipse at 50% 0%, rgba(245,158,11,0.06) 0%, transparent 70%)' }} />
+        style={{ background: 'radial-gradient(ellipse at 50% 0%, rgb(var(--accent-rgb) / 0.06) 0%, transparent 70%)' }} />
 
       {/* Logo header */}
       <div className="h-14 px-5 flex items-center gap-2 shrink-0 relative"
@@ -53,10 +54,10 @@ function Sidebar({ navItems, user, onLogout, extra }) {
                   {/* Active/action background */}
                   {action ? (
                     <span className="absolute inset-0 rounded-xl"
-                      style={{ background: 'linear-gradient(135deg, rgba(245,158,11,0.18) 0%, rgba(245,158,11,0.08) 100%)', border: '1px solid rgba(245,158,11,0.3)', boxShadow: '0 0 15px rgba(245,158,11,0.08)' }} />
+                      style={{ background: 'linear-gradient(135deg, rgb(var(--accent-rgb) / 0.18) 0%, rgb(var(--accent-rgb) / 0.08) 100%)', border: '1px solid rgb(var(--accent-rgb) / 0.3)', boxShadow: '0 0 15px rgb(var(--accent-rgb) / 0.08)' }} />
                   ) : isActive ? (
                     <span className="absolute inset-0 rounded-xl"
-                      style={{ background: 'linear-gradient(135deg, rgba(245,158,11,0.12) 0%, rgba(24,30,46,0.8) 100%)', border: '1px solid rgba(245,158,11,0.18)' }} />
+                      style={{ background: 'linear-gradient(135deg, rgb(var(--accent-rgb) / 0.12) 0%, rgba(24,30,46,0.8) 100%)', border: '1px solid rgb(var(--accent-rgb) / 0.18)' }} />
                   ) : (
                     <span className="absolute inset-0 rounded-xl opacity-0 group-hover:opacity-100 transition-opacity"
                       style={{ background: 'rgba(24,30,46,0.7)' }} />
@@ -73,7 +74,7 @@ function Sidebar({ navItems, user, onLogout, extra }) {
                   )}
                   {action && (
                     <span className="ml-auto relative w-4 h-4 rounded-full text-brand-accent flex items-center justify-center"
-                      style={{ background: 'rgba(245,158,11,0.2)' }}>
+                      style={{ background: 'rgb(var(--accent-rgb) / 0.2)' }}>
                       <Plus size={8} strokeWidth={3} />
                     </span>
                   )}
@@ -96,6 +97,7 @@ function Sidebar({ navItems, user, onLogout, extra }) {
             <div className="text-[13px] font-semibold text-brand-text-primary truncate">{displayName}</div>
             <div className="text-[11px] text-brand-text-disabled truncate font-mono">{user?.role || 'User'}</div>
           </div>
+          <AccentToggle />
           <button onClick={onLogout}
             className="w-7 h-7 rounded-lg grid place-items-center text-brand-text-disabled hover:text-red-400 hover:bg-red-400/10 transition-all shrink-0"
             title="Logout">

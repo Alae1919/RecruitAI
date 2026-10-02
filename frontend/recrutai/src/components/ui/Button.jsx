@@ -10,8 +10,8 @@ const variants = {
 };
 
 const primaryStyle = {
-  background: 'linear-gradient(135deg, #F59E0B 0%, #FCD34D 100%)',
-  boxShadow: '0 0 16px rgba(245,158,11,0.25)',
+  background: 'linear-gradient(135deg, var(--accent) 0%, var(--accent-bright) 100%)',
+  boxShadow: '0 0 16px rgb(var(--accent-rgb) / 0.25)',
 };
 
 const secondaryStyle = {

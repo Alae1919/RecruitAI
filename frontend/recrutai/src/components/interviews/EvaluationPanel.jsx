@@ -37,7 +37,7 @@ function AnswerRow({ answerEval, index }) {
       <button
         onClick={() => setOpen(v => !v)}
         aria-expanded={open}
-        className="w-full flex items-center gap-3 px-4 py-3 text-left transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-amber-400/40"
+        className="w-full flex items-center gap-3 px-4 py-3 text-left transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-brand-accent/40"
         style={{ background: open ? 'rgba(35,42,62,0.5)' : 'rgba(16,20,32,0.6)' }}
       >
         <span className="text-[10px] font-mono text-brand-text-disabled w-5 text-right shrink-0">Q{index + 1}</span>

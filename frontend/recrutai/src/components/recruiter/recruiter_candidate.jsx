@@ -85,8 +85,8 @@ function Topbar({ selectedOffer, mode, setMode, candidatesCount, onBack, onRank 
               { v: 'kanban', label: 'Kanban', Icon: ColumnsIcon },
             ].map(({ v, label, Icon }) => (
               <button key={v} onClick={() => setMode(v)} aria-pressed={mode === v}
-                className="h-7 px-2 rounded-md flex items-center gap-1 text-xs transition-all font-medium focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-400/50"
-                style={mode === v ? { background: '#F59E0B', color: '#111827' } : { color: '#9BA6C4' }}>
+                className="h-7 px-2 rounded-md flex items-center gap-1 text-xs transition-all font-medium focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-accent/50"
+                style={mode === v ? { background: 'var(--accent)', color: '#111827' } : { color: '#9BA6C4' }}>
                 <Icon />{label}
               </button>
             ))}
@@ -95,8 +95,8 @@ function Topbar({ selectedOffer, mode, setMode, candidatesCount, onBack, onRank 
         {selectedOffer && (
           <button onClick={onRank}
             title="Sort candidates by AI match score"
-            className="h-8 px-2.5 text-xs rounded-lg inline-flex items-center gap-1.5 font-medium transition-all hover:bg-amber-500/20"
-            style={{ background: 'rgba(245,158,11,0.1)', border: '1px solid rgba(245,158,11,0.2)', color: '#F59E0B' }}>
+            className="h-8 px-2.5 text-xs rounded-lg inline-flex items-center gap-1.5 font-medium transition-all hover:bg-brand-accent/20"
+            style={{ background: 'rgb(var(--accent-rgb) / 0.1)', border: '1px solid rgb(var(--accent-rgb) / 0.2)', color: 'var(--accent)' }}>
             <SparklesIcon size={12} /> Rank with AI
           </button>
         )}
@@ -123,7 +123,7 @@ function StageTabs({ counts, value, onChange }) {
         const active = value === t.key;
         return (
           <button key={t.key} type="button" aria-pressed={active} onClick={() => onChange(t.key)}
-            className={`h-7 px-2.5 text-xs rounded-md whitespace-nowrap transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-400/50 ${
+            className={`h-7 px-2.5 text-xs rounded-md whitespace-nowrap transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-accent/50 ${
               active ? 'bg-brand-surface text-brand-text-primary shadow font-medium' : 'text-brand-text-muted hover:text-brand-text-primary'
             }`}>
             {t.label}
@@ -320,11 +320,11 @@ export default function JobOffersWithCandidates() {
               )}
               {jobOffers.map(offer => (
                 <button key={offer.id} onClick={() => setSearchParams({ offer: String(offer.id) })}
-                  className="w-full text-left rounded-2xl p-5 transition-all group hover:border-amber-400/40"
+                  className="w-full text-left rounded-2xl p-5 transition-all group hover:border-brand-accent/40"
                   style={{ background: '#101420', border: '1px solid rgba(35,42,62,0.8)' }}>
                   <div className="flex items-center gap-4">
                     <div className="w-10 h-10 rounded-xl grid place-items-center shrink-0"
-                      style={{ background: 'rgba(245,158,11,0.1)', border: '1px solid rgba(245,158,11,0.2)', color: '#F59E0B' }}>
+                      style={{ background: 'rgb(var(--accent-rgb) / 0.1)', border: '1px solid rgb(var(--accent-rgb) / 0.2)', color: 'var(--accent)' }}>
                       <BriefcaseIcon />
                     </div>
                     <div className="flex-1 min-w-0">
@@ -347,7 +347,7 @@ export default function JobOffersWithCandidates() {
         loadingCandidates ? (
           <div className="flex-1 flex items-center justify-center">
             <div className="w-6 h-6 border-2 border-t-transparent rounded-full animate-spin"
-              style={{ borderColor: 'rgba(245,158,11,0.4)', borderTopColor: 'transparent' }} />
+              style={{ borderColor: 'rgb(var(--accent-rgb) / 0.4)', borderTopColor: 'transparent' }} />
           </div>
         ) : (
           <Kanban candidates={candidates} onSelect={openFromKanban} onAdvance={handleAdvance} busyId={busyId} />
@@ -371,7 +371,7 @@ export default function JobOffersWithCandidates() {
               {loadingCandidates ? (
                 <div className="flex justify-center py-12">
                   <div className="w-5 h-5 border-2 border-t-transparent rounded-full animate-spin"
-                    style={{ borderColor: 'rgba(245,158,11,0.4)', borderTopColor: 'transparent' }} />
+                    style={{ borderColor: 'rgb(var(--accent-rgb) / 0.4)', borderTopColor: 'transparent' }} />
                 </div>
               ) : visible.length === 0 ? (
                 <div className="text-center py-12 px-4">
@@ -387,8 +387,8 @@ export default function JobOffersWithCandidates() {
                       className="w-full text-left px-5 py-4 flex items-start gap-3 transition-colors relative hover:bg-brand-elevated/40 focus-visible:outline-none focus-visible:bg-brand-elevated/60"
                       style={{
                         borderBottom: '1px solid rgba(35,42,62,0.5)',
-                        background: active ? 'rgba(245,158,11,0.05)' : undefined,
-                        borderLeft: active ? '2px solid #F59E0B' : '2px solid transparent',
+                        background: active ? 'rgb(var(--accent-rgb) / 0.05)' : undefined,
+                        borderLeft: active ? '2px solid var(--accent)' : '2px solid transparent',
                       }}>
                       <MatchRing score={c.match_score} size={46} stroke={4} />
                       <div className="flex-1 min-w-0">

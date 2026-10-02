@@ -7,10 +7,10 @@ const inputBase = {
 };
 
 function handleFocus(e, error) {
-  e.currentTarget.style.borderColor = error ? 'rgba(239,68,68,0.7)' : 'rgba(245,158,11,0.5)';
+  e.currentTarget.style.borderColor = error ? 'rgba(239,68,68,0.7)' : 'rgb(var(--accent-rgb) / 0.5)';
   e.currentTarget.style.boxShadow = error
     ? 'inset 0 1px 0 rgba(255,255,255,0.03), 0 0 0 3px rgba(239,68,68,0.08)'
-    : 'inset 0 1px 0 rgba(255,255,255,0.03), 0 0 0 3px rgba(245,158,11,0.07)';
+    : 'inset 0 1px 0 rgba(255,255,255,0.03), 0 0 0 3px rgb(var(--accent-rgb) / 0.07)';
 }
 
 function handleBlur(e, error) {

@@ -11,8 +11,8 @@ const FIELD_BASE = {
   boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.02)',
 };
 const onFocus = e => {
-  e.currentTarget.style.borderColor = 'rgba(245,158,11,0.5)';
-  e.currentTarget.style.boxShadow = 'inset 0 1px 0 rgba(255,255,255,0.02), 0 0 0 3px rgba(245,158,11,0.07)';
+  e.currentTarget.style.borderColor = 'rgb(var(--accent-rgb) / 0.5)';
+  e.currentTarget.style.boxShadow = 'inset 0 1px 0 rgba(255,255,255,0.02), 0 0 0 3px rgb(var(--accent-rgb) / 0.07)';
 };
 const onBlur = e => {
   e.currentTarget.style.borderColor = 'rgba(35,42,62,0.8)';
@@ -51,9 +51,9 @@ export function Toggle({ checked, onChange, label }) {
     <button type="button" role="switch" aria-checked={checked} aria-label={label} onClick={() => onChange(!checked)}
       className="relative h-5 w-9 rounded-full transition-all shrink-0"
       style={{
-        background: checked ? '#F59E0B' : 'rgba(35,42,62,0.8)',
-        border: `1px solid ${checked ? '#F59E0B' : 'rgba(35,42,62,1)'}`,
-        boxShadow: checked ? '0 0 10px rgba(245,158,11,0.3)' : 'none',
+        background: checked ? 'var(--accent)' : 'rgba(35,42,62,0.8)',
+        border: `1px solid ${checked ? 'var(--accent)' : 'rgba(35,42,62,1)'}`,
+        boxShadow: checked ? '0 0 10px rgb(var(--accent-rgb) / 0.3)' : 'none',
       }}>
       <span className="absolute top-0.5 h-4 w-4 rounded-full bg-white shadow-sm transition-transform"
         style={{ transform: checked ? 'translateX(16px)' : 'translateX(2px)' }} />
@@ -76,11 +76,11 @@ export function SkillsEditor({ label, hint, skills, onChange }) {
         style={{ background: '#101420', border: '1px solid rgba(35,42,62,0.8)' }}>
         {skills.map(s => (
           <span key={s} className="inline-flex items-center gap-1 h-7 pl-2.5 pr-1.5 rounded-lg text-xs font-medium"
-            style={{ background: 'rgba(245,158,11,0.1)', border: '1px solid rgba(245,158,11,0.25)', color: '#F59E0B' }}>
+            style={{ background: 'rgb(var(--accent-rgb) / 0.1)', border: '1px solid rgb(var(--accent-rgb) / 0.25)', color: 'var(--accent)' }}>
             {s}
             <button type="button" onClick={() => onChange(skills.filter(x => x !== s))}
               className="w-4 h-4 rounded grid place-items-center"
-              onMouseEnter={e => e.currentTarget.style.background = 'rgba(245,158,11,0.2)'}
+              onMouseEnter={e => e.currentTarget.style.background = 'rgb(var(--accent-rgb) / 0.2)'}
               onMouseLeave={e => e.currentTarget.style.background = 'transparent'}>
               <XIcon />
             </button>
@@ -107,7 +107,7 @@ export function StepFooter({ onBack, onNext, nextLabel = 'Continue', loading = f
       </button>
       <button type="button" onClick={onNext} disabled={loading}
         className="h-9 px-5 text-sm rounded-xl font-semibold inline-flex items-center gap-2 transition-all disabled:opacity-50 active:scale-[.98]"
-        style={{ background: 'linear-gradient(135deg, #F59E0B 0%, #FCD34D 100%)', color: '#111827', boxShadow: '0 0 20px rgba(245,158,11,0.25)' }}>
+        style={{ background: 'linear-gradient(135deg, var(--accent) 0%, var(--accent-bright) 100%)', color: '#111827', boxShadow: '0 0 20px rgb(var(--accent-rgb) / 0.25)' }}>
         {loading
           ? <div className="w-4 h-4 border-2 border-gray-900 border-t-transparent rounded-full animate-spin" />
           : <>{nextLabel} <ArrowRight /></>}
@@ -124,9 +124,9 @@ export function Stepper({ steps, current }) {
           <div className={`flex items-center gap-2 text-xs font-medium transition-colors ${i === current ? 'text-brand-accent' : i < current ? 'text-brand-text-primary' : 'text-brand-text-disabled'}`}>
             <span className="w-6 h-6 rounded-full grid place-items-center font-mono text-[10px] shrink-0 transition-all"
               style={i === current
-                ? { background: 'linear-gradient(135deg, #F59E0B 0%, #FCD34D 100%)', color: '#111827', boxShadow: '0 0 14px rgba(245,158,11,0.4)' }
+                ? { background: 'linear-gradient(135deg, var(--accent) 0%, var(--accent-bright) 100%)', color: '#111827', boxShadow: '0 0 14px rgb(var(--accent-rgb) / 0.4)' }
                 : i < current
-                  ? { background: 'rgba(245,158,11,0.15)', color: '#F59E0B', border: '1px solid rgba(245,158,11,0.3)' }
+                  ? { background: 'rgb(var(--accent-rgb) / 0.15)', color: 'var(--accent)', border: '1px solid rgb(var(--accent-rgb) / 0.3)' }
                   : { background: 'rgba(35,42,62,0.6)', color: '#59628A', border: '1px solid rgba(35,42,62,0.8)' }}>
               {i < current ? <CheckIcon /> : i + 1}
             </span>
@@ -134,7 +134,7 @@ export function Stepper({ steps, current }) {
           </div>
           {i < steps.length - 1 && (
             <div className="flex-1 h-px transition-colors"
-              style={{ background: i < current ? 'rgba(245,158,11,0.4)' : 'rgba(35,42,62,0.8)' }} />
+              style={{ background: i < current ? 'rgb(var(--accent-rgb) / 0.4)' : 'rgba(35,42,62,0.8)' }} />
           )}
         </React.Fragment>
       ))}

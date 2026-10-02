@@ -59,7 +59,7 @@ export default function StepDescribe({ onDrafted, onSkip }) {
     <div className="space-y-8 animate-fadeIn">
       <div>
         <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-medium mb-4"
-          style={{ background: 'rgba(245,158,11,0.1)', border: '1px solid rgba(245,158,11,0.25)', color: '#F59E0B' }}>
+          style={{ background: 'rgb(var(--accent-rgb) / 0.1)', border: '1px solid rgb(var(--accent-rgb) / 0.25)', color: 'var(--accent)' }}>
           <SparklesIcon size={11} /> AI-first drafting
         </span>
         <h2 className="text-3xl font-bold tracking-tight text-brand-text-primary">
@@ -104,7 +104,7 @@ export default function StepDescribe({ onDrafted, onSkip }) {
               style={{ background: 'rgba(35,42,62,0.4)', border: '1px solid rgba(35,42,62,0.8)' }}>
               {skills.map(s => (
                 <span key={s} className="inline-flex items-center gap-1 h-6 px-2 rounded-md text-[11px] font-medium"
-                  style={{ background: 'rgba(245,158,11,0.12)', border: '1px solid rgba(245,158,11,0.25)', color: '#F59E0B' }}>
+                  style={{ background: 'rgb(var(--accent-rgb) / 0.12)', border: '1px solid rgb(var(--accent-rgb) / 0.25)', color: 'var(--accent)' }}>
                   {s}
                   <button onClick={() => setSkills(prev => prev.filter(x => x !== s))} className="ml-0.5 opacity-70 hover:opacity-100">
                     <X size={10} />
@@ -154,7 +154,7 @@ export default function StepDescribe({ onDrafted, onSkip }) {
           <div className="text-xs text-brand-text-disabled">Generates title · description based on your inputs</div>
           <button type="button" onClick={generate} disabled={!canGenerate}
             className="h-9 px-4 text-sm rounded-xl font-semibold inline-flex items-center gap-2 transition-all disabled:opacity-50 active:scale-[.98]"
-            style={{ background: 'linear-gradient(135deg, #F59E0B 0%, #FCD34D 100%)', color: '#111827', boxShadow: '0 0 20px rgba(245,158,11,0.25)' }}>
+            style={{ background: 'linear-gradient(135deg, var(--accent) 0%, var(--accent-bright) 100%)', color: '#111827', boxShadow: '0 0 20px rgb(var(--accent-rgb) / 0.25)' }}>
             {bannerState === 'pending'
               ? <><div className="w-3.5 h-3.5 border-2 border-gray-900 border-t-transparent rounded-full animate-spin" /> Drafting…</>
               : <>Draft with AI <SparklesIcon /></>}
@@ -171,7 +171,7 @@ export default function StepDescribe({ onDrafted, onSkip }) {
       <button type="button" onClick={onSkip}
         className="w-full py-4 rounded-xl text-sm text-brand-text-muted transition-all"
         style={{ border: '1.5px dashed rgba(35,42,62,0.8)' }}
-        onMouseEnter={e => { e.currentTarget.style.borderColor = 'rgba(245,158,11,0.25)'; e.currentTarget.style.color = '#EEF0F8'; e.currentTarget.style.background = 'rgba(245,158,11,0.02)'; }}
+        onMouseEnter={e => { e.currentTarget.style.borderColor = 'rgb(var(--accent-rgb) / 0.25)'; e.currentTarget.style.color = '#EEF0F8'; e.currentTarget.style.background = 'rgb(var(--accent-rgb) / 0.02)'; }}
         onMouseLeave={e => { e.currentTarget.style.borderColor = 'rgba(35,42,62,0.8)'; e.currentTarget.style.color = ''; e.currentTarget.style.background = 'transparent'; }}>
         Start from scratch →
       </button>

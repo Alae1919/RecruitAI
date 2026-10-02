@@ -81,12 +81,12 @@ export default function ResumePickerModal({ isOpen, onClose, offerTitle, onConfi
                 onClick={() => setSelectedId(r.id)}
                 className="w-full flex items-center gap-3 p-3 rounded-xl transition-all text-left"
                 style={{
-                  background: selected ? 'rgba(245,158,11,0.06)' : 'rgba(16,20,32,0.6)',
-                  border: `1px solid ${selected ? 'rgba(245,158,11,0.4)' : 'rgba(35,42,62,0.7)'}`,
+                  background: selected ? 'rgb(var(--accent-rgb) / 0.06)' : 'rgba(16,20,32,0.6)',
+                  border: `1px solid ${selected ? 'rgb(var(--accent-rgb) / 0.4)' : 'rgba(35,42,62,0.7)'}`,
                 }}
               >
                 <div className="w-7 h-7 rounded-lg grid place-items-center shrink-0"
-                  style={{ background: selected ? 'rgba(245,158,11,0.12)' : 'rgba(35,42,62,0.6)', color: selected ? '#F59E0B' : '#9BA6C4' }}>
+                  style={{ background: selected ? 'rgb(var(--accent-rgb) / 0.12)' : 'rgba(35,42,62,0.6)', color: selected ? 'var(--accent)' : '#9BA6C4' }}>
                   <File size={14} />
                 </div>
                 <div className="flex-1 min-w-0">
@@ -102,7 +102,7 @@ export default function ResumePickerModal({ isOpen, onClose, offerTitle, onConfi
                   </span>
                 </div>
                 <div className="w-4 h-4 rounded-full border-2 shrink-0 flex items-center justify-center"
-                  style={{ borderColor: selected ? '#F59E0B' : 'rgba(35,42,62,0.8)', background: selected ? '#F59E0B' : 'transparent' }}>
+                  style={{ borderColor: selected ? 'var(--accent)' : 'rgba(35,42,62,0.8)', background: selected ? 'var(--accent)' : 'transparent' }}>
                   {selected && <div className="w-1.5 h-1.5 rounded-full bg-gray-900" />}
                 </div>
               </button>
@@ -116,7 +116,7 @@ export default function ResumePickerModal({ isOpen, onClose, offerTitle, onConfi
           disabled={uploadMutation.isPending}
           className="w-full flex items-center gap-2 px-3 py-2.5 rounded-xl text-sm text-brand-text-muted transition-all disabled:opacity-50"
           style={{ border: '1.5px dashed rgba(35,42,62,0.8)' }}
-          onMouseEnter={e => { e.currentTarget.style.borderColor = 'rgba(245,158,11,0.3)'; e.currentTarget.style.color = '#EEF0F8'; }}
+          onMouseEnter={e => { e.currentTarget.style.borderColor = 'rgb(var(--accent-rgb) / 0.3)'; e.currentTarget.style.color = '#EEF0F8'; }}
           onMouseLeave={e => { e.currentTarget.style.borderColor = 'rgba(35,42,62,0.8)'; e.currentTarget.style.color = ''; }}
         >
           <Upload size={14} />

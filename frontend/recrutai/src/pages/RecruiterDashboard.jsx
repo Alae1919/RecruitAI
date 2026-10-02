@@ -20,7 +20,7 @@ function SearchTrigger({ onClick }) {
   return (
     <div className="px-3 mb-3">
       <button onClick={onClick}
-        className="w-full h-9 px-3 rounded-xl flex items-center gap-2 text-xs text-brand-text-muted transition-colors hover:text-brand-text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-400/50"
+        className="w-full h-9 px-3 rounded-xl flex items-center gap-2 text-xs text-brand-text-muted transition-colors hover:text-brand-text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-accent/50"
         style={{ background: 'rgba(24,30,46,0.7)', border: '1px solid rgba(35,42,62,0.8)' }}>
         <Search size={13} /> <span>Search…</span>
         <kbd className="ml-auto text-[10px] font-mono text-brand-text-disabled">{isMac ? '⌘K' : 'Ctrl K'}</kbd>

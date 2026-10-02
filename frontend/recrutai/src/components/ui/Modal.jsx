@@ -6,7 +6,7 @@ import { X } from 'lucide-react';
 const modalSurface = {
   background: 'linear-gradient(160deg, #131826 0%, #101420 100%)',
   border: '1px solid rgba(35,42,62,0.9)',
-  boxShadow: '0 24px 64px rgba(0,0,0,0.7), 0 0 0 1px rgba(245,158,11,0.04)',
+  boxShadow: '0 24px 64px rgba(0,0,0,0.7), 0 0 0 1px rgb(var(--accent-rgb) / 0.04)',
 };
 
 export default function Modal({ isOpen, onClose, title, children, footer, size = 'md' }) {

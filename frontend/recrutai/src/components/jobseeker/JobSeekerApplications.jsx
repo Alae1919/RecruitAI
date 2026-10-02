@@ -110,7 +110,7 @@ export default function JobSeekerApplications() {
             </span>
           )}
           <span className="inline-flex items-center gap-1.5 h-7 px-2.5 rounded-lg text-[11px] font-medium"
-            style={{ background: 'rgba(245,158,11,0.08)', border: '1px solid rgba(245,158,11,0.2)', color: '#F59E0B' }}>
+            style={{ background: 'rgb(var(--accent-rgb) / 0.08)', border: '1px solid rgb(var(--accent-rgb) / 0.2)', color: 'var(--accent)' }}>
             <SparklesIcon /> AI-matched
           </span>
           <button className="w-9 h-9 rounded-lg text-brand-text-muted grid place-items-center transition-colors"
@@ -176,12 +176,12 @@ export default function JobSeekerApplications() {
               return (
                 <div key={offer.id} className="rounded-2xl p-5 transition-all"
                   style={{ background: '#101420', border: '1px solid rgba(35,42,62,0.8)' }}
-                  onMouseEnter={e => { e.currentTarget.style.borderColor = 'rgba(245,158,11,0.25)'; e.currentTarget.style.background = 'rgba(24,30,46,0.9)'; }}
+                  onMouseEnter={e => { e.currentTarget.style.borderColor = 'rgb(var(--accent-rgb) / 0.25)'; e.currentTarget.style.background = 'rgba(24,30,46,0.9)'; }}
                   onMouseLeave={e => { e.currentTarget.style.borderColor = 'rgba(35,42,62,0.8)'; e.currentTarget.style.background = '#101420'; }}>
                   <div className="flex items-start justify-between gap-4">
                     <div className="flex gap-4 flex-1 min-w-0">
                       <div className="w-10 h-10 rounded-xl grid place-items-center shrink-0 mt-0.5"
-                        style={{ background: 'rgba(245,158,11,0.1)', border: '1px solid rgba(245,158,11,0.2)', color: '#F59E0B' }}>
+                        style={{ background: 'rgb(var(--accent-rgb) / 0.1)', border: '1px solid rgb(var(--accent-rgb) / 0.2)', color: 'var(--accent)' }}>
                         <BriefcaseIcon size={17} />
                       </div>
                       <div className="flex-1 min-w-0">

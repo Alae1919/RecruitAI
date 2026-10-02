@@ -113,7 +113,7 @@ export default function InterviewQuestionsPage() {
         style={{ borderBottom: '1px solid rgba(35,42,62,0.7)', background: 'rgba(9,12,20,0.85)', backdropFilter: 'blur(12px)' }}>
         <button onClick={() => navigate(-1)}
           aria-label="Go back"
-          className="w-8 h-8 rounded-lg grid place-items-center text-brand-text-muted transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-400/50"
+          className="w-8 h-8 rounded-lg grid place-items-center text-brand-text-muted transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-accent/50"
           style={{ border: '1px solid rgba(35,42,62,0.7)' }}
           onMouseEnter={e => e.currentTarget.style.background = 'rgba(35,42,62,0.5)'}
           onMouseLeave={e => e.currentTarget.style.background = 'transparent'}>
@@ -133,7 +133,7 @@ export default function InterviewQuestionsPage() {
               <button onClick={() => setShowRegen(true)}
                 className="h-8 px-3 text-xs rounded-lg inline-flex items-center gap-1.5 transition-all text-brand-text-muted"
                 style={{ border: '1px solid rgba(35,42,62,0.7)', background: 'rgba(16,20,32,0.6)' }}
-                onMouseEnter={e => { e.currentTarget.style.color = '#F59E0B'; e.currentTarget.style.borderColor = 'rgba(245,158,11,0.3)'; }}
+                onMouseEnter={e => { e.currentTarget.style.color = 'var(--accent)'; e.currentTarget.style.borderColor = 'rgb(var(--accent-rgb) / 0.3)'; }}
                 onMouseLeave={e => { e.currentTarget.style.color = ''; e.currentTarget.style.borderColor = 'rgba(35,42,62,0.7)'; }}>
                 <RefreshCw size={12} /> Regenerate
               </button>
@@ -161,7 +161,7 @@ export default function InterviewQuestionsPage() {
             <button
               onClick={() => setShowGenerate(true)}
               className="h-8 px-3 text-xs rounded-lg font-semibold inline-flex items-center gap-1.5 transition-all active:scale-[.97]"
-              style={{ background: 'linear-gradient(135deg, #F59E0B 0%, #FCD34D 100%)', color: '#111827', boxShadow: '0 0 16px rgba(245,158,11,0.3)' }}>
+              style={{ background: 'linear-gradient(135deg, var(--accent) 0%, var(--accent-bright) 100%)', color: '#111827', boxShadow: '0 0 16px rgb(var(--accent-rgb) / 0.3)' }}>
               <Plus size={13} /> {qsList.length ? 'New version' : 'Generate'}
             </button>
           )}
@@ -178,9 +178,9 @@ export default function InterviewQuestionsPage() {
                 onClick={() => setActiveQsId(qs.id)}
                 className="h-7 px-3 text-xs rounded-lg transition-all"
                 style={{
-                  background: activeQs?.id === qs.id ? 'rgba(245,158,11,0.12)' : 'rgba(35,42,62,0.4)',
-                  border: `1px solid ${activeQs?.id === qs.id ? 'rgba(245,158,11,0.3)' : 'rgba(35,42,62,0.7)'}`,
-                  color: activeQs?.id === qs.id ? '#F59E0B' : '#9BA6C4',
+                  background: activeQs?.id === qs.id ? 'rgb(var(--accent-rgb) / 0.12)' : 'rgba(35,42,62,0.4)',
+                  border: `1px solid ${activeQs?.id === qs.id ? 'rgb(var(--accent-rgb) / 0.3)' : 'rgba(35,42,62,0.7)'}`,
+                  color: activeQs?.id === qs.id ? 'var(--accent)' : '#9BA6C4',
                 }}>
                 v{qs.version}
               </button>
@@ -276,7 +276,7 @@ export default function InterviewQuestionsPage() {
                 disabled={createQMut.isPending}
                 className="w-full py-3 rounded-xl text-sm text-brand-text-muted transition-all disabled:opacity-50"
                 style={{ border: '1.5px dashed rgba(35,42,62,0.8)' }}
-                onMouseEnter={e => { e.currentTarget.style.borderColor = 'rgba(245,158,11,0.3)'; e.currentTarget.style.color = '#EEF0F8'; }}
+                onMouseEnter={e => { e.currentTarget.style.borderColor = 'rgb(var(--accent-rgb) / 0.3)'; e.currentTarget.style.color = '#EEF0F8'; }}
                 onMouseLeave={e => { e.currentTarget.style.borderColor = 'rgba(35,42,62,0.8)'; e.currentTarget.style.color = ''; }}>
                 <Plus size={14} className="inline mr-1" /> Add question
               </button>

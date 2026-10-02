@@ -76,7 +76,7 @@ export default function Login() {
 
         {/* Ambient orbs */}
         <div className="absolute top-[-80px] left-[-60px] w-[350px] h-[350px] rounded-full pointer-events-none animate-float-slow"
-          style={{ background: 'radial-gradient(circle, rgba(245,158,11,0.2) 0%, transparent 70%)', filter: 'blur(40px)' }} />
+          style={{ background: 'radial-gradient(circle, rgb(var(--accent-rgb) / 0.2) 0%, transparent 70%)', filter: 'blur(40px)' }} />
         <div className="absolute bottom-[10%] right-[-40px] w-[250px] h-[250px] rounded-full pointer-events-none animate-float"
           style={{ background: 'radial-gradient(circle, rgba(124,58,237,0.18) 0%, transparent 70%)', filter: 'blur(35px)' }} />
 
@@ -84,10 +84,10 @@ export default function Login() {
         <FloatingShape style={{ top: '18%', right: '12%', animation: 'float 9s ease-in-out infinite', animationDelay: '0.5s' }}>
           <div className="w-16 h-16 rounded-2xl opacity-20"
             style={{
-              background: 'linear-gradient(135deg, rgba(245,158,11,0.6) 0%, rgba(245,158,11,0.1) 100%)',
-              border: '1px solid rgba(245,158,11,0.3)',
+              background: 'linear-gradient(135deg, rgb(var(--accent-rgb) / 0.6) 0%, rgb(var(--accent-rgb) / 0.1) 100%)',
+              border: '1px solid rgb(var(--accent-rgb) / 0.3)',
               transform: 'perspective(200px) rotateX(25deg) rotateY(-15deg)',
-              boxShadow: '0 8px 20px rgba(245,158,11,0.1)',
+              boxShadow: '0 8px 20px rgb(var(--accent-rgb) / 0.1)',
             }} />
         </FloatingShape>
         <FloatingShape style={{ top: '55%', right: '22%', animation: 'float 11s ease-in-out infinite', animationDelay: '2s' }}>
@@ -101,8 +101,8 @@ export default function Login() {
         <FloatingShape style={{ bottom: '28%', left: '8%', animation: 'float 7s ease-in-out infinite', animationDelay: '1s' }}>
           <div className="w-10 h-10 rounded-full opacity-20"
             style={{
-              background: 'radial-gradient(circle, rgba(245,158,11,0.7) 0%, transparent 70%)',
-              boxShadow: '0 0 20px rgba(245,158,11,0.2)',
+              background: 'radial-gradient(circle, rgb(var(--accent-rgb) / 0.7) 0%, transparent 70%)',
+              boxShadow: '0 0 20px rgb(var(--accent-rgb) / 0.2)',
             }} />
         </FloatingShape>
 
@@ -112,7 +112,7 @@ export default function Login() {
         {/* Benefits */}
         <div className="relative space-y-6 max-w-[380px]">
           <div className="text-[11px] font-mono tracking-[0.2em] text-brand-accent uppercase"
-            style={{ textShadow: '0 0 20px rgba(245,158,11,0.4)' }}>
+            style={{ textShadow: '0 0 20px rgb(var(--accent-rgb) / 0.4)' }}>
             WHY RECRUTAI
           </div>
           <h2 className="text-[28px] font-bold tracking-tight leading-tight text-brand-text-primary">
@@ -124,7 +124,7 @@ export default function Login() {
               <div key={i} className="flex items-start gap-3 text-sm text-brand-text-muted"
                 style={{ animationDelay: `${i * 0.1}s` }}>
                 <span className="mt-0.5 w-7 h-7 rounded-lg grid place-items-center shrink-0 text-brand-accent"
-                  style={{ background: 'rgba(245,158,11,0.1)', border: '1px solid rgba(245,158,11,0.2)' }}>
+                  style={{ background: 'rgb(var(--accent-rgb) / 0.1)', border: '1px solid rgb(var(--accent-rgb) / 0.2)' }}>
                   <Icon />
                 </span>
                 <span className="leading-relaxed text-[#B8C2DC]">{text}</span>
@@ -140,7 +140,7 @@ export default function Login() {
             ].map(({ v, l }) => (
               <div key={l} className="rounded-xl px-4 py-3"
                 style={{ background: 'rgba(16,20,32,0.7)', border: '1px solid rgba(35,42,62,0.7)' }}>
-                <div className="text-xl font-bold font-mono text-brand-accent" style={{ textShadow: '0 0 15px rgba(245,158,11,0.4)' }}>{v}</div>
+                <div className="text-xl font-bold font-mono text-brand-accent" style={{ textShadow: '0 0 15px rgb(var(--accent-rgb) / 0.4)' }}>{v}</div>
                 <div className="text-[11px] text-brand-text-disabled mt-0.5">{l}</div>
               </div>
             ))}
@@ -186,7 +186,7 @@ export default function Login() {
                   <button key={opt.v} type="button" onClick={() => setRole(opt.v)}
                     className="h-10 rounded-lg text-sm font-medium flex items-center justify-center gap-1.5 transition-all duration-200"
                     style={role === opt.v
-                      ? { background: 'linear-gradient(135deg, #F59E0B 0%, #FCD34D 100%)', color: '#090C14', boxShadow: '0 0 20px rgba(245,158,11,0.3)' }
+                      ? { background: 'linear-gradient(135deg, var(--accent) 0%, var(--accent-bright) 100%)', color: '#090C14', boxShadow: '0 0 20px rgb(var(--accent-rgb) / 0.3)' }
                       : { color: '#9BA6C4' }}>
                     <opt.Icon /> {opt.l}
                   </button>
@@ -211,7 +211,7 @@ export default function Login() {
                     border: '1px solid rgba(35,42,62,0.8)',
                     boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.03)',
                   }}
-                  onFocus={e => e.currentTarget.style.borderColor = 'rgba(245,158,11,0.5)'}
+                  onFocus={e => e.currentTarget.style.borderColor = 'rgb(var(--accent-rgb) / 0.5)'}
                   onBlur={e => e.currentTarget.style.borderColor = 'rgba(35,42,62,0.8)'}
                 />
               </div>
@@ -236,7 +236,7 @@ export default function Login() {
                     border: '1px solid rgba(35,42,62,0.8)',
                     boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.03)',
                   }}
-                  onFocus={e => e.currentTarget.style.borderColor = 'rgba(245,158,11,0.5)'}
+                  onFocus={e => e.currentTarget.style.borderColor = 'rgb(var(--accent-rgb) / 0.5)'}
                   onBlur={e => e.currentTarget.style.borderColor = 'rgba(35,42,62,0.8)'}
                 />
                 <button type="button" onClick={() => setShowPassword(s => !s)}
@@ -248,14 +248,14 @@ export default function Login() {
 
             {/* Remember me */}
             <label className="flex items-center gap-2.5 text-xs text-brand-text-muted cursor-pointer group">
-              <input type="checkbox" defaultChecked className="accent-amber-400 rounded w-3.5 h-3.5" />
+              <input type="checkbox" defaultChecked className="accent-brand-accent rounded w-3.5 h-3.5" />
               <span className="group-hover:text-brand-text-primary transition-colors">Remember me for 30 days</span>
             </label>
 
             {/* Submit */}
             <button type="submit" disabled={loading}
               className="w-full mt-2 h-12 px-6 rounded-xl text-gray-900 font-bold text-sm inline-flex items-center justify-center gap-2 transition-all disabled:opacity-50 disabled:cursor-not-allowed active:scale-[.98]"
-              style={{ background: 'linear-gradient(135deg, #F59E0B 0%, #FCD34D 100%)', boxShadow: '0 0 30px rgba(245,158,11,0.35), 0 4px 12px rgba(245,158,11,0.2)' }}>
+              style={{ background: 'linear-gradient(135deg, var(--accent) 0%, var(--accent-bright) 100%)', boxShadow: '0 0 30px rgb(var(--accent-rgb) / 0.35), 0 4px 12px rgb(var(--accent-rgb) / 0.2)' }}>
               {loading ? (
                 <svg className="animate-spin w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
                   <circle cx="12" cy="12" r="10" opacity=".25"/>
