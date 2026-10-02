@@ -39,7 +39,7 @@ class Migration(migrations.Migration):
         ),
         migrations.AddConstraint(
             model_name='question',
-            constraint=models.CheckConstraint(condition=models.Q(models.Q(('interview__isnull', True), ('question_set__isnull', False)), models.Q(('interview__isnull', False), ('question_set__isnull', True)), _connector='OR'), name='question_source_xor'),
+            constraint=models.CheckConstraint(check=models.Q(models.Q(('interview__isnull', True), ('question_set__isnull', False)), models.Q(('interview__isnull', False), ('question_set__isnull', True)), _connector='OR'), name='question_source_xor'),
         ),
         migrations.AddIndex(
             model_name='interview',
