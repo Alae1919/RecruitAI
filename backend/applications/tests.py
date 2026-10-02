@@ -354,3 +354,50 @@ class TestAdvanceApplicationService(TestCase):
         self.app.save()
         with self.assertRaises(ValidationError):
             accept_application(application_id=self.app.id, recruiter=self.recruiter)
+
+
+# ---------------------------------------------------------------------------
+# Recruiter pipeline summary (sidebar counts)
+# ---------------------------------------------------------------------------
+
+from rest_framework.test import APITestCase
+
+
+class TestPipelineSummaryEndpoint(APITestCase):
+    def setUp(self):
+        self.recruiter = _make_recruiter()
+        self.open_offer = _make_job_offer(self.recruiter)
+        self.paused_offer = _make_job_offer(self.recruiter)
+        self.paused_offer.status = JobOffer.Status.PAUSED
+        self.paused_offer.save()
+
+        def apply(offer, email, status_=Application.Status.PENDING, score=None):
+            app = Application.objects.create(
+                job_seeker=_make_job_seeker(email), job_offer=offer, status=status_,
+            )
+            if score is not None:
+                CVAnalysis.objects.create(application=app, eligibility_score=score)
+
+        apply(self.open_offer, 'a@t.com')
+        apply(self.open_offer, 'b@t.com', score=9.0)
+        apply(self.open_offer, 'c@t.com', Application.Status.ACCEPTED)
+        apply(self.paused_offer, 'd@t.com', Application.Status.REJECTED)
+        # another recruiter's data must not leak in
+        other = _make_recruiter('other@test.com')
+        apply(_make_job_offer(other), 'e@t.com')
+
+    def test_counts_for_the_calling_recruiter_only(self):
+        self.client.force_authenticate(user=self.recruiter.user)
+        res = self.client.get('/api/applications/pipeline/')
+        self.assertEqual(res.status_code, 200)
+        self.assertEqual(res.data['offers'], 2)
+        self.assertEqual(res.data['open_offers'], 1)
+        self.assertEqual(res.data['candidates'], 4)
+        self.assertEqual(res.data['stages'], {
+            'applied': 1, 'screening': 1, 'interview': 1, 'offer': 0, 'hired': 0, 'rejected': 1,
+        })
+
+    def test_job_seekers_are_denied(self):
+        seeker = _make_job_seeker('seeker@t.com')
+        self.client.force_authenticate(user=seeker.user)
+        self.assertEqual(self.client.get('/api/applications/pipeline/').status_code, 403)

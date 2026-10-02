@@ -26,7 +26,7 @@ from .services.accept_application import accept_application
 from .services.advance_application import advance_application
 from .services.reject_application import reject_application
 from .services.upload_resume import upload_resume, set_default_resume
-from .selectors import list_jobseeker_applications, list_jobseeker_resumes
+from .selectors import list_jobseeker_applications, list_jobseeker_resumes, recruiter_pipeline_summary
 
 logger = logging.getLogger(__name__)
 
@@ -222,3 +222,10 @@ class AdvanceApplicationView(APIView):
             return Response({'error': ' '.join(str(m) for m in e.detail)}, status=status.HTTP_400_BAD_REQUEST)
 
         return Response(ApplicationSerializer(application, context={'request': request}).data)
+
+
+class RecruiterPipelineSummaryView(APIView):
+    permission_classes = [IsAuthenticated, IsRecruiter]
+
+    def get(self, request):
+        return Response(recruiter_pipeline_summary(request.user.recruiter))
