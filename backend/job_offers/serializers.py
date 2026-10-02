@@ -24,6 +24,10 @@ class JobOfferSerializer(serializers.ModelSerializer):
         read_only_fields = ['id', 'created_at', 'updated_at']
 
     def validate(self, attrs):
+        status = attrs.get('status') or (self.instance.status if self.instance else JobOffer.Status.OPEN)
+        description = attrs.get('description', self.instance.description if self.instance else '')
+        if status != JobOffer.Status.DRAFT and not (description or '').strip():
+            raise serializers.ValidationError({'description': 'A description is required unless the offer is a draft.'})
         low = attrs.get('experience_min', getattr(self.instance, 'experience_min', 0))
         high = attrs.get('experience_max', getattr(self.instance, 'experience_max', None))
         if high is not None and low is not None and high < low:

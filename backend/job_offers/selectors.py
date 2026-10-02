@@ -27,8 +27,12 @@ def with_application_stats(queryset):
     S = Application.Status
     threshold = settings.RECRUITMENT['AUTO_SHORTLIST_SCORE']
     advanced = Q(application__status__in=[S.ACCEPTED, S.OFFER, S.HIRED])
-    strong_cv = Q(application__cv_analysis__eligibility_score__gte=threshold) & ~Q(
-        application__status=S.REJECTED
+    # offers that switched auto-shortlist off never promote on CV score alone
+    auto_shortlist = Q(screening_config__auto_shortlist__isnull=True) | ~Q(screening_config__auto_shortlist=False)
+    strong_cv = (
+        Q(application__cv_analysis__eligibility_score__gte=threshold)
+        & ~Q(application__status=S.REJECTED)
+        & auto_shortlist
     )
     return queryset.annotate(
         applicants_count=Count('application', distinct=True),

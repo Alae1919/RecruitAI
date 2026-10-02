@@ -17,7 +17,7 @@ class JobOffer(models.Model):
 
     recruiter = models.ForeignKey(Recruiter, on_delete=models.CASCADE, related_name='job_offers')
     title = models.CharField(max_length=255)
-    description = models.TextField()
+    description = models.TextField(blank=True)  # may stay empty while status == draft
     requirements = models.TextField(blank=True, null=True)
     skills = models.JSONField(default=list, blank=True)  # must-have
     nice_skills = models.JSONField(default=list, blank=True)

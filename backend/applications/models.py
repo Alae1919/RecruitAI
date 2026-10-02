@@ -84,6 +84,8 @@ class Application(models.Model):
         }
         if self.status in fixed:
             return fixed[self.status]
+        if self.job_offer.screening_config.get('auto_shortlist') is False:
+            return 'applied'
         try:
             score = self.cv_analysis.eligibility_score
         except ObjectDoesNotExist:

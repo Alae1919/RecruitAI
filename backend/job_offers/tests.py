@@ -361,3 +361,67 @@ class TestCreateOfferWizardFields(APITestCase):
         self.assertEqual(offer.employment_type, JobOffer.EmploymentType.FULL_TIME)
         self.assertEqual(offer.status, JobOffer.Status.OPEN)
         self.assertIsNone(offer.experience_max)
+
+
+# ---------------------------------------------------------------------------
+# Drafts and the auto-shortlist switch
+# ---------------------------------------------------------------------------
+
+class TestDraftOffers(APITestCase):
+    def setUp(self):
+        self.recruiter = _make_recruiter()
+        self.client.force_authenticate(user=self.recruiter.user)
+
+    def test_draft_can_be_saved_without_description(self):
+        res = self.client.post('/api/job_offers/create', {'title': 'WIP role', 'status': 'draft'}, format='json')
+        self.assertEqual(res.status_code, 201)
+
+    def test_open_offer_requires_description(self):
+        res = self.client.post('/api/job_offers/create', {'title': 'No desc'}, format='json')
+        self.assertEqual(res.status_code, 400)
+        self.assertIn('description', res.data)
+
+    def test_publishing_a_draft_without_description_is_rejected(self):
+        offer = _make_offer(self.recruiter)
+        offer.description = ''
+        offer.status = JobOffer.Status.DRAFT
+        offer.save()
+        res = self.client.patch(f'/api/job_offers/{offer.id}/edit/', {'status': 'open'}, format='json')
+        self.assertEqual(res.status_code, 400)
+
+    def test_publishing_a_draft_with_description_succeeds(self):
+        offer = _make_offer(self.recruiter)
+        offer.status = JobOffer.Status.DRAFT
+        offer.save()
+        res = self.client.patch(f'/api/job_offers/{offer.id}/edit/', {'status': 'open'}, format='json')
+        self.assertEqual(res.status_code, 200)
+
+
+class TestAutoShortlistSwitch(APITestCase):
+    def setUp(self):
+        self.recruiter = _make_recruiter()
+        self.client.force_authenticate(user=self.recruiter.user)
+
+    def _offer_with_strong_applicant(self, title, screening_config):
+        offer = _make_offer(self.recruiter, title=title)
+        offer.screening_config = screening_config
+        offer.save()
+        app = _apply(offer, f'{title}@t.com'.replace(' ', ''), score=9.0)
+        return offer, app
+
+    def test_default_promotes_strong_cv_to_screening(self):
+        offer, app = self._offer_with_strong_applicant('On', {})
+        app.refresh_from_db()
+        self.assertEqual(app.stage, 'screening')
+
+    def test_switched_off_keeps_applicant_in_applied(self):
+        offer, app = self._offer_with_strong_applicant('Off', {'auto_shortlist': False})
+        app.refresh_from_db()
+        self.assertEqual(app.stage, 'applied')
+
+    def test_shortlist_count_respects_the_switch(self):
+        self._offer_with_strong_applicant('On', {'auto_shortlist': True})
+        self._offer_with_strong_applicant('Off', {'auto_shortlist': False})
+        res = self.client.get('/api/job_offers/list')
+        by_title = {o['title']: o['shortlisted_count'] for o in res.data['results']}
+        self.assertEqual(by_title, {'On': 1, 'Off': 0})
