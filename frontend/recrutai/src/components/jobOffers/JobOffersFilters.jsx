@@ -19,7 +19,7 @@ function useDebounce(value, delay = 350) {
   return debounced;
 }
 
-export default function JobOffersFilters({ filters = {}, onChange }) {
+export default function JobOffersFilters({ filters = {}, onChange, hideOrdering = false }) {
   const [open, setOpen] = useState(false);
   const [localTitle, setLocalTitle]    = useState(filters.title    ?? '');
   const [localLocation, setLocalLocation] = useState(filters.location ?? '');
@@ -42,13 +42,13 @@ export default function JobOffersFilters({ filters = {}, onChange }) {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [debouncedTitle, debouncedLocation, debouncedExpMin]);
 
-  const hasActive = localTitle || localLocation || localExpMin || (filters.ordering && filters.ordering !== '-created_at');
+  const hasActive = localTitle || localLocation || localExpMin || (!hideOrdering && filters.ordering && filters.ordering !== '-created_at');
 
   const reset = () => {
     setLocalTitle('');
     setLocalLocation('');
     setLocalExpMin('');
-    onChange({ ordering: '-created_at', page: 1 });
+    onChange({ ...(hideOrdering ? { ...filters, title: '', location: '', experience_min: '' } : { ordering: '-created_at' }), page: 1 });
   };
 
   const panelRef = useRef(null);
@@ -147,7 +147,7 @@ export default function JobOffersFilters({ filters = {}, onChange }) {
           </div>
 
           {/* Ordering */}
-          <div>
+          {!hideOrdering && <div>
             <label className="block text-[11px] font-medium text-brand-text-muted mb-1.5 uppercase tracking-wider">Sort by</label>
             <select
               value={filters.ordering ?? '-created_at'}
@@ -159,7 +159,7 @@ export default function JobOffersFilters({ filters = {}, onChange }) {
                 <option key={o.value} value={o.value}>{o.label}</option>
               ))}
             </select>
-          </div>
+          </div>}
         </div>
       )}
     </div>

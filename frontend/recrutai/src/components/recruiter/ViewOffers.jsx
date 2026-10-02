@@ -1,26 +1,57 @@
 import React, { useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
-import { fetchCandidatesForJobOffer } from '../../services/api';
 import { useToast } from '../../hooks/useToast';
-import { Button, Input, Modal, ConfirmModal } from '../ui/index';
+import { Button, Input, Select, Modal, ConfirmModal } from '../ui/index';
 import SearchComponent from '../ui/animated-glowing-search-bar';
-import { Search, Plus, Trash2, Pencil, Bell, Briefcase, Users, MessageSquare, Sparkles } from 'lucide-react';
+import { Plus, Trash2, Pencil, Bell, Briefcase, MessageSquare, Sparkles } from 'lucide-react';
 import { useJobOffers, useEditOffer, useDeleteOffer, useGenerateJobDescription } from '../../shared/hooks/useJobOffers';
 import { StatusBadge, KpiCard } from '../ui/index';
 import Pagination from '../ui/Pagination';
 import JobOffersFilters from '../jobOffers/JobOffersFilters';
 import AsyncTaskBanner from '../ui/AsyncTaskBanner';
+import { timeAgo } from '../../shared/utils/time';
 
-const SearchIcon    = ({ size = 14 }) => <Search size={size} />;
 const PlusIcon      = ({ size = 14 }) => <Plus size={size} />;
 const TrashIcon     = ({ size = 13 }) => <Trash2 size={size} />;
 const EditIcon      = ({ size = 13 }) => <Pencil size={size} />;
 const BellIcon      = ({ size = 15 }) => <Bell size={size} />;
 const BriefcaseIcon = ({ size = 20 }) => <Briefcase size={size} />;
-const UsersIcon     = ({ size = 14 }) => <Users size={size} />;
 const QuestionsIcon = ({ size = 13 }) => <MessageSquare size={size} />;
 
 const PAGE_SIZE = 20;
+
+const STATUS_TABS = [
+  { value: '',       label: 'All' },
+  { value: 'open',   label: 'Open' },
+  { value: 'draft',  label: 'Draft' },
+  { value: 'paused', label: 'Paused' },
+];
+
+const SORT_OPTIONS = [
+  { value: '-created_at',       label: 'Recent' },
+  { value: '-applicants_count', label: 'Most applicants' },
+  { value: '-avg_match',        label: 'Best match' },
+  { value: 'title',             label: 'Title A–Z' },
+];
+const DEFAULT_ORDERING = '-created_at';
+
+const OFFER_STATUS_OPTIONS = [
+  { value: 'open',   label: 'Open' },
+  { value: 'draft',  label: 'Draft' },
+  { value: 'paused', label: 'Paused' },
+  { value: 'closed', label: 'Closed' },
+];
+
+const HEADERS = [
+  { label: 'Role' },
+  { label: 'Location', cls: 'hidden md:table-cell' },
+  { label: 'Applicants', cls: 'text-right hidden lg:table-cell' },
+  { label: 'Shortlist', cls: 'text-right hidden lg:table-cell' },
+  { label: 'Avg. match', cls: 'hidden xl:table-cell' },
+  { label: 'Status' },
+  { label: 'Posted', cls: 'hidden md:table-cell' },
+  { label: '' },
+];
 
 function SearchInput({ value, onChange, placeholder }) {
   return (
@@ -33,7 +64,7 @@ function SearchInput({ value, onChange, placeholder }) {
 function SkeletonRow() {
   return (
     <tr style={{ borderTop: '1px solid rgba(35,42,62,0.5)' }}>
-      {[55, 30, 15, 20, 10].map((w, i) => (
+      {[40, 20, 8, 8, 14, 10, 10, 8].map((w, i) => (
         <td key={i} className="p-4 pl-6">
           <div className="h-4 rounded animate-pulse" style={{ width: `${w}%`, background: 'rgba(35,42,62,0.8)' }} />
         </td>
@@ -42,20 +73,17 @@ function SkeletonRow() {
   );
 }
 
-const candidateBadge = (status) => {
-  const map = {
-    pending:  { bg: 'rgba(245,158,11,0.1)', color: '#FCD34D', border: 'rgba(245,158,11,0.2)' },
-    accepted: { bg: 'rgba(16,185,129,0.1)', color: '#6EE7B7', border: 'rgba(16,185,129,0.2)' },
-    rejected: { bg: 'rgba(239,68,68,0.1)',  color: '#FCA5A5', border: 'rgba(239,68,68,0.2)' },
-  };
-  const s = map[status] || { bg: 'rgba(35,42,62,0.6)', color: '#9BA6C4', border: 'rgba(35,42,62,0.8)' };
+function MatchCell({ value }) {
+  if (value == null) return <span className="text-brand-text-disabled">—</span>;
   return (
-    <span className="text-[11px] px-2 py-0.5 rounded-full font-medium"
-      style={{ background: s.bg, color: s.color, border: `1px solid ${s.border}` }}>
-      {status}
-    </span>
+    <div className="flex items-center gap-2" title={`Average CV match ${value}/100`}>
+      <div className="h-1.5 w-16 rounded-full overflow-hidden" style={{ background: 'rgba(35,42,62,0.8)' }}>
+        <div className="h-full rounded-full bg-brand-accent" style={{ width: `${Math.min(100, value)}%` }} />
+      </div>
+      <span className="font-mono text-xs text-brand-text-muted">{Math.round(value)}</span>
+    </div>
   );
-};
+}
 
 function Topbar({ title, subtitle, actions }) {
   return (
@@ -68,9 +96,7 @@ function Topbar({ title, subtitle, actions }) {
         </div>
       </div>
       <div className="flex items-center gap-2">
-        <button className="w-9 h-9 rounded-lg text-brand-text-muted grid place-items-center transition-colors"
-          onMouseEnter={e => e.currentTarget.style.background = 'rgba(35,42,62,0.6)'}
-          onMouseLeave={e => e.currentTarget.style.background = 'transparent'}>
+        <button aria-label="Notifications" className="w-9 h-9 rounded-lg text-brand-text-muted grid place-items-center transition-colors hover:bg-brand-elevated">
           <BellIcon />
         </button>
         {actions}
@@ -89,7 +115,8 @@ export default function ViewOffers() {
     title:          searchParams.get('title')          || '',
     location:       searchParams.get('location')       || '',
     experience_min: searchParams.get('experience_min') || '',
-    ordering:       searchParams.get('ordering')       || '-created_at',
+    status:         searchParams.get('status')         || '',
+    ordering:       searchParams.get('ordering')       || DEFAULT_ORDERING,
   };
 
   const queryParams = { ...filters, page, page_size: PAGE_SIZE, ...(search ? { search } : {}) };
@@ -102,13 +129,12 @@ export default function ViewOffers() {
 
   const [editingOffer, setEditingOffer]   = useState(null);
   const [deleteTarget, setDeleteTarget]   = useState(null);
-  const [candidatesOffer, setCandidatesOffer] = useState(null);
-  const [candidates, setCandidates]       = useState([]);
-  const [loadingCandidates, setLoadingCandidates] = useState(false);
   const [regenState, setRegenState]       = useState('idle');
 
   const offersList = data?.results ?? (Array.isArray(data) ? data : []);
   const totalCount = data?.count ?? offersList.length;
+  const openCount  = offersList.filter(o => o.status === 'open').length;
+  const hasFilters = !!(search || filters.title || filters.location || filters.experience_min || filters.status);
 
   const setParam = (key, value) => {
     setSearchParams(prev => {
@@ -122,7 +148,7 @@ export default function ViewOffers() {
     setSearchParams(prev => {
       const next = new URLSearchParams(prev);
       Object.entries(newFilters).forEach(([k, v]) => {
-        if (v && v !== '' && !(k === 'ordering' && v === '-created_at') && k !== 'page') {
+        if (v && v !== '' && !(k === 'ordering' && v === DEFAULT_ORDERING) && k !== 'page') {
           next.set(k, v);
         } else {
           next.delete(k);
@@ -176,31 +202,26 @@ export default function ViewOffers() {
     }
   };
 
-  const handleViewCandidates = async (offer) => {
-    setCandidatesOffer(offer);
-    setLoadingCandidates(true);
-    try {
-      const d = await fetchCandidatesForJobOffer(offer.id);
-      setCandidates(d);
-    } catch {
-      toast.error('Failed to load candidates.');
-    } finally {
-      setLoadingCandidates(false);
-    }
-  };
+  const openCandidates = (offer) =>
+    navigate(`/recruiter-dashboard/recruiter_candidate?offer=${offer.id}`);
+
+  const avgMatches = offersList.map(o => o.avg_match).filter(v => v != null);
+  const avgMatch = avgMatches.length
+    ? Math.round(avgMatches.reduce((a, v) => a + v, 0) / avgMatches.length)
+    : '—';
 
   const kpis = [
-    { label: 'Active roles',  value: totalCount,                                                       sub: 'total offers' },
-    { label: 'Applicants',   value: offersList.reduce((a, o) => a + (o.applicants_count || 0), 0),    sub: 'across all roles' },
-    { label: 'Shortlisted',  value: offersList.reduce((a, o) => a + (o.shortlisted_count || 0), 0),   sub: 'AI-ranked' },
-    { label: 'Avg. match',   value: '76', sub: '/ 100 score' },
+    { label: 'Active roles', value: openCount,                                                      sub: `${totalCount} total offers` },
+    { label: 'Applicants',   value: offersList.reduce((a, o) => a + (o.applicants_count || 0), 0),  sub: 'across listed roles' },
+    { label: 'Shortlisted',  value: offersList.reduce((a, o) => a + (o.shortlisted_count || 0), 0), sub: 'AI-ranked' },
+    { label: 'Avg. match',   value: avgMatch,                                                       sub: '/ 100 CV score' },
   ];
 
   return (
     <div className="flex-1 animate-fadeIn">
       <Topbar
         title="Job Offers"
-        subtitle={`${totalCount} total`}
+        subtitle={`${totalCount} total · ${openCount} open`}
         actions={
           <button
             onClick={() => navigate('/recruiter-dashboard/add-offers')}
@@ -233,7 +254,31 @@ export default function ViewOffers() {
               onChange={e => { setParam('search', e.target.value); setParam('page', ''); }}
               placeholder="Search offers…"
             />
-            <JobOffersFilters filters={filters} onChange={handleFiltersChange} />
+            <div role="group" aria-label="Filter by status"
+              className="flex items-center gap-1 rounded-lg p-0.5"
+              style={{ background: 'rgba(24,30,46,0.8)', border: '1px solid rgba(35,42,62,0.8)' }}>
+              {STATUS_TABS.map(t => {
+                const active = filters.status === t.value;
+                return (
+                  <button key={t.label} type="button" aria-pressed={active}
+                    onClick={() => handleFiltersChange({ ...filters, status: t.value, page: 1 })}
+                    className={`h-7 px-2.5 text-xs rounded-md font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-400/50 ${
+                      active ? 'bg-brand-accent text-gray-900' : 'text-brand-text-muted hover:text-brand-text-primary'
+                    }`}>
+                    {t.label}
+                  </button>
+                );
+              })}
+            </div>
+            <select
+              aria-label="Sort offers"
+              value={filters.ordering}
+              onChange={e => handleFiltersChange({ ...filters, ordering: e.target.value, page: 1 })}
+              className="h-9 px-3 rounded-lg text-xs text-brand-text-muted outline-none cursor-pointer"
+              style={{ background: 'rgba(24,30,46,0.8)', border: '1px solid rgba(35,42,62,0.8)' }}>
+              {SORT_OPTIONS.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
+            </select>
+            <JobOffersFilters filters={filters} onChange={handleFiltersChange} hideOrdering />
           </div>
 
           {/* Table */}
@@ -241,11 +286,11 @@ export default function ViewOffers() {
             <table className="w-full text-sm">
               <thead>
                 <tr>
-                  {['Role', 'Location', 'Applicants', 'Status', ''].map((h, i) => (
+                  {HEADERS.map((h, i) => (
                     <th key={i}
-                      className={`text-left font-mono text-[10px] uppercase tracking-widest text-brand-text-disabled font-medium p-4 ${i === 0 ? 'pl-6' : ''} ${i === 4 ? 'pr-6' : ''} ${i === 2 ? 'hidden lg:table-cell text-right' : ''} ${i === 1 ? 'hidden md:table-cell' : ''}`}
+                      className={`text-left font-mono text-[10px] uppercase tracking-widest text-brand-text-disabled font-medium p-4 ${i === 0 ? 'pl-6' : ''} ${i === HEADERS.length - 1 ? 'pr-6' : ''} ${h.cls || ''}`}
                       style={{ borderBottom: '1px solid rgba(35,42,62,0.6)' }}>
-                      {h}
+                      {h.label}
                     </th>
                   ))}
                 </tr>
@@ -254,24 +299,30 @@ export default function ViewOffers() {
                 {loading ? (
                   [1, 2, 3].map(i => <SkeletonRow key={i} />)
                 ) : error ? (
-                  <tr><td colSpan={5} className="p-8 text-center text-sm text-red-400">Failed to load offers.</td></tr>
+                  <tr><td colSpan={HEADERS.length} className="p-8 text-center text-sm text-red-400">Failed to load offers.</td></tr>
                 ) : offersList.length === 0 ? (
                   <tr>
-                    <td colSpan={5} className="py-20">
+                    <td colSpan={HEADERS.length} className="py-20">
                       <div className="flex flex-col items-center gap-4">
                         <div className="w-14 h-14 rounded-2xl grid place-items-center text-brand-text-disabled"
                           style={{ background: 'rgba(35,42,62,0.5)', border: '1px solid rgba(35,42,62,0.8)' }}>
                           <BriefcaseIcon />
                         </div>
                         <div className="text-center">
-                          <div className="text-sm font-semibold text-brand-text-primary">No offers found</div>
-                          <button onClick={() => navigate('/recruiter-dashboard/add-offers')}
-                            className="mt-2 text-xs font-medium transition-colors"
-                            style={{ color: '#F59E0B' }}
-                            onMouseEnter={e => e.currentTarget.style.color = '#FCD34D'}
-                            onMouseLeave={e => e.currentTarget.style.color = '#F59E0B'}>
-                            Create your first offer →
-                          </button>
+                          <div className="text-sm font-semibold text-brand-text-primary">
+                            {hasFilters ? 'No offers match these filters' : 'No offers found'}
+                          </div>
+                          {hasFilters ? (
+                            <button onClick={() => setSearchParams({})}
+                              className="mt-2 text-xs font-medium text-brand-accent hover:text-brand-accent-bright transition-colors">
+                              Clear filters
+                            </button>
+                          ) : (
+                            <button onClick={() => navigate('/recruiter-dashboard/add-offers')}
+                              className="mt-2 text-xs font-medium text-brand-accent hover:text-brand-accent-bright transition-colors">
+                              Create your first offer →
+                            </button>
+                          )}
                         </div>
                       </div>
                     </td>
@@ -279,56 +330,61 @@ export default function ViewOffers() {
                 ) : (
                   offersList.map(offer => (
                     <tr key={offer.id}
-                      className="cursor-pointer transition-colors group"
+                      className="cursor-pointer transition-colors group hover:bg-brand-elevated/60"
                       style={{ borderTop: '1px solid rgba(35,42,62,0.5)' }}
-                      onMouseEnter={e => e.currentTarget.style.background = 'rgba(24,30,46,0.6)'}
-                      onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
-                      onClick={() => handleViewCandidates(offer)}>
+                      onClick={() => openCandidates(offer)}>
                       <td className="p-4 pl-6">
                         <div className="flex items-center gap-3">
                           <div className="w-8 h-8 rounded-lg grid place-items-center shrink-0 transition-colors"
                             style={{ background: 'rgba(245,158,11,0.08)', border: '1px solid rgba(245,158,11,0.15)', color: '#F59E0B' }}>
                             <BriefcaseIcon size={14} />
                           </div>
-                          <div>
-                            <div className="font-semibold text-brand-text-primary">{offer.title}</div>
-                            <div className="text-xs text-brand-text-disabled mt-0.5 line-clamp-1 max-w-[280px]">{offer.description}</div>
+                          <div className="min-w-0">
+                            <button type="button"
+                              onClick={(e) => { e.stopPropagation(); openCandidates(offer); }}
+                              className="font-semibold text-brand-text-primary text-left hover:text-brand-accent transition-colors focus-visible:outline-none focus-visible:underline">
+                              {offer.title}
+                            </button>
+                            <div className="text-xs text-brand-text-disabled mt-0.5 line-clamp-1 max-w-[280px]">
+                              {[offer.department, offer.employment_type?.replace('_', '-'), offer.salary_range].filter(Boolean).join(' · ') || offer.description}
+                            </div>
                           </div>
                         </div>
                       </td>
                       <td className="p-4 text-brand-text-muted hidden md:table-cell">{offer.location || '—'}</td>
                       <td className="p-4 text-right font-mono text-brand-text-muted hidden lg:table-cell">
-                        <span className="inline-flex items-center gap-1.5">
-                          {offer.applicants_count != null && <UsersIcon size={12} />}
-                          {offer.applicants_count ?? '—'}
-                        </span>
+                        {offer.applicants_count ?? '—'}
                       </td>
+                      <td className="p-4 text-right font-mono text-brand-accent hidden lg:table-cell">
+                        {offer.shortlisted_count ?? '—'}
+                      </td>
+                      <td className="p-4 hidden xl:table-cell"><MatchCell value={offer.avg_match} /></td>
                       <td className="p-4">
                         <StatusBadge status={offer.status || 'open'} />
                       </td>
+                      <td className="p-4 text-xs text-brand-text-muted hidden md:table-cell">
+                        {offer.status === 'draft' ? '—' : timeAgo(offer.created_at)}
+                      </td>
                       <td className="p-4 pr-6" onClick={e => e.stopPropagation()}>
-                        <div className="flex items-center justify-end gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                        <div className="flex items-center justify-end gap-1 opacity-70 group-hover:opacity-100 focus-within:opacity-100 transition-opacity">
                           <button
-                            className="h-7 px-2 rounded-md text-[11px] inline-flex items-center gap-1 transition-colors text-brand-text-muted"
+                            aria-label={`Interview questions for ${offer.title}`}
+                            className="h-7 px-2 rounded-md text-[11px] inline-flex items-center gap-1 transition-colors text-brand-text-muted hover:text-indigo-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-400/50"
                             style={{ background: 'rgba(35,42,62,0.4)', border: '1px solid rgba(35,42,62,0.7)' }}
-                            onMouseEnter={e => { e.currentTarget.style.color = '#818CF8'; e.currentTarget.style.borderColor = 'rgba(99,102,241,0.3)'; }}
-                            onMouseLeave={e => { e.currentTarget.style.color = ''; e.currentTarget.style.borderColor = 'rgba(35,42,62,0.7)'; }}
                             onClick={() => navigate(`/recruiter-dashboard/offers/${offer.id}/questions`)}>
                             <QuestionsIcon /> Questions
                           </button>
                           <button
-                            className="h-7 px-2 rounded-md text-[11px] inline-flex items-center gap-1 transition-colors text-brand-text-muted"
+                            aria-label={`Edit ${offer.title}`}
+                            className="h-7 px-2 rounded-md text-[11px] inline-flex items-center gap-1 transition-colors text-brand-text-muted hover:text-brand-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-400/50"
                             style={{ background: 'rgba(35,42,62,0.4)', border: '1px solid rgba(35,42,62,0.7)' }}
-                            onMouseEnter={e => { e.currentTarget.style.color = '#F59E0B'; e.currentTarget.style.borderColor = 'rgba(245,158,11,0.3)'; }}
-                            onMouseLeave={e => { e.currentTarget.style.color = ''; e.currentTarget.style.borderColor = 'rgba(35,42,62,0.7)'; }}
                             onClick={() => setEditingOffer({ ...offer })}>
                             <EditIcon /> Edit
                           </button>
                           <button
-                            className="w-7 h-7 rounded-md grid place-items-center transition-colors text-brand-text-disabled"
+                            aria-label={`Delete ${offer.title}`}
+                            className="w-7 h-7 rounded-md grid place-items-center transition-colors text-brand-text-disabled hover:text-red-400 hover:bg-red-500/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-400/50"
                             style={{ background: 'rgba(35,42,62,0.4)', border: '1px solid rgba(35,42,62,0.7)' }}
-                            onMouseEnter={e => { e.currentTarget.style.color = '#F87171'; e.currentTarget.style.borderColor = 'rgba(239,68,68,0.3)'; e.currentTarget.style.background = 'rgba(239,68,68,0.08)'; }}
-                            onMouseLeave={e => { e.currentTarget.style.color = ''; e.currentTarget.style.borderColor = 'rgba(35,42,62,0.7)'; e.currentTarget.style.background = 'rgba(35,42,62,0.4)'; }}
                             onClick={() => setDeleteTarget(offer)}>
                             <TrashIcon />
                           </button>
@@ -377,7 +433,12 @@ export default function ViewOffers() {
       >
         {editingOffer && (
           <div className="space-y-4">
-            <Input label="Job Title" name="title" value={editingOffer.title || ''} onChange={handleEditChange} required />
+            <div className="grid grid-cols-[1fr_160px] gap-4">
+              <Input label="Job Title" name="title" value={editingOffer.title || ''} onChange={handleEditChange} required />
+              <Select label="Status" name="status" value={editingOffer.status || 'open'} onChange={handleEditChange}>
+                {OFFER_STATUS_OPTIONS.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
+              </Select>
+            </div>
             <div>
               <div className="flex items-center justify-between mb-1">
                 <label className="block text-[11px] font-medium text-brand-text-muted uppercase tracking-wider">Description</label>
@@ -422,43 +483,6 @@ export default function ViewOffers() {
         danger
         loading={deleteMutation.isPending}
       />
-
-      {/* Candidates modal */}
-      <Modal
-        isOpen={!!candidatesOffer}
-        onClose={() => { setCandidatesOffer(null); setCandidates([]); }}
-        title={`Candidates — ${candidatesOffer?.title}`}
-        size="lg"
-      >
-        {loadingCandidates ? (
-          <div className="flex justify-center py-10">
-            <div className="w-5 h-5 border-2 border-t-transparent rounded-full animate-spin" style={{ borderColor: 'rgba(245,158,11,0.5)', borderTopColor: 'transparent' }} />
-          </div>
-        ) : candidates.length === 0 ? (
-          <p className="text-sm text-brand-text-muted text-center py-8">No candidates have applied yet.</p>
-        ) : (
-          <div className="space-y-0 divide-y" style={{ borderColor: 'rgba(35,42,62,0.6)' }}>
-            {candidates.map(c => (
-              <div key={c.id} className="flex items-center justify-between gap-3 py-3">
-                <div>
-                  <p className="text-sm font-medium text-brand-text-primary">{c.candidate_name}</p>
-                  <div className="mt-0.5">{candidateBadge(c.status)}</div>
-                </div>
-                {c.resume_url && (
-                  <button
-                    onClick={() => window.open(c.resume_url, '_blank')}
-                    className="h-7 px-2.5 text-xs rounded-lg transition-colors font-medium text-brand-text-muted"
-                    style={{ border: '1px solid rgba(35,42,62,0.8)', background: 'rgba(16,20,32,0.6)' }}
-                    onMouseEnter={e => { e.currentTarget.style.color = '#F59E0B'; e.currentTarget.style.borderColor = 'rgba(245,158,11,0.3)'; }}
-                    onMouseLeave={e => { e.currentTarget.style.color = ''; e.currentTarget.style.borderColor = 'rgba(35,42,62,0.8)'; }}>
-                    View Resume
-                  </button>
-                )}
-              </div>
-            ))}
-          </div>
-        )}
-      </Modal>
     </div>
   );
 }
