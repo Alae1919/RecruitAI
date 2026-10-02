@@ -9,7 +9,6 @@ import { Modal } from '../ui/index';
 import pdfjsWorker from 'pdfjs-dist/build/pdf.worker.min.js';
 import SearchComponent from '../ui/animated-glowing-search-bar';
 import { Sparkles, List, Columns2, Briefcase, Bell, ArrowLeft } from 'lucide-react';
-import Avatar from '../ui/Avatar';
 import StatusBadge from '../ui/StatusBadge';
 import MatchRing from './candidates/MatchRing';
 import CandidateDetail from './candidates/CandidateDetail';
@@ -113,7 +112,7 @@ function StageTabs({ counts, value, onChange }) {
   ];
   return (
     <div role="group" aria-label="Filter by stage"
-      className="flex items-center gap-0.5 rounded-lg p-0.5 overflow-x-auto"
+      className="flex flex-wrap items-center gap-0.5 rounded-lg p-0.5"
       style={{ background: 'rgba(24,30,46,0.8)', border: '1px solid rgba(35,42,62,0.8)' }}>
       {tabs.map(t => {
         const active = value === t.key;
@@ -196,7 +195,8 @@ export default function JobOffersWithCandidates() {
     () => visibleCandidates(candidates, { stage, sort, query: q }),
     [candidates, stage, sort, q],
   );
-  const selected = candidates.find(c => c.id === selectedId) ?? visible[0] ?? null;
+  // the detail follows the visible list: a filtered-out selection falls back to the top match
+  const selected = visible.find(c => c.id === selectedId) ?? visible[0] ?? null;
 
   const handleAdvance = async (c) => {
     const action = nextStageAction(c.stage);
@@ -361,7 +361,6 @@ export default function JobOffersWithCandidates() {
                         )}
                         <div className="text-[11px] font-mono text-brand-text-disabled mt-2">applied {timeAgo(c.applied_at)}</div>
                       </div>
-                      <Avatar name={c.candidate_name} size={28} />
                     </button>
                   );
                 })
